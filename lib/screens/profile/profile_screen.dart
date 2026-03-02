@@ -1,0 +1,813 @@
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:percent_indicator/percent_indicator.dart';
+import '../../controllers/auth_controller.dart';
+import '../../controllers/spots_controller.dart';
+import '../../core/constants/app_constants.dart';
+import '../../core/router/app_router.dart';
+import '../../core/theme/app_theme.dart';
+import '../../models/gamification_models.dart';
+import '../../models/spot_model.dart';
+import '../../models/user_model.dart';
+import '../../widgets/gamification_widgets.dart';
+import '../../widgets/shared_widgets.dart';
+import '../../widgets/spot_cards.dart';
+
+class ProfileScreen extends ConsumerWidget {
+  const ProfileScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(currentUserProvider);
+    final isAuthenticated = ref.watch(isAuthenticatedProvider);
+
+    if (!isAuthenticated || user == null) {
+      return const _UnauthenticatedView();
+    }
+
+    return _AuthenticatedProfile(user: user);
+  }
+}
+
+// ─── Unauthenticated ──────────────────────────────────────────────────────────
+
+class _UnauthenticatedView extends StatelessWidget {
+  const _UnauthenticatedView();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.person_off_rounded,
+                size: 72,
+                color: AppColors.textSecondary,
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Sign in to view your profile',
+                style: Theme.of(context).textTheme.titleLarge,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Track your XP, badges, and saved spots',
+                style: const TextStyle(color: AppColors.textSecondary),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () => context.go(AppRoutes.login),
+                child: const Text('Sign In'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Authenticated Profile ───────────────────────────────────────────────────
+
+class _AuthenticatedProfile extends ConsumerStatefulWidget {
+  final UserModel user;
+  const _AuthenticatedProfile({required this.user});
+
+  @override
+  ConsumerState<_AuthenticatedProfile> createState() =>
+      _AuthenticatedProfileState();
+}
+
+class _AuthenticatedProfileState extends ConsumerState<_AuthenticatedProfile>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final user = widget.user;
+    final bookmarksAsync = ref.watch(bookmarksProvider(user.id));
+    final bookmarksList = bookmarksAsync.value ?? [];
+
+    return Scaffold(
+      body: NestedScrollView(
+        headerSliverBuilder: (context, _) => [
+          SliverAppBar(
+            expandedHeight: 320,
+            pinned: true,
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.edit_outlined),
+                tooltip: 'Edit Profile',
+                onPressed: () => _showEditProfileSheet(context, user),
+              ),
+              IconButton(
+                icon: const Icon(Icons.logout_rounded),
+                tooltip: 'Sign Out',
+                onPressed: () => _confirmSignOut(context),
+              ),
+            ],
+            flexibleSpace: FlexibleSpaceBar(
+              background: _ProfileHeader(user: user),
+            ),
+          ),
+          SliverPersistentHeader(
+            pinned: true,
+            delegate: _TabBarDelegate(
+              TabBar(
+                controller: _tabController,
+                tabs: const [
+                  Tab(text: 'Stats'),
+                  Tab(text: 'Badges'),
+                  Tab(text: 'Saved'),
+                ],
+                labelColor: AppColors.primary,
+                unselectedLabelColor: AppColors.textSecondary,
+                indicatorColor: AppColors.primary,
+                dividerColor: AppColors.border,
+              ),
+            ),
+          ),
+        ],
+        body: TabBarView(
+          controller: _tabController,
+          children: [
+            _StatsTab(user: user),
+            _BadgesTab(user: user),
+            _SavedTab(bookmarks: bookmarksList),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showEditProfileSheet(BuildContext context, UserModel user) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.surfaceElevated,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => _EditProfileSheet(user: user),
+    );
+  }
+
+  void _confirmSignOut(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surfaceElevated,
+        title: const Text('Sign Out'),
+        content: const Text('Are you sure you want to sign out?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+            onPressed: () {
+              Navigator.pop(ctx);
+              ref.read(authControllerProvider.notifier).signOut();
+            },
+            child: const Text('Sign Out'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Profile Header ───────────────────────────────────────────────────────────
+
+class _ProfileHeader extends StatelessWidget {
+  final UserModel user;
+  const _ProfileHeader({required this.user});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFF1A1025), AppColors.bg],
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 90, 24, 20),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            // Avatar
+            Stack(
+              alignment: Alignment.bottomRight,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(3),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: const LinearGradient(
+                      colors: [AppColors.primary, AppColors.secondary],
+                    ),
+                  ),
+                  child: CircleAvatar(
+                    radius: 44,
+                    backgroundColor: AppColors.surface,
+                    backgroundImage: user.photoURL != null
+                        ? CachedNetworkImageProvider(user.photoURL!)
+                        : null,
+                    child: user.photoURL == null
+                        ? Text(
+                            user.displayName.isNotEmpty
+                                ? user.displayName[0].toUpperCase()
+                                : '?',
+                            style: const TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.primary,
+                            ),
+                          )
+                        : null,
+                  ),
+                ),
+                LevelBadge(level: user.level),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // Name
+            Text(
+              user.displayName,
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              user.levelTitle,
+              style: const TextStyle(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
+            if (user.bio != null && user.bio!.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(
+                user.bio!,
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 13,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+            const SizedBox(height: 16),
+
+            // XP Bar
+            XpProgressBar(
+              currentXp: user.points,
+              maxXp: user.points + user.xpToNextLevel,
+              level: user.level,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Stats Tab ────────────────────────────────────────────────────────────────
+
+class _StatsTab extends StatelessWidget {
+  final UserModel user;
+  const _StatsTab({required this.user});
+
+  @override
+  Widget build(BuildContext context) {
+    final stats = [
+      {'icon': '⭐', 'label': 'Reviews', 'value': '${user.ratingsCount}'},
+      {
+        'icon': '📍',
+        'label': 'Contributions',
+        'value': '${user.contributionsCount}',
+      },
+      {
+        'icon': '🔖',
+        'label': 'Saved Spots',
+        'value': '${user.bookmarks.length}',
+      },
+      {'icon': '🏅', 'label': 'Badges', 'value': '${user.badgesEarned.length}'},
+      {'icon': '✨', 'label': 'Total XP', 'value': '${user.points}'},
+      {'icon': '🎯', 'label': 'Level', 'value': '${user.level}'},
+    ];
+
+    return ListView(
+      padding: const EdgeInsets.all(20),
+      children: [
+        _SectionTitle('Activity'),
+        const SizedBox(height: 12),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            childAspectRatio: 1.1,
+            mainAxisSpacing: 10,
+            crossAxisSpacing: 10,
+          ),
+          itemCount: stats.length,
+          itemBuilder: (_, i) {
+            final s = stats[i];
+            return _StatCard(
+              icon: s['icon']!,
+              label: s['label']!,
+              value: s['value']!,
+            );
+          },
+        ),
+
+        const SizedBox(height: 24),
+        _SectionTitle('Level Progress'),
+        const SizedBox(height: 12),
+        _LevelProgressCard(user: user),
+
+        if (user.location != null && user.location!.isNotEmpty) ...[
+          const SizedBox(height: 24),
+          _SectionTitle('Location'),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              const Icon(
+                Icons.location_on_rounded,
+                color: AppColors.secondary,
+                size: 18,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                user.location!,
+                style: const TextStyle(color: AppColors.textSecondary),
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _StatCard extends StatelessWidget {
+  final String icon;
+  final String label;
+  final String value;
+
+  const _StatCard({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surfaceElevated,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(icon, style: const TextStyle(fontSize: 22)),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(
+              fontWeight: FontWeight.w800,
+              fontSize: 18,
+              color: AppColors.primary,
+            ),
+          ),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 10,
+              color: AppColors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    ).animate().fadeIn().scale(begin: const Offset(0.9, 0.9));
+  }
+}
+
+class _LevelProgressCard extends StatelessWidget {
+  final UserModel user;
+  const _LevelProgressCard({required this.user});
+
+  @override
+  Widget build(BuildContext context) {
+    final currentLevel = LevelInfo.levels.firstWhere(
+      (l) => l.level == user.level,
+      orElse: () => LevelInfo.levels.first,
+    );
+    final nextLevel = user.level < 10 ? LevelInfo.levels[user.level] : null;
+
+    final progress = user.xpToNextLevel > 0
+        ? (user.points - currentLevel.minPoints) / (user.xpToNextLevel)
+        : 1.0;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceElevated,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Level ${user.level}',
+                    style: const TextStyle(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 16,
+                    ),
+                  ),
+                  Text(
+                    user.levelTitle,
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+              if (nextLevel != null)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      'Level ${nextLevel.level}',
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                      ),
+                    ),
+                    Text(
+                      nextLevel.title,
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                )
+              else
+                const Text(
+                  'MAX LEVEL',
+                  style: TextStyle(
+                    color: AppColors.gold,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          LinearPercentIndicator(
+            percent: progress.clamp(0.0, 1.0),
+            lineHeight: 12,
+            backgroundColor: AppColors.surface,
+            progressColor: AppColors.primary,
+            barRadius: const Radius.circular(6),
+            padding: EdgeInsets.zero,
+          ),
+          const SizedBox(height: 6),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '${user.points} XP',
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 11,
+                ),
+              ),
+              if (nextLevel != null)
+                Text(
+                  '${nextLevel.minPoints - user.points} XP to Level ${nextLevel.level}',
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 11,
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Badges Tab ───────────────────────────────────────────────────────────────
+
+class _BadgesTab extends ConsumerWidget {
+  final UserModel user;
+  const _BadgesTab({required this.user});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (user.badgesEarned.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('🏅', style: TextStyle(fontSize: 52)),
+            const SizedBox(height: 12),
+            Text(
+              'No badges yet',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Contribute and explore to earn badges!',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return GridView.builder(
+      padding: const EdgeInsets.all(20),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        childAspectRatio: 0.85,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+      ),
+      itemCount: user.badgesEarned.length,
+      itemBuilder: (_, i) {
+        final badgeId = user.badgesEarned[i];
+        return BadgeCard(badgeId: badgeId)
+            .animate(delay: Duration(milliseconds: i * 60))
+            .fadeIn()
+            .scale(begin: const Offset(0.85, 0.85));
+      },
+    );
+  }
+}
+
+// ─── Saved Tab ────────────────────────────────────────────────────────────────
+
+class _SavedTab extends ConsumerWidget {
+  final List<SpotModel> bookmarks;
+  const _SavedTab({required this.bookmarks});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (bookmarks.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('🔖', style: TextStyle(fontSize: 52)),
+            const SizedBox(height: 12),
+            Text(
+              'No saved spots',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Bookmark spots to see them here',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () => context.go(AppRoutes.spots),
+              child: const Text('Explore Spots'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: bookmarks.length,
+      itemBuilder: (_, i) => Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: CompactSpotCard(spot: bookmarks[i]),
+      ),
+    );
+  }
+}
+
+// ─── Edit Profile Sheet ───────────────────────────────────────────────────────
+
+class _EditProfileSheet extends ConsumerStatefulWidget {
+  final UserModel user;
+  const _EditProfileSheet({required this.user});
+
+  @override
+  ConsumerState<_EditProfileSheet> createState() => _EditProfileSheetState();
+}
+
+class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
+  late final TextEditingController _nameCtrl;
+  late final TextEditingController _bioCtrl;
+  late final TextEditingController _locationCtrl;
+  bool _loading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameCtrl = TextEditingController(text: widget.user.displayName);
+    _bioCtrl = TextEditingController(text: widget.user.bio ?? '');
+    _locationCtrl = TextEditingController(text: widget.user.location ?? '');
+  }
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _bioCtrl.dispose();
+    _locationCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    if (_nameCtrl.text.trim().isEmpty) return;
+    setState(() => _loading = true);
+
+    final error = await ref
+        .read(authControllerProvider.notifier)
+        .updateProfile(
+          displayName: _nameCtrl.text.trim(),
+          bio: _bioCtrl.text.trim(),
+          location: _locationCtrl.text.trim(),
+        );
+
+    if (mounted) {
+      setState(() => _loading = false);
+      if (error == null) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Profile updated ✓'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error), backgroundColor: AppColors.error),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+        left: 24,
+        right: 24,
+        top: 24,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                'Edit Profile',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const Spacer(),
+              IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          TextField(
+            controller: _nameCtrl,
+            decoration: const InputDecoration(
+              labelText: 'Display Name',
+              prefixIcon: Icon(Icons.person_outline),
+            ),
+          ),
+          const SizedBox(height: 14),
+          TextField(
+            controller: _bioCtrl,
+            maxLines: 3,
+            decoration: const InputDecoration(
+              labelText: 'Bio',
+              prefixIcon: Icon(Icons.info_outline),
+              alignLabelWithHint: true,
+            ),
+          ),
+          const SizedBox(height: 14),
+          TextField(
+            controller: _locationCtrl,
+            decoration: const InputDecoration(
+              labelText: 'Location',
+              prefixIcon: Icon(Icons.location_on_outlined),
+            ),
+          ),
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _loading ? null : _save,
+              child: _loading
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.bg,
+                      ),
+                    )
+                  : const Text('Save Changes'),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+class _SectionTitle extends StatelessWidget {
+  final String text;
+  const _SectionTitle(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: Theme.of(
+        context,
+      ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+    );
+  }
+}
+
+class _TabBarDelegate extends SliverPersistentHeaderDelegate {
+  final TabBar tabBar;
+
+  _TabBarDelegate(this.tabBar);
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) => Container(color: AppColors.bg, child: tabBar);
+
+  @override
+  double get maxExtent => tabBar.preferredSize.height;
+
+  @override
+  double get minExtent => tabBar.preferredSize.height;
+
+  @override
+  bool shouldRebuild(covariant SliverPersistentHeaderDelegate old) => false;
+}

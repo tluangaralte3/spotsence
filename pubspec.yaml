@@ -31,58 +31,70 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # UI
-  cupertino_icons: ^1.0.8
-  google_fonts: ^6.1.0
-  cached_network_image: ^3.3.0
-  shimmer: ^3.0.0
-  lottie: ^2.7.0
-  flutter_svg: ^2.0.9
+  # Firebase
+  firebase_core: ^4.4.0
+  firebase_auth: ^6.1.4
+  cloud_firestore: ^6.1.2
+  firebase_storage: ^13.0.6
+  firebase_analytics: ^12.1.2
 
   # State Management
-  flutter_riverpod: ^2.4.9
-  riverpod_annotation: ^2.3.3
-
-  # Firebase
-  firebase_core: ^3.6.0
-  firebase_auth: ^5.3.1
-  cloud_firestore: ^5.4.4
-  firebase_storage: ^12.3.4
-  firebase_analytics: ^11.3.3
-
-  # Maps & Location
-  google_maps_flutter: ^2.5.0
-  geolocator: ^10.1.0
-  geocoding: ^2.1.1
-
-  # Local Storage
-  hive: ^2.2.3
-  hive_flutter: ^1.1.0
-  shared_preferences: ^2.2.2
-
-  # Data Models & Serialization
-  freezed_annotation: ^2.4.1
-  json_annotation: ^4.8.1
-  equatable: ^2.0.5
+  flutter_riverpod: ^3.1.0
+  riverpod_annotation: ^4.0.0
 
   # Navigation
-  go_router: ^12.1.3
+  go_router: ^17.1.0
+
+  # Networking
+  dio: ^5.7.0
+  pretty_dio_logger: ^1.4.0
+
+  # Local Storage
+  shared_preferences: ^2.3.2
+  flutter_secure_storage: ^10.0.0
+
+  # UI
+  cupertino_icons: ^1.0.8
+  google_fonts: ^8.0.2
+  cached_network_image: ^3.4.1
+  shimmer: ^3.0.0
+  lottie: ^3.1.2
+  flutter_animate: ^4.5.0
+  flutter_svg: ^2.0.9
+  percent_indicator: ^4.2.4
+  fl_chart: ^1.1.1
+
+  # Forms & Validation
+  flutter_form_builder: ^10.3.0+2
+  form_builder_validators: ^11.3.0
 
   # Image Handling
-  image_picker: ^1.0.5
-  image: ^4.1.3
+  image_picker: ^1.1.2
+  image_cropper: ^11.0.0
 
-  # Network & HTTP
-  dio: ^5.4.0
-  connectivity_plus: ^5.0.2
+  # Maps & Location
+  google_maps_flutter: ^2.9.0
+  geolocator: ^14.0.2
+  geocoding: ^4.0.0
 
-  # Utilities
-  intl: ^0.19.0
-  url_launcher: ^6.2.2
-  share_plus: ^7.2.1
+  # Data Models & Serialization
+  freezed_annotation: ^3.1.0
+  json_annotation: ^4.9.0
+  equatable: ^2.0.5
+
+  # Utils
+  intl: ^0.20.2
+  timeago: ^3.7.0
+  uuid: ^4.5.1
+  url_launcher: ^6.3.0
+  share_plus: ^12.0.1
+  connectivity_plus: ^7.0.0
+  package_info_plus: ^9.0.0
   path_provider: ^2.1.1
   logger: ^2.0.2+1
-  uuid: ^4.2.1
+
+  # Animations & Effects
+  confetti: ^0.8.0
 
   # Functional Programming
   dartz: ^0.10.1
@@ -94,14 +106,14 @@ dev_dependencies:
   flutter_lints: ^6.0.0
 
   # Code Generation
-  build_runner: ^2.4.7
-  freezed: ^2.4.6
-  json_serializable: ^6.7.1
-  riverpod_generator: ^2.3.9
+  build_runner: ^2.4.12
+  freezed: ^3.2.3
+  json_serializable: ^6.8.0
+  riverpod_generator: ^4.0.0+1
 
   # Testing
   mockito: ^5.4.4
-  flutter_launcher_icons: ^0.13.1
+  flutter_launcher_icons: ^0.14.4
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

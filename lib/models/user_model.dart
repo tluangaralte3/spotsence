@@ -1,0 +1,173 @@
+import 'package:flutter/foundation.dart';
+
+/// Mirrors the Firestore `users` document + API /auth/me response.
+@immutable
+class UserModel {
+  final String id;
+  final String email;
+  final String displayName;
+  final String? photoURL;
+  final String? bio;
+  final String? location;
+  final int role; // 0 = admin, 1 = user
+  final int points;
+  final int level;
+  final String levelTitle;
+  final List<String> badges;
+  final List<String> badgesEarned;
+  final int contributionsCount;
+  final int ratingsCount;
+  final List<String> bookmarks;
+  final String createdAt;
+
+  const UserModel({
+    required this.id,
+    required this.email,
+    required this.displayName,
+    this.photoURL,
+    this.bio,
+    this.location,
+    required this.role,
+    required this.points,
+    required this.level,
+    required this.levelTitle,
+    required this.badges,
+    required this.badgesEarned,
+    required this.contributionsCount,
+    required this.ratingsCount,
+    required this.bookmarks,
+    required this.createdAt,
+  });
+
+  bool get isAdmin => role == 0;
+
+  /// Level thresholds matching the web app constants/points.ts
+  static const _levelThresholds = [
+    (level: 1, points: 0, title: 'Explorer'),
+    (level: 2, points: 100, title: 'Wanderer'),
+    (level: 3, points: 250, title: 'Adventurer'),
+    (level: 4, points: 500, title: 'Pathfinder'),
+    (level: 5, points: 1000, title: 'Guide'),
+    (level: 6, points: 2000, title: 'Expert'),
+    (level: 7, points: 3500, title: 'Master'),
+    (level: 8, points: 5500, title: 'Legend'),
+    (level: 9, points: 8500, title: 'Champion'),
+    (level: 10, points: 12500, title: 'Guardian'),
+  ];
+
+  static int calculateLevel(int pts) {
+    int lvl = 1;
+    for (final t in _levelThresholds) {
+      if (pts >= t.points) lvl = t.level;
+    }
+    return lvl;
+  }
+
+  static String getLevelTitle(int lvl) {
+    return _levelThresholds
+        .firstWhere(
+          (t) => t.level == lvl,
+          orElse: () => (level: 1, points: 0, title: 'Explorer'),
+        )
+        .title;
+  }
+
+  /// Points needed to reach the next level.
+  int get pointsToNextLevel {
+    final next = _levelThresholds.where((t) => t.level == level + 1);
+    if (next.isEmpty) return 0;
+    return next.first.points - points;
+  }
+
+  /// Alias for pointsToNextLevel (used in profile UI).
+  int get xpToNextLevel => pointsToNextLevel;
+
+  /// 0.0–1.0 progress toward next level.
+  double get levelProgress {
+    final currentThreshold = _levelThresholds.firstWhere(
+      (t) => t.level == level,
+    );
+    final nextThresholds = _levelThresholds.where((t) => t.level == level + 1);
+    if (nextThresholds.isEmpty) return 1.0;
+    final nextThreshold = nextThresholds.first;
+    final range = nextThreshold.points - currentThreshold.points;
+    final earned = points - currentThreshold.points;
+    return (earned / range).clamp(0.0, 1.0);
+  }
+
+  factory UserModel.fromJson(Map<String, dynamic> json) {
+    final pts = (json['points'] as num?)?.toInt() ?? 0;
+    final lvl = (json['level'] as num?)?.toInt() ?? calculateLevel(pts);
+    return UserModel(
+      id: json['id'] as String? ?? '',
+      email: json['email'] as String? ?? '',
+      displayName: json['displayName'] as String? ?? 'User',
+      photoURL: json['photoURL'] as String?,
+      bio: json['bio'] as String?,
+      location: json['location'] as String?,
+      role: (json['role'] as num?)?.toInt() ?? 1,
+      points: pts,
+      level: lvl,
+      levelTitle: getLevelTitle(lvl),
+      badges: List<String>.from(json['badges'] as List? ?? []),
+      badgesEarned: List<String>.from(json['badgesEarned'] as List? ?? []),
+      contributionsCount: (json['contributionsCount'] as num?)?.toInt() ?? 0,
+      ratingsCount: (json['ratingsCount'] as num?)?.toInt() ?? 0,
+      bookmarks: List<String>.from(json['bookmarks'] as List? ?? []),
+      createdAt: json['createdAt'] as String? ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'email': email,
+    'displayName': displayName,
+    'photoURL': photoURL,
+    'bio': bio,
+    'location': location,
+    'role': role,
+    'points': points,
+    'level': level,
+    'levelTitle': levelTitle,
+    'badges': badges,
+    'badgesEarned': badgesEarned,
+    'contributionsCount': contributionsCount,
+    'ratingsCount': ratingsCount,
+    'bookmarks': bookmarks,
+    'createdAt': createdAt,
+  };
+
+  UserModel copyWith({
+    String? displayName,
+    String? photoURL,
+    String? bio,
+    String? location,
+    int? points,
+    int? level,
+    String? levelTitle,
+    List<String>? badges,
+    List<String>? badgesEarned,
+    int? contributionsCount,
+    int? ratingsCount,
+    List<String>? bookmarks,
+  }) {
+    return UserModel(
+      id: id,
+      email: email,
+      displayName: displayName ?? this.displayName,
+      photoURL: photoURL ?? this.photoURL,
+      bio: bio ?? this.bio,
+      location: location ?? this.location,
+      role: role,
+      points: points ?? this.points,
+      level: level ?? this.level,
+      levelTitle: levelTitle ?? this.levelTitle,
+      badges: badges ?? this.badges,
+      badgesEarned: badgesEarned ?? this.badgesEarned,
+      contributionsCount: contributionsCount ?? this.contributionsCount,
+      ratingsCount: ratingsCount ?? this.ratingsCount,
+      bookmarks: bookmarks ?? this.bookmarks,
+      createdAt: createdAt,
+    );
+  }
+}

@@ -1,0 +1,213 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../controllers/auth_controller.dart';
+import '../../screens/auth/login_screen.dart';
+import '../../screens/auth/register_screen.dart';
+import '../../screens/auth/forgot_password_screen.dart';
+import '../../screens/home/home_screen.dart';
+import '../../screens/spots/spots_list_screen.dart';
+import '../../screens/spots/spot_detail_screen.dart';
+import '../../screens/search/search_screen.dart';
+import '../../screens/community/community_screen.dart';
+import '../../screens/community/create_post_screen.dart';
+import '../../screens/contribute/contribute_screen.dart';
+import '../../screens/leaderboard/leaderboard_screen.dart';
+import '../../screens/profile/profile_screen.dart';
+import '../../screens/profile/edit_profile_screen.dart';
+import '../../screens/shell/main_shell.dart';
+import '../../screens/onboarding/onboarding_screen.dart';
+import '../../screens/listings/listings_screen.dart';
+import '../../screens/listings/listing_detail_screen.dart';
+
+// Named route paths
+abstract class AppRoutes {
+  static const onboarding = '/onboarding';
+  static const login = '/login';
+  static const register = '/register';
+  static const forgotPassword = '/forgot-password';
+  static const home = '/';
+  static const spots = '/spots';
+  static const spotDetail = '/spots/:id';
+  static const search = '/search';
+  static const community = '/community';
+  static const createPost = '/community/new';
+  static const contribute = '/contribute';
+  static const leaderboard = '/leaderboard';
+  static const profile = '/profile';
+  static const editProfile = '/profile/edit';
+  static const listings = '/listings';
+  static const listingDetail = '/listings/:type/:id';
+
+  static String spotDetailPath(String id) => '/spots/$id';
+  static String listingDetailPath(String type, String id) =>
+      '/listings/$type/$id';
+}
+
+final appRouterProvider = Provider<GoRouter>((ref) {
+  final authState = ref.watch(authControllerProvider);
+
+  return GoRouter(
+    initialLocation: AppRoutes.home,
+    debugLogDiagnostics: true,
+    redirect: (context, state) {
+      final isLoading = authState.isLoading;
+      if (isLoading) return null;
+
+      final isAuthenticated = authState.value?.isAuthenticated ?? false;
+      final isAuthRoute = [
+        AppRoutes.login,
+        AppRoutes.register,
+        AppRoutes.forgotPassword,
+        AppRoutes.onboarding,
+      ].contains(state.matchedLocation);
+
+      // If not authenticated and trying to access a protected route → login
+      final protectedRoutes = [
+        AppRoutes.profile,
+        AppRoutes.editProfile,
+        AppRoutes.createPost,
+        AppRoutes.contribute,
+      ];
+      final isProtected = protectedRoutes.any(
+        (r) => state.matchedLocation.startsWith(r),
+      );
+
+      if (!isAuthenticated && isProtected) return AppRoutes.login;
+      // If authenticated and on auth screen → home
+      if (isAuthenticated && isAuthRoute) return AppRoutes.home;
+      return null;
+    },
+    routes: [
+      GoRoute(
+        path: AppRoutes.onboarding,
+        builder: (_, __) => const OnboardingScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.login,
+        pageBuilder: (_, state) => _slide(state, const LoginScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.register,
+        pageBuilder: (_, state) => _slide(state, const RegisterScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.forgotPassword,
+        pageBuilder: (_, state) => _slide(state, const ForgotPasswordScreen()),
+      ),
+
+      // ── Shell (bottom nav) ─────────────────────────────────────────────
+      ShellRoute(
+        builder: (context, state, child) => MainShell(child: child),
+        routes: [
+          GoRoute(path: AppRoutes.home, builder: (_, __) => const HomeScreen()),
+          GoRoute(
+            path: AppRoutes.spots,
+            builder: (_, __) => const SpotsListScreen(),
+            routes: [
+              GoRoute(
+                path: ':id',
+                pageBuilder: (_, state) => _fade(
+                  state,
+                  SpotDetailScreen(id: state.pathParameters['id']!),
+                ),
+              ),
+            ],
+          ),
+          GoRoute(
+            path: AppRoutes.listings,
+            builder: (_, state) {
+              final tab =
+                  int.tryParse(state.uri.queryParameters['tab'] ?? '0') ?? 0;
+              return ListingsScreen(initialTab: tab);
+            },
+            routes: [
+              GoRoute(
+                path: ':type/:id',
+                pageBuilder: (_, state) => _fade(
+                  state,
+                  ListingDetailScreen(
+                    type: state.pathParameters['type']!,
+                    id: state.pathParameters['id']!,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          GoRoute(
+            path: AppRoutes.search,
+            builder: (_, __) => const SearchScreen(),
+          ),
+          GoRoute(
+            path: AppRoutes.community,
+            builder: (_, __) => const CommunityScreen(),
+          ),
+          GoRoute(
+            path: AppRoutes.leaderboard,
+            builder: (_, __) => const LeaderboardScreen(),
+          ),
+          GoRoute(
+            path: AppRoutes.profile,
+            builder: (_, __) => const ProfileScreen(),
+          ),
+        ],
+      ),
+
+      // ── Modal routes (outside shell) ───────────────────────────────────
+      GoRoute(
+        path: AppRoutes.createPost,
+        pageBuilder: (_, state) =>
+            _bottomSheet(state, const CreatePostScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.contribute,
+        pageBuilder: (_, state) => _slide(state, const ContributeScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.editProfile,
+        pageBuilder: (_, state) => _slide(state, const EditProfileScreen()),
+      ),
+    ],
+  );
+});
+
+// ── Page transition helpers ───────────────────────────────────────────────────
+
+CustomTransitionPage<void> _slide(GoRouterState state, Widget child) =>
+    CustomTransitionPage(
+      key: state.pageKey,
+      child: child,
+      transitionsBuilder: (_, animation, __, c) => SlideTransition(
+        position: animation.drive(
+          Tween(
+            begin: const Offset(1, 0),
+            end: Offset.zero,
+          ).chain(CurveTween(curve: Curves.easeOutCubic)),
+        ),
+        child: c,
+      ),
+    );
+
+CustomTransitionPage<void> _fade(GoRouterState state, Widget child) =>
+    CustomTransitionPage(
+      key: state.pageKey,
+      child: child,
+      transitionsBuilder: (_, animation, __, c) =>
+          FadeTransition(opacity: animation, child: c),
+    );
+
+CustomTransitionPage<void> _bottomSheet(GoRouterState state, Widget child) =>
+    CustomTransitionPage(
+      key: state.pageKey,
+      child: child,
+      opaque: false,
+      transitionsBuilder: (_, animation, __, c) => SlideTransition(
+        position: animation.drive(
+          Tween(
+            begin: const Offset(0, 1),
+            end: Offset.zero,
+          ).chain(CurveTween(curve: Curves.easeOutQuart)),
+        ),
+        child: c,
+      ),
+    );

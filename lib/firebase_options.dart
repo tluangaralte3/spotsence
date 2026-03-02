@@ -63,8 +63,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '195136676856',
     projectId: 'spotmizoram',
     storageBucket: 'spotmizoram.firebasestorage.app',
-    iosClientId: '195136676856-h59hc87309qfparsv735jcdoocndct4g.apps.googleusercontent.com',
+    iosClientId:
+        '195136676856-h59hc87309qfparsv735jcdoocndct4g.apps.googleusercontent.com',
     iosBundleId: 'com.hillstech.spotmizoram',
   );
-
 }
