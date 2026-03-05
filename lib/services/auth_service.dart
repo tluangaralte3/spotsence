@@ -1,114 +1,243 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:dio/dio.dart';
 import '../models/user_model.dart';
-import 'api_client.dart';
 
 final authServiceProvider = Provider<AuthService>((ref) {
-  return AuthService(ref.watch(dioProvider), FirebaseAuth.instance);
+  return AuthService(FirebaseAuth.instance, FirebaseFirestore.instance);
 });
 
-class AuthService extends BaseApiService {
-  final FirebaseAuth _firebaseAuth;
+/// Thin result wrapper used by AuthController.
+sealed class AuthResult<T> {
+  const AuthResult();
+}
 
-  AuthService(Dio dio, this._firebaseAuth) : super(dio);
+class AuthOk<T> extends AuthResult<T> {
+  final T value;
+  const AuthOk(this.value);
+}
 
-  // ── Firebase Auth stream ──────────────────────────────────────────────
+class AuthErr<T> extends AuthResult<T> {
+  final String message;
+  const AuthErr(this.message);
+}
 
-  Stream<User?> get authStateChanges => _firebaseAuth.authStateChanges();
+extension AuthResultX<T> on AuthResult<T> {
+  R when<R>({
+    required R Function(T value) ok,
+    required R Function(String msg) err,
+  }) {
+    return switch (this) {
+      AuthOk<T> r => ok(r.value),
+      AuthErr<T> r => err(r.message),
+    };
+  }
+}
 
-  User? get currentFirebaseUser => _firebaseAuth.currentUser;
+class AuthService {
+  final FirebaseAuth _auth;
+  final FirebaseFirestore _db;
 
-  // ── Sign in with email / password ─────────────────────────────────────
+  static const _users = 'users';
 
-  Future<ApiResult<UserCredential>> signInWithEmail(
+  AuthService(this._auth, this._db);
+
+  // ── Auth state ────────────────────────────────────────────────────────
+
+  Stream<User?> get authStateChanges => _auth.authStateChanges();
+  User? get currentFirebaseUser => _auth.currentUser;
+
+  // ── Sign in ───────────────────────────────────────────────────────────
+
+  Future<AuthResult<UserModel>> signInWithEmail(
     String email,
     String password,
   ) async {
-    return safeCall(() async {
-      final credential = await _firebaseAuth.signInWithEmailAndPassword(
+    try {
+      final cred = await _auth.signInWithEmailAndPassword(
         email: email.trim(),
         password: password,
       );
-      return ApiResult.ok(credential);
-    });
+      final user = await _fetchOrCreateProfile(cred.user!);
+      return AuthOk(user);
+    } on FirebaseAuthException catch (e) {
+      return AuthErr(_authMessage(e.code));
+    } catch (e) {
+      return AuthErr('Sign in failed. Please try again.');
+    }
   }
 
-  // ── Register (via REST API so we get the Firestore doc created) ───────
+  // ── Register ──────────────────────────────────────────────────────────
 
-  Future<ApiResult<UserModel>> registerWithEmail({
+  Future<AuthResult<UserModel>> registerWithEmail({
     required String email,
     required String password,
     required String displayName,
   }) async {
-    return safeCall(() async {
-      final response = await dio.post(
-        '/api/auth/register',
-        data: {
-          'email': email.trim(),
-          'password': password,
-          'displayName': displayName.trim(),
-        },
-      );
-      // After REST creates the user, sign them in via Firebase SDK
-      await _firebaseAuth.signInWithEmailAndPassword(
+    try {
+      // 1. Create Firebase Auth account
+      final cred = await _auth.createUserWithEmailAndPassword(
         email: email.trim(),
         password: password,
       );
-      return unwrap(
-        response,
-        (json) => UserModel.fromJson(json as Map<String, dynamic>),
-      );
-    });
+
+      // 2. Update display name in Firebase Auth
+      await cred.user!.updateDisplayName(displayName.trim());
+
+      // 3. Write initial Firestore user document
+      final now = DateTime.now();
+      final uid = cred.user!.uid;
+      final userDoc = {
+        'id': uid,
+        'email': email.trim(),
+        'displayName': displayName.trim(),
+        'photoURL': null,
+        'bio': null,
+        'location': null,
+        'role': 1, // 0 = admin, 1 = regular user
+        'points': 0,
+        'level': 1,
+        'levelTitle': 'Explorer',
+        'badges': <String>[],
+        'badgesEarned': <String>[],
+        'contributionsCount': 0,
+        'ratingsCount': 0,
+        'bookmarks': <String>[],
+        'createdAt': now.toIso8601String(),
+        'updatedAt': now.toIso8601String(),
+      };
+      await _db.collection(_users).doc(uid).set(userDoc);
+
+      final user = UserModel.fromJson(userDoc);
+      return AuthOk(user);
+    } on FirebaseAuthException catch (e) {
+      return AuthErr(_authMessage(e.code));
+    } catch (e) {
+      return AuthErr('Registration failed. Please try again.');
+    }
   }
 
-  // ── Get own Firestore profile ─────────────────────────────────────────
+  // ── Fetch profile from Firestore ──────────────────────────────────────
 
-  Future<ApiResult<UserModel>> getMyProfile() async {
-    return safeCall(() async {
-      final response = await dio.get('/api/auth/me');
-      return unwrap(
-        response,
-        (json) => UserModel.fromJson(json as Map<String, dynamic>),
-      );
+  Future<AuthResult<UserModel>> getMyProfile() async {
+    try {
+      final uid = _auth.currentUser?.uid;
+      if (uid == null) return const AuthErr('Not signed in.');
+      final user = await _fetchOrCreateProfile(_auth.currentUser!);
+      return AuthOk(user);
+    } catch (e) {
+      return AuthErr('Could not load profile.');
+    }
+  }
+
+  /// Stream of the current user's Firestore document — live updates.
+  Stream<UserModel?> watchMyProfile() {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) return Stream.value(null);
+    return _db.collection(_users).doc(uid).snapshots().map((snap) {
+      if (!snap.exists) return null;
+      return UserModel.fromFirestore(snap);
     });
   }
 
   // ── Update profile ────────────────────────────────────────────────────
 
-  Future<ApiResult<UserModel>> updateProfile({
+  Future<AuthResult<UserModel>> updateProfile({
     String? displayName,
     String? photoURL,
     String? bio,
     String? location,
   }) async {
-    return safeCall(() async {
-      final response = await dio.patch(
-        '/api/auth/me',
-        data: {
-          if (displayName != null) 'displayName': displayName,
-          if (photoURL != null) 'photoURL': photoURL,
-          if (bio != null) 'bio': bio,
-          if (location != null) 'location': location,
-        },
-      );
-      return unwrap(
-        response,
-        (json) => UserModel.fromJson(json as Map<String, dynamic>),
-      );
-    });
+    try {
+      final uid = _auth.currentUser?.uid;
+      if (uid == null) return const AuthErr('Not signed in.');
+
+      final updates = <String, dynamic>{
+        'updatedAt': DateTime.now().toIso8601String(),
+        if (displayName != null) 'displayName': displayName.trim(),
+        if (photoURL != null) 'photoURL': photoURL,
+        if (bio != null) 'bio': bio.trim(),
+        if (location != null) 'location': location.trim(),
+      };
+      await _db.collection(_users).doc(uid).update(updates);
+
+      // Also sync display name in Firebase Auth
+      if (displayName != null) {
+        await _auth.currentUser!.updateDisplayName(displayName.trim());
+      }
+
+      final snap = await _db.collection(_users).doc(uid).get();
+      final user = UserModel.fromFirestore(snap);
+      return AuthOk(user);
+    } catch (e) {
+      return AuthErr('Profile update failed.');
+    }
   }
 
   // ── Sign out ──────────────────────────────────────────────────────────
 
-  Future<void> signOut() => _firebaseAuth.signOut();
+  Future<void> signOut() => _auth.signOut();
 
   // ── Password reset ────────────────────────────────────────────────────
 
-  Future<ApiResult<void>> sendPasswordReset(String email) async {
-    return safeCall(() async {
-      await _firebaseAuth.sendPasswordResetEmail(email: email.trim());
-      return ApiResult.ok(null);
-    });
+  Future<AuthResult<void>> sendPasswordReset(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email.trim());
+      return const AuthOk(null);
+    } on FirebaseAuthException catch (e) {
+      return AuthErr(_authMessage(e.code));
+    } catch (_) {
+      return const AuthErr('Could not send reset email.');
+    }
   }
+
+  // ── Helpers ───────────────────────────────────────────────────────────
+
+  /// Fetch the user's Firestore profile; create it if it doesn't exist yet
+  /// (handles accounts created outside the app, e.g. Firebase Console).
+  Future<UserModel> _fetchOrCreateProfile(User firebaseUser) async {
+    final snap = await _db.collection(_users).doc(firebaseUser.uid).get();
+
+    if (snap.exists) {
+      return UserModel.fromFirestore(snap);
+    }
+
+    // Auto-create a minimal profile
+    final now = DateTime.now();
+    final userDoc = {
+      'id': firebaseUser.uid,
+      'email': firebaseUser.email ?? '',
+      'displayName': firebaseUser.displayName ?? 'User',
+      'photoURL': firebaseUser.photoURL,
+      'bio': null,
+      'location': null,
+      'role': 1,
+      'points': 0,
+      'level': 1,
+      'levelTitle': 'Explorer',
+      'badges': <String>[],
+      'badgesEarned': <String>[],
+      'contributionsCount': 0,
+      'ratingsCount': 0,
+      'bookmarks': <String>[],
+      'createdAt': now.toIso8601String(),
+      'updatedAt': now.toIso8601String(),
+    };
+    await _db.collection(_users).doc(firebaseUser.uid).set(userDoc);
+    return UserModel.fromJson(userDoc);
+  }
+
+  /// Human-readable messages for Firebase Auth error codes.
+  String _authMessage(String code) => switch (code) {
+    'user-not-found' => 'No account found with this email.',
+    'wrong-password' => 'Incorrect password.',
+    'invalid-credential' => 'Invalid email or password.',
+    'email-already-in-use' => 'An account with this email already exists.',
+    'weak-password' => 'Password must be at least 6 characters.',
+    'invalid-email' => 'Please enter a valid email address.',
+    'user-disabled' => 'This account has been disabled.',
+    'too-many-requests' => 'Too many attempts. Please try again later.',
+    'network-request-failed' => 'No internet connection.',
+    _ => 'Authentication error. Please try again.',
+  };
 }

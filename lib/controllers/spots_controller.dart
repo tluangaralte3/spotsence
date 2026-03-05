@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/spot_model.dart';
+import '../services/firestore_spots_service.dart';
 import '../services/spots_service.dart';
-import '../services/api_client.dart';
 
 // ── Featured Spots ────────────────────────────────────────────────────────────
 
@@ -29,6 +29,33 @@ class FeaturedSpotsNotifier extends AsyncNotifier<List<SpotModel>> {
     );
   }
 }
+
+// ── Featured Spots by Category (for home page filter tabs) ───────────────────
+
+/// Reads directly from Firestore `spots` collection.
+/// Pass null or 'all' for all approved spots; pass a category string to filter.
+final featuredSpotsByCategoryProvider =
+    FutureProvider.family<List<SpotModel>, String?>((ref, category) async {
+      return ref
+          .read(firestoreSpotsServiceProvider)
+          .getFeaturedSpots(category: category, limit: 12);
+    });
+
+/// Stream version — live updates from Firestore when data changes.
+final featuredSpotsByCategoryStreamProvider =
+    StreamProvider.family<List<SpotModel>, String?>((ref, category) {
+      return ref
+          .read(firestoreSpotsServiceProvider)
+          .watchFeaturedSpots(category: category, limit: 12);
+    });
+
+/// All spots stream for the browse/explore screen — higher limit, category-aware.
+final allSpotsByCategoryStreamProvider =
+    StreamProvider.family<List<SpotModel>, String?>((ref, category) {
+      return ref
+          .read(firestoreSpotsServiceProvider)
+          .watchFeaturedSpots(category: category, limit: 100);
+    });
 
 // ── Spots List (paginated) ────────────────────────────────────────────────────
 
@@ -118,8 +145,7 @@ final spotDetailProvider = FutureProvider.family<SpotModel?, String>((
   ref,
   spotId,
 ) async {
-  final result = await ref.read(spotsServiceProvider).getSpotDetail(spotId);
-  return result.when(ok: (spot) => spot, err: (_) => null);
+  return ref.read(firestoreSpotsServiceProvider).getSpotById(spotId);
 });
 
 // ── Search ────────────────────────────────────────────────────────────────────

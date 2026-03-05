@@ -47,9 +47,9 @@ class AuthController extends AsyncNotifier<AuthState> {
 
   @override
   Future<AuthState> build() async {
-    // Listen to Firebase auth state changes
+    // React to Firebase auth state changes (sign in / sign out)
     ref.listen(firebaseAuthStreamProvider, (prev, next) {
-      next.whenData((firebaseUser) async {
+      next.whenData((firebaseUser) {
         if (firebaseUser != null) {
           _loadProfile();
         } else {
@@ -60,7 +60,7 @@ class AuthController extends AsyncNotifier<AuthState> {
       });
     });
 
-    // Check current auth on startup
+    // Initial check on startup
     final firebaseUser = FirebaseAuth.instance.currentUser;
     if (firebaseUser == null) {
       return const AuthState(status: AuthStatus.unauthenticated);
@@ -81,15 +81,18 @@ class AuthController extends AsyncNotifier<AuthState> {
     state = AsyncData(await _fetchProfile());
   }
 
-  // ── Actions ─────────────────────────────────────────────────────────────
+  // ── Actions ──────────────────────────────────────────────────────────────
 
+  /// Returns null on success, or an error message string.
   Future<String?> signIn(String email, String password) async {
     state = const AsyncLoading();
     final result = await _authService.signInWithEmail(email, password);
     return result.when(
-      ok: (_) {
-        // _loadProfile will be triggered by firebaseAuthStreamProvider
-        return null; // null = success
+      ok: (user) {
+        state = AsyncData(
+          AuthState(status: AuthStatus.authenticated, user: user),
+        );
+        return null;
       },
       err: (msg) {
         state = AsyncData(
@@ -100,6 +103,7 @@ class AuthController extends AsyncNotifier<AuthState> {
     );
   }
 
+  /// Returns null on success, or an error message string.
   Future<String?> register({
     required String email,
     required String password,
@@ -158,7 +162,7 @@ class AuthController extends AsyncNotifier<AuthState> {
     );
   }
 
-  /// Refresh the profile from the API.
+  /// Refresh the profile from Firestore.
   Future<void> refreshProfile() => _loadProfile();
 }
 
@@ -174,4 +178,11 @@ final currentUserProvider = Provider<UserModel?>((ref) {
 /// Whether the user is currently signed in.
 final isAuthenticatedProvider = Provider<bool>((ref) {
   return ref.watch(authControllerProvider).value?.isAuthenticated ?? false;
+});
+
+/// Live Firestore stream of the current user's profile.
+/// Keeps the in-memory UserModel up-to-date when points/badges change.
+final currentUserStreamProvider = StreamProvider<UserModel?>((ref) {
+  final authService = ref.watch(authServiceProvider);
+  return authService.watchMyProfile();
 });

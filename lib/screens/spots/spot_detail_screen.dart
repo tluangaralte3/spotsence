@@ -1,11 +1,11 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../controllers/auth_controller.dart';
 import '../../controllers/spots_controller.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/spot_model.dart';
-import '../../services/spots_service.dart';
 import '../../widgets/shared_widgets.dart';
 
 class SpotDetailScreen extends ConsumerWidget {
@@ -175,9 +175,13 @@ class _SpotDetailBodyState extends ConsumerState<_SpotDetailBody> {
                         color: AppColors.textSecondary,
                       ),
                       const SizedBox(width: 4),
-                      Text(
-                        spot.locationAddress,
-                        style: Theme.of(context).textTheme.bodyMedium,
+                      Expanded(
+                        child: Text(
+                          spot.locationAddress,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
                       ),
                     ],
                   ),
@@ -186,14 +190,18 @@ class _SpotDetailBodyState extends ConsumerState<_SpotDetailBody> {
                   // Stats row
                   Row(
                     children: [
-                      _InfoPill(
-                        icon: Icons.visibility_outlined,
-                        label: '${spot.views} views',
+                      Flexible(
+                        child: _InfoPill(
+                          icon: Icons.visibility_outlined,
+                          label: '${spot.views} views',
+                        ),
                       ),
                       const SizedBox(width: 8),
-                      _InfoPill(
-                        icon: Icons.trending_up,
-                        label: '${spot.popularity} popularity',
+                      Flexible(
+                        child: _InfoPill(
+                          icon: Icons.trending_up,
+                          label: '${spot.popularity} popularity',
+                        ),
                       ),
                     ],
                   ),
@@ -309,8 +317,24 @@ class _SpotDetailBodyState extends ConsumerState<_SpotDetailBody> {
   }
 
   Future<void> _toggleBookmark(String spotId) async {
+    final user = ref.read(currentUserProvider);
+    if (user == null) return;
     setState(() => _bookmarkLoading = true);
-    await ref.read(spotsServiceProvider).toggleBookmark(spotId);
+    try {
+      final ref2 = FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.id)
+          .collection('bookmarks')
+          .doc(spotId);
+      if (_bookmarked) {
+        await ref2.delete();
+      } else {
+        await ref2.set({
+          'spotId': spotId,
+          'savedAt': FieldValue.serverTimestamp(),
+        });
+      }
+    } catch (_) {}
     if (mounted)
       setState(() {
         _bookmarked = !_bookmarked;
@@ -337,11 +361,18 @@ class _ReviewSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Read reviews live from Firestore 'reviews' subcollection
     final reviewsAsync = ref.watch(
-      FutureProvider.autoDispose.family<List<dynamic>, String>((r, id) async {
-        final result = await r.read(spotsServiceProvider).getReviews(id);
-        return result.when(ok: (l) => l, err: (_) => []);
-      })(spotId),
+      StreamProvider.autoDispose.family<List<Map<String, dynamic>>, String>(
+        (r, id) => FirebaseFirestore.instance
+            .collection('spots')
+            .doc(id)
+            .collection('reviews')
+            .orderBy('timestamp', descending: true)
+            .limit(20)
+            .snapshots()
+            .map((s) => s.docs.map((d) => d.data()).toList()),
+      )(spotId),
     );
 
     return Column(
@@ -360,7 +391,10 @@ class _ReviewSection extends ConsumerWidget {
                   style: TextStyle(color: AppColors.textSecondary),
                 )
               : Column(
-                  children: reviews.take(5).map((r) {
+                  children: reviews.take(10).map((r) {
+                    final userName = r['userName'] as String? ?? 'Anonymous';
+                    final rating = (r['rating'] as num?)?.toDouble() ?? 0;
+                    final comment = r['comment'] as String? ?? '';
                     return Container(
                       margin: const EdgeInsets.only(bottom: 12),
                       padding: const EdgeInsets.all(14),
@@ -375,20 +409,20 @@ class _ReviewSection extends ConsumerWidget {
                           Row(
                             children: [
                               Text(
-                                r.userName ?? '',
+                                userName,
                                 style: const TextStyle(
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.textPrimary,
                                 ),
                               ),
                               const Spacer(),
-                              StarRating(rating: (r.rating ?? 0).toDouble()),
+                              StarRating(rating: rating),
                             ],
                           ),
-                          if ((r.comment ?? '').isNotEmpty) ...[
+                          if (comment.isNotEmpty) ...[
                             const SizedBox(height: 6),
                             Text(
-                              r.comment ?? '',
+                              comment,
                               style: Theme.of(context).textTheme.bodyMedium,
                             ),
                           ],
@@ -425,21 +459,36 @@ class _ReviewSheetState extends ConsumerState<_ReviewSheet> {
   Future<void> _submit() async {
     if (_rating == 0) return;
     setState(() => _loading = true);
-    final result = await ref
-        .read(spotsServiceProvider)
-        .submitReview(
-          spotId: widget.spotId,
-          rating: _rating,
-          comment: _commentCtrl.text.trim(),
-        );
-    if (mounted) {
-      setState(() => _loading = false);
-      if (result.isOk) {
+    try {
+      final user = ref.read(currentUserProvider);
+      await FirebaseFirestore.instance
+          .collection('spots')
+          .doc(widget.spotId)
+          .collection('reviews')
+          .add({
+            'userId': user?.id ?? '',
+            'userName': user?.displayName ?? 'Anonymous',
+            'rating': _rating,
+            'comment': _commentCtrl.text.trim(),
+            'timestamp': FieldValue.serverTimestamp(),
+          });
+      if (mounted) {
+        setState(() => _loading = false);
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('⭐ Review submitted! +10 XP earned'),
+            content: Text('⭐ Review submitted!'),
             backgroundColor: AppColors.success,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _loading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to submit: $e'),
+            backgroundColor: AppColors.error,
           ),
         );
       }
@@ -541,11 +590,15 @@ class _InfoPill extends StatelessWidget {
         children: [
           Icon(icon, size: 13, color: AppColors.textSecondary),
           const SizedBox(width: 4),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              color: AppColors.textSecondary,
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 12,
+                color: AppColors.textSecondary,
+              ),
             ),
           ),
         ],

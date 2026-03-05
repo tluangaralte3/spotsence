@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -6,8 +7,8 @@ import '../../controllers/spots_controller.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/router/app_router.dart';
 import '../../core/theme/app_theme.dart';
+import '../../models/spot_model.dart';
 import '../../widgets/shared_widgets.dart';
-import '../../widgets/spot_cards.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -15,7 +16,6 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
-    final featured = ref.watch(featuredSpotsProvider);
 
     return Scaffold(
       body: CustomScrollView(
@@ -234,65 +234,6 @@ class HomeScreen extends ConsumerWidget {
             ),
           ),
 
-          // ── Featured section ────────────────────────────────────────────
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 28, 20, 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    '✨ Featured',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  TextButton(
-                    onPressed: () => context.go(AppRoutes.listings),
-                    child: const Text(
-                      'See all',
-                      style: TextStyle(color: AppColors.primary),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          SliverToBoxAdapter(
-            child: SizedBox(
-              height: 210,
-              child: featured.when(
-                loading: () => ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  itemCount: 3,
-                  separatorBuilder: (_, __) => const SizedBox(width: 12),
-                  itemBuilder: (_, __) =>
-                      const ShimmerBox(width: 280, height: 200, radius: 20),
-                ),
-                error: (_, __) => const EmptyState(
-                  emoji: '😕',
-                  title: 'Could not load featured spots',
-                ),
-                data: (spots) => spots.isEmpty
-                    ? const EmptyState(
-                        emoji: '🗺️',
-                        title: 'No featured spots yet',
-                      )
-                    : ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        itemCount: spots.length,
-                        separatorBuilder: (_, __) => const SizedBox(width: 0),
-                        itemBuilder: (ctx, i) => FeaturedSpotCard(
-                          spot: spots[i],
-                          onTap: () =>
-                              ctx.push(AppRoutes.spotDetailPath(spots[i].id)),
-                        ),
-                      ),
-              ),
-            ),
-          ),
-
           // ── Browse Listings ─────────────────────────────────────────────
           SliverToBoxAdapter(
             child: Padding(
@@ -317,6 +258,9 @@ class HomeScreen extends ConsumerWidget {
           ),
 
           SliverToBoxAdapter(child: _ListingCategoryGrid()),
+
+          // ── Featured Spots Section ────────────────────────────────────
+          const SliverToBoxAdapter(child: _FeaturedSpotsSection()),
 
           // ── Quick stats (if signed in) ──────────────────────────────────
           if (user != null)
@@ -468,6 +412,523 @@ class _StatCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Featured Spots Section  (mirrors the web FeaturedSpotsSection component)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _FeaturedSpotsSection extends ConsumerStatefulWidget {
+  const _FeaturedSpotsSection();
+
+  @override
+  ConsumerState<_FeaturedSpotsSection> createState() =>
+      _FeaturedSpotsSectionState();
+}
+
+class _FeaturedSpotsSectionState extends ConsumerState<_FeaturedSpotsSection> {
+  static const _tabs = [
+    (id: 'all', label: 'Popular nearby', emoji: '🗺️'),
+    (id: 'Mountains', label: 'Mountains', emoji: '⛰️'),
+    (id: 'Waterfalls', label: 'Waterfalls', emoji: '💧'),
+    (id: 'Cultural Sites', label: 'Cultural Sites', emoji: '🏛️'),
+    (id: 'Viewpoints', label: 'Viewpoints', emoji: '👁️'),
+    (id: 'Adventure', label: 'Adventure', emoji: '🧗'),
+  ];
+
+  String _selectedCategory = 'all';
+  final _scrollController = ScrollController();
+  bool _canScrollLeft = false;
+  bool _canScrollRight = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_updateScrollButtons);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _updateScrollButtons() {
+    final sc = _scrollController;
+    setState(() {
+      _canScrollLeft = sc.offset > 0;
+      _canScrollRight = sc.offset < sc.position.maxScrollExtent - 10;
+    });
+  }
+
+  void _scroll(double delta) {
+    _scrollController.animateTo(
+      (_scrollController.offset + delta).clamp(
+        0.0,
+        _scrollController.position.maxScrollExtent,
+      ),
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final spotsAsync = ref.watch(
+      featuredSpotsByCategoryStreamProvider(_selectedCategory),
+    );
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(0, 28, 0, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Header ──────────────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Explore and unwind at\nMizoram\'s top spots',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                          height: 1.25,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      RichText(
+                        text: TextSpan(
+                          style: Theme.of(context).textTheme.bodyMedium,
+                          children: const [
+                            TextSpan(text: 'Discover hidden gems. '),
+                            TextSpan(
+                              text: 'Now with SpotSence.',
+                              style: TextStyle(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                TextButton.icon(
+                  onPressed: () => context.go(AppRoutes.spots),
+                  icon: const Icon(
+                    Icons.arrow_forward_rounded,
+                    size: 16,
+                    color: AppColors.primary,
+                  ),
+                  label: const Text(
+                    'View All',
+                    style: TextStyle(color: AppColors.primary),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // ── Filter tabs ──────────────────────────────────────────────────
+          SizedBox(
+            height: 40,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              itemCount: _tabs.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (_, i) {
+                final tab = _tabs[i];
+                final selected = _selectedCategory == tab.id;
+                return GestureDetector(
+                  onTap: () {
+                    if (_selectedCategory != tab.id) {
+                      setState(() {
+                        _selectedCategory = tab.id;
+                        _canScrollLeft = false;
+                        _canScrollRight = true;
+                      });
+                    }
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: selected
+                          ? AppColors.primary
+                          : AppColors.surfaceElevated,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: selected ? AppColors.primary : AppColors.border,
+                      ),
+                    ),
+                    child: Text(
+                      '${tab.emoji}  ${tab.label}',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: selected
+                            ? Colors.white
+                            : AppColors.textSecondary,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // ── Cards + scroll arrows ────────────────────────────────────────────
+          Stack(
+            children: [
+              // Cards list
+              SizedBox(
+                height: 330,
+                child: spotsAsync.when(
+                  loading: () => ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    itemCount: 3,
+                    separatorBuilder: (_, __) => const SizedBox(width: 12),
+                    itemBuilder: (_, __) =>
+                        const ShimmerBox(width: 260, height: 330, radius: 20),
+                  ),
+                  error: (_, __) => const Center(
+                    child: EmptyState(
+                      emoji: '😕',
+                      title: 'Could not load spots',
+                    ),
+                  ),
+                  data: (spots) => spots.isEmpty
+                      ? const Center(
+                          child: EmptyState(
+                            emoji: '🗺️',
+                            title: 'No spots found',
+                          ),
+                        )
+                      : NotificationListener<ScrollNotification>(
+                          onNotification: (_) {
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              if (_scrollController.hasClients) {
+                                _updateScrollButtons();
+                              }
+                            });
+                            return false;
+                          },
+                          child: ListView.separated(
+                            controller: _scrollController,
+                            scrollDirection: Axis.horizontal,
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            itemCount: spots.length,
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(width: 14),
+                            itemBuilder: (ctx, i) => _FeaturedCard(
+                              spot: spots[i],
+                              onTap: () => ctx.push(
+                                AppRoutes.spotDetailPath(spots[i].id),
+                              ),
+                            ),
+                          ),
+                        ),
+                ),
+              ),
+
+              // Left arrow
+              if (_canScrollLeft)
+                Positioned(
+                  left: 4,
+                  top: 0,
+                  bottom: 0,
+                  child: Center(
+                    child: GestureDetector(
+                      onTap: () => _scroll(-320),
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceElevated,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppColors.border),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.chevron_left_rounded,
+                          size: 24,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+              // Right arrow
+              if (_canScrollRight)
+                Positioned(
+                  right: 4,
+                  top: 0,
+                  bottom: 0,
+                  child: Center(
+                    child: GestureDetector(
+                      onTap: () => _scroll(320),
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceElevated,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppColors.border),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.chevron_right_rounded,
+                          size: 24,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Individual rich card matching the web design.
+class _FeaturedCard extends StatelessWidget {
+  final SpotModel spot;
+  final VoidCallback onTap;
+
+  const _FeaturedCard({required this.spot, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 260,
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.07),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Image ──────────────────────────────────────────────────
+            Stack(
+              children: [
+                SizedBox(
+                  height: 155,
+                  width: double.infinity,
+                  child: spot.heroImage.isNotEmpty
+                      ? CachedNetworkImage(
+                          imageUrl: spot.heroImage,
+                          fit: BoxFit.cover,
+                          placeholder: (_, __) => const _CardImagePlaceholder(),
+                          errorWidget: (_, __, ___) =>
+                              const _CardImagePlaceholder(),
+                        )
+                      : const _CardImagePlaceholder(),
+                ),
+                if (spot.featured)
+                  Positioned(
+                    top: 10,
+                    right: 10,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Text(
+                        'Featured',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+
+            // ── Content ────────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Name + rating
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              spot.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              spot.locationAddress.isNotEmpty
+                                  ? spot.locationAddress
+                                  : spot.category,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (spot.averageRating > 0) ...[
+                        const SizedBox(width: 6),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.star_rounded,
+                              size: 15,
+                              color: Color(0xFFFBBF24),
+                            ),
+                            const SizedBox(width: 2),
+                            Text(
+                              spot.averageRating.toStringAsFixed(1),
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  // Description / placeStory
+                  Text(
+                    spot.placeStory?.isNotEmpty == true
+                        ? spot.placeStory!
+                        : 'Explore the beauty of ${spot.name} in Mizoram.',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                      height: 1.4,
+                    ),
+                  ),
+
+                  const SizedBox(height: 10),
+                  const Divider(height: 1, color: AppColors.border),
+                  const SizedBox(height: 10),
+
+                  // Category + popularity
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        spot.category,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                      if (spot.popularity > 0)
+                        Row(
+                          children: [
+                            Text(
+                              '${spot.popularity}',
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            const Text(
+                              '/10',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CardImagePlaceholder extends StatelessWidget {
+  const _CardImagePlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: AppColors.surfaceElevated,
+      child: const Center(
+        child: Icon(Icons.image_outlined, size: 40, color: AppColors.textMuted),
       ),
     );
   }

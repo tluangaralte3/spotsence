@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
 /// Mirrors the Firestore `users` document + API /auth/me response.
@@ -115,6 +116,31 @@ class UserModel {
       ratingsCount: (json['ratingsCount'] as num?)?.toInt() ?? 0,
       bookmarks: List<String>.from(json['bookmarks'] as List? ?? []),
       createdAt: json['createdAt'] as String? ?? '',
+    );
+  }
+
+  /// Parse from a Firestore [DocumentSnapshot].
+  factory UserModel.fromFirestore(DocumentSnapshot<Map<String, dynamic>> snap) {
+    final d = snap.data() ?? {};
+    final pts = (d['points'] as num?)?.toInt() ?? 0;
+    final lvl = (d['level'] as num?)?.toInt() ?? calculateLevel(pts);
+    return UserModel(
+      id: snap.id,
+      email: d['email'] as String? ?? '',
+      displayName: d['displayName'] as String? ?? 'User',
+      photoURL: d['photoURL'] as String?,
+      bio: d['bio'] as String?,
+      location: d['location'] as String?,
+      role: (d['role'] as num?)?.toInt() ?? 1,
+      points: pts,
+      level: lvl,
+      levelTitle: getLevelTitle(lvl),
+      badges: List<String>.from(d['badges'] as List? ?? []),
+      badgesEarned: List<String>.from(d['badgesEarned'] as List? ?? []),
+      contributionsCount: (d['contributionsCount'] as num?)?.toInt() ?? 0,
+      ratingsCount: (d['ratingsCount'] as num?)?.toInt() ?? 0,
+      bookmarks: List<String>.from(d['bookmarks'] as List? ?? []),
+      createdAt: d['createdAt'] as String? ?? '',
     );
   }
 
