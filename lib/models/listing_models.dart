@@ -2,6 +2,8 @@
 // Collections: restaurants, hotels, cafes, homestays, adventureSpots,
 //              shoppingAreas, events
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Shared helpers
 // ─────────────────────────────────────────────────────────────────────────────
@@ -40,6 +42,10 @@ class RestaurantModel {
   final bool hasReservation;
   final String district;
 
+  final String contactPhone;
+  final String website;
+  final int ratingsCount;
+
   const RestaurantModel({
     required this.id,
     required this.name,
@@ -53,6 +59,9 @@ class RestaurantModel {
     required this.hasDelivery,
     required this.hasReservation,
     required this.district,
+    this.contactPhone = '',
+    this.website = '',
+    this.ratingsCount = 0,
   });
 
   String get heroImage => _heroImage(images);
@@ -71,7 +80,37 @@ class RestaurantModel {
         hasDelivery: json['hasDelivery'] == true,
         hasReservation: json['hasReservation'] == true,
         district: json['district']?.toString() ?? '',
+        contactPhone: json['contactPhone']?.toString() ?? '',
+        website: json['website']?.toString() ?? '',
+        ratingsCount: (json['ratingsCount'] as num?)?.toInt() ?? 0,
       );
+
+  factory RestaurantModel.fromFirestore(
+    DocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
+    final d = doc.data() ?? {};
+    return RestaurantModel(
+      id: doc.id,
+      name: d['name']?.toString() ?? '',
+      description: d['description']?.toString() ?? '',
+      location: d['location']?.toString() ?? d['address']?.toString() ?? '',
+      images: _toStringList(d['images']),
+      rating: _toDouble(d['rating'] ?? d['averageRating']),
+      priceRange: d['priceRange']?.toString() ?? '\$',
+      cuisineTypes: _toStringList(d['cuisineTypes'] ?? d['cuisine']),
+      openingHours: d['openingHours']?.toString() ?? '',
+      hasDelivery: d['hasDelivery'] == true,
+      hasReservation: d['hasReservation'] == true,
+      district: d['district']?.toString() ?? '',
+      contactPhone:
+          d['contactPhone']?.toString() ?? d['phone']?.toString() ?? '',
+      website: d['website']?.toString() ?? '',
+      ratingsCount:
+          (d['ratingsCount'] as num?)?.toInt() ??
+          (d['reviewCount'] as num?)?.toInt() ??
+          0,
+    );
+  }
 
   Map<String, dynamic> toJson() => {
     'id': id,
@@ -86,6 +125,8 @@ class RestaurantModel {
     'hasDelivery': hasDelivery,
     'hasReservation': hasReservation,
     'district': district,
+    'contactPhone': contactPhone,
+    'website': website,
   };
 }
 

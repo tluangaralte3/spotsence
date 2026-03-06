@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/listing_models.dart';
 import '../models/spot_model.dart';
+import '../services/firestore_restaurants_service.dart';
 import '../services/firestore_spots_service.dart';
 import '../services/listings_service.dart';
 
@@ -93,37 +94,22 @@ class RestaurantsNotifier extends Notifier<PaginatedState<RestaurantModel>> {
 
   Future<void> loadFirst() async {
     state = state.copyWith(isLoading: true, error: null);
-    final result = await ref
-        .read(listingsServiceProvider)
-        .getRestaurants(page: 1);
-    result.when(
-      ok: (items) => state = state.copyWith(
+    try {
+      final restaurants = await ref
+          .read(firestoreRestaurantsServiceProvider)
+          .getRestaurants(limit: 100);
+      state = state.copyWith(
         isLoading: false,
-        items: items,
+        items: restaurants,
         currentPage: 1,
-        hasMore: items.length >= 20,
-      ),
-      err: (e) => state = state.copyWith(isLoading: false, error: e),
-    );
+        hasMore: false,
+      );
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
   }
 
-  Future<void> loadMore() async {
-    if (state.isLoadingMore || !state.hasMore) return;
-    state = state.copyWith(isLoadingMore: true);
-    final nextPage = state.currentPage + 1;
-    final result = await ref
-        .read(listingsServiceProvider)
-        .getRestaurants(page: nextPage);
-    result.when(
-      ok: (items) => state = state.copyWith(
-        isLoadingMore: false,
-        items: [...state.items, ...items],
-        currentPage: nextPage,
-        hasMore: items.length >= 20,
-      ),
-      err: (e) => state = state.copyWith(isLoadingMore: false, error: e),
-    );
-  }
+  Future<void> loadMore() async {} // No-op: all loaded at once
 
   Future<void> refresh() => loadFirst();
 }

@@ -19,6 +19,7 @@ import '../../screens/shell/main_shell.dart';
 import '../../screens/onboarding/onboarding_screen.dart';
 import '../../screens/listings/listings_screen.dart';
 import '../../screens/listings/listing_detail_screen.dart';
+import '../../screens/listings/restaurant_detail_screen.dart';
 
 // Named route paths
 abstract class AppRoutes {
@@ -124,13 +125,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: ':type/:id',
-                pageBuilder: (_, state) => _fade(
-                  state,
-                  ListingDetailScreen(
-                    type: state.pathParameters['type']!,
-                    id: state.pathParameters['id']!,
-                  ),
-                ),
+                pageBuilder: (_, state) {
+                  final type = state.pathParameters['type']!;
+                  final id = state.pathParameters['id']!;
+                  if (type == 'restaurants') {
+                    return _fade(state, RestaurantDetailScreen(id: id));
+                  }
+                  return _fade(state, ListingDetailScreen(type: type, id: id));
+                },
               ),
             ],
           ),
