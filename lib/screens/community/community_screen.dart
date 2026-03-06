@@ -8,6 +8,7 @@ import '../../core/router/app_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/community_models.dart';
 import '../../widgets/shared_widgets.dart';
+import 'community_map.dart';
 
 class CommunityScreen extends ConsumerStatefulWidget {
   const CommunityScreen({super.key});
@@ -50,9 +51,16 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen>
           ],
         ),
       ),
-      body: TabBarView(
-        controller: _tabs,
-        children: const [_PostsFeed(), _BucketListsTab(), _DilemmasTab()],
+      body: ListenableBuilder(
+        listenable: _tabs,
+        builder: (context, _) => TabBarView(
+          controller: _tabs,
+          // Disable swipe on the map tab so pan/zoom gestures reach flutter_map
+          physics: _tabs.index == 0
+              ? const NeverScrollableScrollPhysics()
+              : const AlwaysScrollableScrollPhysics(),
+          children: const [CommunityMap(), _BucketListsTab(), _DilemmasTab()],
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {

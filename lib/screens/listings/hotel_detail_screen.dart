@@ -1,0 +1,873 @@
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../controllers/auth_controller.dart';
+import '../../core/theme/app_theme.dart';
+import '../../models/listing_models.dart';
+import '../../services/firestore_hotels_service.dart';
+import '../../widgets/shared_widgets.dart';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HotelDetailScreen
+// ─────────────────────────────────────────────────────────────────────────────
+
+class HotelDetailScreen extends ConsumerWidget {
+  final String id;
+  const HotelDetailScreen({super.key, required this.id});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(hotelDetailProvider(id));
+
+    return async.when(
+      loading: () => const Scaffold(
+        backgroundColor: AppColors.bg,
+        body: Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
+      ),
+      error: (_, __) => Scaffold(
+        backgroundColor: AppColors.bg,
+        appBar: AppBar(backgroundColor: AppColors.bg),
+        body: const EmptyState(emoji: '😕', title: 'Could not load hotel'),
+      ),
+      data: (h) => h == null
+          ? Scaffold(
+              backgroundColor: AppColors.bg,
+              appBar: AppBar(backgroundColor: AppColors.bg),
+              body: const EmptyState(emoji: '🔍', title: 'Hotel not found'),
+            )
+          : _HotelBody(hotel: h),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Body
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _HotelBody extends ConsumerStatefulWidget {
+  final HotelModel hotel;
+  const _HotelBody({required this.hotel});
+
+  @override
+  ConsumerState<_HotelBody> createState() => _HotelBodyState();
+}
+
+class _HotelBodyState extends ConsumerState<_HotelBody> {
+  int _imageIndex = 0;
+  bool _showAllDesc = false;
+
+  HotelModel get h => widget.hotel;
+
+  @override
+  Widget build(BuildContext context) {
+    final images = h.images.isNotEmpty ? h.images : [h.heroImage];
+
+    return Scaffold(
+      backgroundColor: AppColors.bg,
+      body: CustomScrollView(
+        slivers: [
+          // ── Hero image ─────────────────────────────────────────────────
+          SliverAppBar(
+            expandedHeight: 280,
+            pinned: true,
+            backgroundColor: AppColors.bg,
+            leading: GestureDetector(
+              onTap: () => context.pop(),
+              child: Container(
+                margin: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.surface.withOpacity(0.9),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: AppColors.textPrimary,
+                  size: 18,
+                ),
+              ),
+            ),
+            flexibleSpace: FlexibleSpaceBar(
+              background: Stack(
+                fit: StackFit.expand,
+                children: [
+                  images[_imageIndex].isNotEmpty
+                      ? CachedNetworkImage(
+                          imageUrl: images[_imageIndex],
+                          fit: BoxFit.cover,
+                          placeholder: (_, __) =>
+                              Container(color: AppColors.surfaceElevated),
+                          errorWidget: (_, __, ___) => Container(
+                            color: AppColors.surfaceElevated,
+                            child: const Center(
+                              child: Icon(
+                                Icons.broken_image_outlined,
+                                color: AppColors.textMuted,
+                                size: 48,
+                              ),
+                            ),
+                          ),
+                        )
+                      : Container(
+                          color: AppColors.surfaceElevated,
+                          child: const Center(
+                            child: Icon(
+                              Icons.hotel,
+                              color: AppColors.textMuted,
+                              size: 64,
+                            ),
+                          ),
+                        ),
+                  // Bottom fade
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    height: 80,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            AppColors.bg.withOpacity(0.8),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Image dots
+                  if (images.length > 1)
+                    Positioned(
+                      bottom: 12,
+                      left: 0,
+                      right: 0,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(
+                          images.length > 5 ? 5 : images.length,
+                          (i) => GestureDetector(
+                            onTap: () => setState(() => _imageIndex = i),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              margin: const EdgeInsets.symmetric(horizontal: 3),
+                              width: _imageIndex == i ? 20 : 6,
+                              height: 6,
+                              decoration: BoxDecoration(
+                                color: _imageIndex == i
+                                    ? AppColors.primary
+                                    : Colors.white.withOpacity(0.5),
+                                borderRadius: BorderRadius.circular(3),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+
+          // ── Content ───────────────────────────────────────────────────
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Name + rating
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          h.name,
+                          style: const TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      _RatingBadge(rating: h.rating),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Location
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.location_on_outlined,
+                        size: 14,
+                        color: AppColors.primary,
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          h.location.isNotEmpty ? h.location : h.district,
+                          style: const TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 13,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  // Badges
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 6,
+                    children: [
+                      if (h.priceRange.isNotEmpty)
+                        _Badge(
+                          label: h.priceRange,
+                          color: AppColors.primary,
+                          bgColor: AppColors.primary.withOpacity(0.12),
+                        ),
+                      if (h.district.isNotEmpty)
+                        _Badge(
+                          label: h.district,
+                          color: AppColors.textSecondary,
+                          bgColor: AppColors.surfaceElevated,
+                          hasBorder: true,
+                        ),
+                      for (final rt in h.roomTypes.take(3))
+                        _Badge(
+                          label: rt,
+                          color: AppColors.secondary,
+                          bgColor: AppColors.secondary.withOpacity(0.1),
+                        ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // Amenities info panel
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: Wrap(
+                      spacing: 20,
+                      runSpacing: 10,
+                      children: [
+                        if (h.hasWifi)
+                          const _InfoDot(
+                            icon: Icons.wifi_rounded,
+                            label: 'Free WiFi',
+                          ),
+                        if (h.hasParking)
+                          const _InfoDot(
+                            icon: Icons.local_parking_rounded,
+                            label: 'Parking',
+                          ),
+                        if (h.hasRestaurant)
+                          const _InfoDot(
+                            icon: Icons.restaurant_menu_rounded,
+                            label: 'Restaurant',
+                          ),
+                        if (h.hasPool)
+                          const _InfoDot(
+                            icon: Icons.pool_rounded,
+                            label: 'Pool',
+                          ),
+                        if (h.contactPhone.isNotEmpty)
+                          _InfoDot(
+                            icon: Icons.phone_outlined,
+                            label: h.contactPhone,
+                          ),
+                      ],
+                    ),
+                  ),
+
+                  // Amenities chips
+                  if (h.amenities.isNotEmpty) ...[
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Amenities',
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: h.amenities
+                          .map(
+                            (a) => _Badge(
+                              label: a,
+                              color: AppColors.textSecondary,
+                              bgColor: AppColors.surfaceElevated,
+                              hasBorder: true,
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ],
+
+                  // Description
+                  if (h.description.isNotEmpty) ...[
+                    const SizedBox(height: 24),
+                    const Text(
+                      'About',
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      h.description,
+                      maxLines: _showAllDesc ? null : 4,
+                      overflow: _showAllDesc
+                          ? TextOverflow.visible
+                          : TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 14,
+                        height: 1.6,
+                      ),
+                    ),
+                    if (h.description.length > 200)
+                      GestureDetector(
+                        onTap: () =>
+                            setState(() => _showAllDesc = !_showAllDesc),
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 6),
+                          child: Text(
+                            _showAllDesc ? 'Show less' : 'Read more',
+                            style: const TextStyle(
+                              color: AppColors.primary,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+
+                  // Gallery strip
+                  if (images.length > 1) ...[
+                    const SizedBox(height: 24),
+                    const Text(
+                      'Gallery',
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      height: 90,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: images.length,
+                        separatorBuilder: (_, __) => const SizedBox(width: 8),
+                        itemBuilder: (_, i) => GestureDetector(
+                          onTap: () => setState(() => _imageIndex = i),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: CachedNetworkImage(
+                              imageUrl: images[i],
+                              width: 90,
+                              height: 90,
+                              fit: BoxFit.cover,
+                              errorWidget: (_, __, ___) => Container(
+                                width: 90,
+                                color: AppColors.surfaceElevated,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+
+                  // Reviews
+                  const SizedBox(height: 32),
+                  const Divider(height: 1, color: AppColors.border),
+                  const SizedBox(height: 24),
+                  _ReviewSection(hotelId: h.id),
+                  const SizedBox(height: 40),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Reviews Section
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _ReviewSection extends ConsumerStatefulWidget {
+  final String hotelId;
+  const _ReviewSection({required this.hotelId});
+
+  @override
+  ConsumerState<_ReviewSection> createState() => _ReviewSectionState();
+}
+
+class _ReviewSectionState extends ConsumerState<_ReviewSection> {
+  bool _showForm = false;
+  double _myRating = 5;
+  final _commentCtrl = TextEditingController();
+  bool _submitting = false;
+
+  @override
+  void dispose() {
+    _commentCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    final user = ref.read(currentUserProvider);
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Sign in to leave a review')),
+      );
+      return;
+    }
+    final comment = _commentCtrl.text.trim();
+    if (comment.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please write a comment')));
+      return;
+    }
+
+    setState(() => _submitting = true);
+    try {
+      await ref
+          .read(firestoreHotelsServiceProvider)
+          .submitReview(
+            hotelId: widget.hotelId,
+            userId: user.id,
+            userName: user.displayName,
+            userAvatar: user.photoURL ?? '',
+            rating: _myRating,
+            comment: comment,
+          );
+      _commentCtrl.clear();
+      setState(() {
+        _showForm = false;
+        _submitting = false;
+        _myRating = 5;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Review submitted!'),
+            backgroundColor: AppColors.primary,
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() => _submitting = false);
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final reviewsAsync = ref.watch(hotelReviewsProvider(widget.hotelId));
+    final user = ref.watch(currentUserProvider);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Header
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Reviews',
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            if (user != null)
+              GestureDetector(
+                onTap: () => setState(() => _showForm = !_showForm),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 7,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: AppColors.primary.withOpacity(0.4),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        _showForm ? Icons.close : Icons.rate_review_outlined,
+                        size: 14,
+                        color: AppColors.primary,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        _showForm ? 'Cancel' : 'Write Review',
+                        style: const TextStyle(
+                          color: AppColors.primary,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
+
+        // Review form
+        if (_showForm) ...[
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Your Rating',
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: List.generate(5, (i) {
+                    final star = (i + 1).toDouble();
+                    return GestureDetector(
+                      onTap: () => setState(() => _myRating = star),
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 4),
+                        child: Icon(
+                          Icons.star_rounded,
+                          size: 32,
+                          color: star <= _myRating
+                              ? AppColors.star
+                              : AppColors.border,
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: _commentCtrl,
+                  maxLines: 3,
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 14,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'Share your experience…',
+                    hintStyle: const TextStyle(
+                      color: AppColors.textMuted,
+                      fontSize: 14,
+                    ),
+                    filled: true,
+                    fillColor: AppColors.surfaceElevated,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: AppColors.border),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: AppColors.border),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: AppColors.primary),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _submitting ? null : _submit,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: _submitting
+                        ? const SizedBox(
+                            height: 18,
+                            width: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.black,
+                            ),
+                          )
+                        : const Text(
+                            'Submit Review',
+                            style: TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+
+        const SizedBox(height: 16),
+
+        // Reviews list
+        reviewsAsync.when(
+          loading: () => const Center(
+            child: Padding(
+              padding: EdgeInsets.all(16),
+              child: CircularProgressIndicator(color: AppColors.primary),
+            ),
+          ),
+          error: (_, __) => const Padding(
+            padding: EdgeInsets.all(8),
+            child: Text(
+              'Could not load reviews',
+              style: TextStyle(color: AppColors.textMuted),
+            ),
+          ),
+          data: (reviews) => reviews.isEmpty
+              ? Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: const Center(
+                    child: Text(
+                      'No reviews yet — be the first!',
+                      style: TextStyle(color: AppColors.textMuted),
+                    ),
+                  ),
+                )
+              : ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: reviews.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  itemBuilder: (_, i) => _ReviewCard(review: reviews[i]),
+                ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Review Card
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _ReviewCard extends StatelessWidget {
+  final Map<String, dynamic> review;
+  const _ReviewCard({required this.review});
+
+  @override
+  Widget build(BuildContext context) {
+    final rating = (review['rating'] as num?)?.toDouble() ?? 0.0;
+    final comment = review['comment']?.toString() ?? '';
+    final userName = review['userName']?.toString() ?? 'Anonymous';
+    final userAvatar = review['userAvatar']?.toString() ?? '';
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 18,
+                backgroundColor: AppColors.surfaceElevated,
+                backgroundImage: userAvatar.isNotEmpty
+                    ? NetworkImage(userAvatar)
+                    : null,
+                child: userAvatar.isEmpty
+                    ? Text(
+                        userName.isNotEmpty ? userName[0].toUpperCase() : '?',
+                        style: const TextStyle(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                        ),
+                      )
+                    : null,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      userName,
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Row(
+                      children: List.generate(
+                        5,
+                        (i) => Icon(
+                          Icons.star_rounded,
+                          size: 13,
+                          color: (i + 1) <= rating
+                              ? AppColors.star
+                              : AppColors.border,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          if (comment.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Text(
+              comment,
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 13,
+                height: 1.5,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Small shared widgets
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _RatingBadge extends StatelessWidget {
+  final double rating;
+  const _RatingBadge({required this.rating});
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+    decoration: BoxDecoration(
+      color: AppColors.star.withOpacity(0.15),
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(color: AppColors.star.withOpacity(0.3)),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Icon(Icons.star_rounded, size: 14, color: AppColors.star),
+        const SizedBox(width: 4),
+        Text(
+          rating.toStringAsFixed(1),
+          style: const TextStyle(
+            color: AppColors.star,
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _Badge extends StatelessWidget {
+  final String label;
+  final Color color;
+  final Color bgColor;
+  final bool hasBorder;
+  const _Badge({
+    required this.label,
+    required this.color,
+    required this.bgColor,
+    this.hasBorder = false,
+  });
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+    decoration: BoxDecoration(
+      color: bgColor,
+      borderRadius: BorderRadius.circular(20),
+      border: hasBorder ? Border.all(color: AppColors.border) : null,
+    ),
+    child: Text(
+      label,
+      style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w600),
+    ),
+  );
+}
+
+class _InfoDot extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  const _InfoDot({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Icon(icon, size: 14, color: AppColors.primary),
+      const SizedBox(width: 5),
+      Text(
+        label,
+        style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+      ),
+    ],
+  );
+}

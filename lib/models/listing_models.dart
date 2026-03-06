@@ -45,6 +45,8 @@ class RestaurantModel {
   final String contactPhone;
   final String website;
   final int ratingsCount;
+  final double? latitude;
+  final double? longitude;
 
   const RestaurantModel({
     required this.id,
@@ -62,6 +64,8 @@ class RestaurantModel {
     this.contactPhone = '',
     this.website = '',
     this.ratingsCount = 0,
+    this.latitude,
+    this.longitude,
   });
 
   String get heroImage => _heroImage(images);
@@ -83,6 +87,8 @@ class RestaurantModel {
         contactPhone: json['contactPhone']?.toString() ?? '',
         website: json['website']?.toString() ?? '',
         ratingsCount: (json['ratingsCount'] as num?)?.toInt() ?? 0,
+        latitude: (json['latitude'] as num?)?.toDouble(),
+        longitude: (json['longitude'] as num?)?.toDouble(),
       );
 
   factory RestaurantModel.fromFirestore(
@@ -109,6 +115,8 @@ class RestaurantModel {
           (d['ratingsCount'] as num?)?.toInt() ??
           (d['reviewCount'] as num?)?.toInt() ??
           0,
+      latitude: (d['latitude'] as num?)?.toDouble(),
+      longitude: (d['longitude'] as num?)?.toDouble(),
     );
   }
 
@@ -152,6 +160,8 @@ class HotelModel {
   final String contactPhone;
   final String website;
 
+  final int ratingsCount;
+
   const HotelModel({
     required this.id,
     required this.name,
@@ -169,6 +179,7 @@ class HotelModel {
     required this.district,
     required this.contactPhone,
     required this.website,
+    this.ratingsCount = 0,
   });
 
   String get heroImage => _heroImage(images);
@@ -190,7 +201,35 @@ class HotelModel {
     district: json['district']?.toString() ?? '',
     contactPhone: json['contactPhone']?.toString() ?? '',
     website: json['website']?.toString() ?? '',
+    ratingsCount: (json['ratingsCount'] as num?)?.toInt() ?? 0,
   );
+
+  factory HotelModel.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
+    final d = doc.data() ?? {};
+    return HotelModel(
+      id: doc.id,
+      name: d['name']?.toString() ?? '',
+      description: d['description']?.toString() ?? '',
+      location: d['location']?.toString() ?? d['address']?.toString() ?? '',
+      images: _toStringList(d['images']),
+      rating: _toDouble(d['rating'] ?? d['averageRating']),
+      priceRange: d['priceRange']?.toString() ?? '\$\$',
+      amenities: _toStringList(d['amenities']),
+      roomTypes: _toStringList(d['roomTypes']),
+      hasRestaurant: d['hasRestaurant'] == true,
+      hasWifi: d['hasWifi'] == true,
+      hasParking: d['hasParking'] == true,
+      hasPool: d['hasPool'] == true,
+      district: d['district']?.toString() ?? '',
+      contactPhone:
+          d['contactPhone']?.toString() ?? d['phone']?.toString() ?? '',
+      website: d['website']?.toString() ?? '',
+      ratingsCount:
+          (d['ratingsCount'] as num?)?.toInt() ??
+          (d['reviewCount'] as num?)?.toInt() ??
+          0,
+    );
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -210,6 +249,10 @@ class CafeModel {
   final bool hasWifi;
   final bool hasOutdoorSeating;
   final String district;
+  final String contactPhone;
+  final int ratingsCount;
+  final double? latitude;
+  final double? longitude;
 
   const CafeModel({
     required this.id,
@@ -224,6 +267,10 @@ class CafeModel {
     required this.hasWifi,
     required this.hasOutdoorSeating,
     required this.district,
+    this.contactPhone = '',
+    this.ratingsCount = 0,
+    this.latitude,
+    this.longitude,
   });
 
   String get heroImage => _heroImage(images);
@@ -241,7 +288,37 @@ class CafeModel {
     hasWifi: json['hasWifi'] == true,
     hasOutdoorSeating: json['hasOutdoorSeating'] == true,
     district: json['district']?.toString() ?? '',
+    contactPhone: json['contactPhone']?.toString() ?? '',
+    ratingsCount: (json['ratingsCount'] as num?)?.toInt() ?? 0,
+    latitude: (json['latitude'] as num?)?.toDouble(),
+    longitude: (json['longitude'] as num?)?.toDouble(),
   );
+
+  factory CafeModel.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
+    final d = doc.data() ?? {};
+    return CafeModel(
+      id: doc.id,
+      name: d['name']?.toString() ?? '',
+      description: d['description']?.toString() ?? '',
+      location: d['location']?.toString() ?? d['address']?.toString() ?? '',
+      images: _toStringList(d['images']),
+      rating: _toDouble(d['rating'] ?? d['averageRating']),
+      priceRange: d['priceRange']?.toString() ?? '\$',
+      specialties: _toStringList(d['specialties'] ?? d['menu']),
+      openingHours: d['openingHours']?.toString() ?? '',
+      hasWifi: d['hasWifi'] == true,
+      hasOutdoorSeating: d['hasOutdoorSeating'] == true,
+      district: d['district']?.toString() ?? '',
+      contactPhone:
+          d['contactPhone']?.toString() ?? d['phone']?.toString() ?? '',
+      ratingsCount:
+          (d['ratingsCount'] as num?)?.toInt() ??
+          (d['reviewCount'] as num?)?.toInt() ??
+          0,
+      latitude: (d['latitude'] as num?)?.toDouble(),
+      longitude: (d['longitude'] as num?)?.toDouble(),
+    );
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -302,6 +379,31 @@ class HomestayModel {
     district: json['district']?.toString() ?? '',
     contactPhone: json['contactPhone']?.toString() ?? '',
   );
+
+  factory HomestayModel.fromFirestore(
+    DocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
+    final d = doc.data() ?? {};
+    return HomestayModel(
+      id: doc.id,
+      name: d['name']?.toString() ?? '',
+      description: d['description']?.toString() ?? '',
+      location: d['location']?.toString() ?? d['address']?.toString() ?? '',
+      images: _toStringList(d['images']),
+      rating: _toDouble(d['rating'] ?? d['averageRating']),
+      priceRange: d['priceRange']?.toString() ?? '\$\$',
+      amenities: _toStringList(d['amenities']),
+      maxGuests: (d['maxGuests'] as num?)?.toInt() ?? 2,
+      hostName: d['hostName']?.toString() ?? d['ownerName']?.toString() ?? '',
+      hostPhoto:
+          d['hostPhoto']?.toString() ?? d['ownerPhoto']?.toString() ?? '',
+      hasBreakfast: d['hasBreakfast'] == true,
+      hasFreePickup: d['hasFreePickup'] == true,
+      district: d['district']?.toString() ?? '',
+      contactPhone:
+          d['contactPhone']?.toString() ?? d['phone']?.toString() ?? '',
+    );
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -373,6 +475,27 @@ class AdventureSpotModel {
         isPopular: json['isPopular'] == true,
         district: json['district']?.toString() ?? '',
       );
+
+  factory AdventureSpotModel.fromFirestore(
+    DocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
+    final d = doc.data() ?? {};
+    return AdventureSpotModel(
+      id: doc.id,
+      name: d['name']?.toString() ?? '',
+      description: d['description']?.toString() ?? '',
+      category: d['category']?.toString() ?? 'adventure',
+      location: d['location']?.toString() ?? d['address']?.toString() ?? '',
+      images: _toStringList(d['images']),
+      rating: _toDouble(d['rating'] ?? d['averageRating']),
+      difficulty: d['difficulty']?.toString() ?? 'Moderate',
+      duration: d['duration']?.toString() ?? '',
+      bestSeason: d['bestSeason']?.toString() ?? '',
+      activities: _toStringList(d['activities']),
+      isPopular: d['isPopular'] == true || d['featured'] == true,
+      district: d['district']?.toString() ?? '',
+    );
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -434,6 +557,30 @@ class ShoppingAreaModel {
         isPopular: json['isPopular'] == true,
         district: json['district']?.toString() ?? '',
       );
+
+  factory ShoppingAreaModel.fromFirestore(
+    DocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
+    final d = doc.data() ?? {};
+    return ShoppingAreaModel(
+      id: doc.id,
+      name: d['name']?.toString() ?? '',
+      description: d['description']?.toString() ?? '',
+      type: d['type']?.toString() ?? 'market',
+      location: d['location']?.toString() ?? d['address']?.toString() ?? '',
+      images: _toStringList(d['images']),
+      rating: _toDouble(d['rating'] ?? d['averageRating']),
+      openingHours: d['openingHours']?.toString() ?? '',
+      products: _toStringList(d['products'] ?? d['items']),
+      priceRange: d['priceRange']?.toString() ?? '\$',
+      hasParking: d['hasParking'] == true,
+      acceptsCards:
+          d['acceptsCards'] == true || d['acceptsCreditCards'] == true,
+      hasDelivery: d['hasDelivery'] == true,
+      isPopular: d['isPopular'] == true || d['featured'] == true,
+      district: d['district']?.toString() ?? '',
+    );
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -516,6 +663,45 @@ class EventModel {
       type: json['type']?.toString() ?? 'cultural',
       status: json['status']?.toString() ?? 'Published',
       district: json['district']?.toString() ?? '',
+    );
+  }
+
+  factory EventModel.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
+    final d = doc.data() ?? {};
+    DateTime? parsedDate;
+    final rawDate = d['date'] ?? d['eventDate'] ?? d['startDate'];
+    if (rawDate != null) {
+      try {
+        if (rawDate is Timestamp) {
+          parsedDate = rawDate.toDate();
+        } else if (rawDate is int) {
+          parsedDate = DateTime.fromMillisecondsSinceEpoch(rawDate);
+        } else {
+          parsedDate = DateTime.parse(rawDate.toString());
+        }
+      } catch (_) {}
+    }
+    final images = _toStringList(d['images']);
+    final imageUrl =
+        d['imageUrl']?.toString() ??
+        d['image']?.toString() ??
+        (images.isNotEmpty ? images.first : '');
+    return EventModel(
+      id: doc.id,
+      title: d['title']?.toString() ?? d['name']?.toString() ?? '',
+      description: d['description']?.toString() ?? '',
+      location: d['location']?.toString() ?? d['venue']?.toString() ?? '',
+      date: parsedDate,
+      time: d['time']?.toString() ?? d['startTime']?.toString() ?? '',
+      attendees:
+          (d['attendees'] as num?)?.toInt() ??
+          (d['attendeeCount'] as num?)?.toInt() ??
+          0,
+      category: d['category']?.toString() ?? '',
+      imageUrl: imageUrl,
+      type: d['type']?.toString() ?? 'cultural',
+      status: d['status']?.toString() ?? 'Published',
+      district: d['district']?.toString() ?? '',
     );
   }
 }

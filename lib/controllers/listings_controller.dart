@@ -1,9 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/listing_models.dart';
 import '../models/spot_model.dart';
+import '../services/firestore_adventure_service.dart';
+import '../services/firestore_cafes_service.dart';
+import '../services/firestore_events_service.dart';
+import '../services/firestore_homestays_service.dart';
+import '../services/firestore_hotels_service.dart';
 import '../services/firestore_restaurants_service.dart';
+import '../services/firestore_shopping_service.dart';
 import '../services/firestore_spots_service.dart';
-import '../services/listings_service.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Generic paginated state
@@ -132,35 +137,22 @@ class HotelsNotifier extends Notifier<PaginatedState<HotelModel>> {
 
   Future<void> loadFirst() async {
     state = state.copyWith(isLoading: true, error: null);
-    final result = await ref.read(listingsServiceProvider).getHotels(page: 1);
-    result.when(
-      ok: (items) => state = state.copyWith(
+    try {
+      final hotels = await ref
+          .read(firestoreHotelsServiceProvider)
+          .getHotels(limit: 100);
+      state = state.copyWith(
         isLoading: false,
-        items: items,
+        items: hotels,
         currentPage: 1,
-        hasMore: items.length >= 20,
-      ),
-      err: (e) => state = state.copyWith(isLoading: false, error: e),
-    );
+        hasMore: false,
+      );
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
   }
 
-  Future<void> loadMore() async {
-    if (state.isLoadingMore || !state.hasMore) return;
-    state = state.copyWith(isLoadingMore: true);
-    final nextPage = state.currentPage + 1;
-    final result = await ref
-        .read(listingsServiceProvider)
-        .getHotels(page: nextPage);
-    result.when(
-      ok: (items) => state = state.copyWith(
-        isLoadingMore: false,
-        items: [...state.items, ...items],
-        currentPage: nextPage,
-        hasMore: items.length >= 20,
-      ),
-      err: (e) => state = state.copyWith(isLoadingMore: false, error: e),
-    );
-  }
+  Future<void> loadMore() async {} // No-op: all loaded at once
 
   Future<void> refresh() => loadFirst();
 }
@@ -183,35 +175,22 @@ class CafesNotifier extends Notifier<PaginatedState<CafeModel>> {
 
   Future<void> loadFirst() async {
     state = state.copyWith(isLoading: true, error: null);
-    final result = await ref.read(listingsServiceProvider).getCafes(page: 1);
-    result.when(
-      ok: (items) => state = state.copyWith(
+    try {
+      final cafes = await ref
+          .read(firestoreCafesServiceProvider)
+          .getCafes(limit: 100);
+      state = state.copyWith(
         isLoading: false,
-        items: items,
+        items: cafes,
         currentPage: 1,
-        hasMore: items.length >= 20,
-      ),
-      err: (e) => state = state.copyWith(isLoading: false, error: e),
-    );
+        hasMore: false,
+      );
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
   }
 
-  Future<void> loadMore() async {
-    if (state.isLoadingMore || !state.hasMore) return;
-    state = state.copyWith(isLoadingMore: true);
-    final nextPage = state.currentPage + 1;
-    final result = await ref
-        .read(listingsServiceProvider)
-        .getCafes(page: nextPage);
-    result.when(
-      ok: (items) => state = state.copyWith(
-        isLoadingMore: false,
-        items: [...state.items, ...items],
-        currentPage: nextPage,
-        hasMore: items.length >= 20,
-      ),
-      err: (e) => state = state.copyWith(isLoadingMore: false, error: e),
-    );
-  }
+  Future<void> loadMore() async {} // No-op: all loaded at once
 
   Future<void> refresh() => loadFirst();
 }
@@ -234,37 +213,22 @@ class HomestaysNotifier extends Notifier<PaginatedState<HomestayModel>> {
 
   Future<void> loadFirst() async {
     state = state.copyWith(isLoading: true, error: null);
-    final result = await ref
-        .read(listingsServiceProvider)
-        .getHomestays(page: 1);
-    result.when(
-      ok: (items) => state = state.copyWith(
+    try {
+      final homestays = await ref
+          .read(firestoreHomestaysServiceProvider)
+          .getHomestays(limit: 100);
+      state = state.copyWith(
         isLoading: false,
-        items: items,
+        items: homestays,
         currentPage: 1,
-        hasMore: items.length >= 20,
-      ),
-      err: (e) => state = state.copyWith(isLoading: false, error: e),
-    );
+        hasMore: false,
+      );
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
   }
 
-  Future<void> loadMore() async {
-    if (state.isLoadingMore || !state.hasMore) return;
-    state = state.copyWith(isLoadingMore: true);
-    final nextPage = state.currentPage + 1;
-    final result = await ref
-        .read(listingsServiceProvider)
-        .getHomestays(page: nextPage);
-    result.when(
-      ok: (items) => state = state.copyWith(
-        isLoadingMore: false,
-        items: [...state.items, ...items],
-        currentPage: nextPage,
-        hasMore: items.length >= 20,
-      ),
-      err: (e) => state = state.copyWith(isLoadingMore: false, error: e),
-    );
-  }
+  Future<void> loadMore() async {} // No-op: all loaded at once
 
   Future<void> refresh() => loadFirst();
 }
@@ -288,37 +252,22 @@ class AdventureSpotsNotifier
 
   Future<void> loadFirst() async {
     state = state.copyWith(isLoading: true, error: null);
-    final result = await ref
-        .read(listingsServiceProvider)
-        .getAdventureSpots(page: 1);
-    result.when(
-      ok: (items) => state = state.copyWith(
+    try {
+      final spots = await ref
+          .read(firestoreAdventureServiceProvider)
+          .getAdventureSpots(limit: 100);
+      state = state.copyWith(
         isLoading: false,
-        items: items,
+        items: spots,
         currentPage: 1,
-        hasMore: items.length >= 20,
-      ),
-      err: (e) => state = state.copyWith(isLoading: false, error: e),
-    );
+        hasMore: false,
+      );
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
   }
 
-  Future<void> loadMore() async {
-    if (state.isLoadingMore || !state.hasMore) return;
-    state = state.copyWith(isLoadingMore: true);
-    final nextPage = state.currentPage + 1;
-    final result = await ref
-        .read(listingsServiceProvider)
-        .getAdventureSpots(page: nextPage);
-    result.when(
-      ok: (items) => state = state.copyWith(
-        isLoadingMore: false,
-        items: [...state.items, ...items],
-        currentPage: nextPage,
-        hasMore: items.length >= 20,
-      ),
-      err: (e) => state = state.copyWith(isLoadingMore: false, error: e),
-    );
-  }
+  Future<void> loadMore() async {} // No-op: all loaded at once
 
   Future<void> refresh() => loadFirst();
 }
@@ -343,37 +292,22 @@ class ShoppingAreasNotifier
 
   Future<void> loadFirst() async {
     state = state.copyWith(isLoading: true, error: null);
-    final result = await ref
-        .read(listingsServiceProvider)
-        .getShoppingAreas(page: 1);
-    result.when(
-      ok: (items) => state = state.copyWith(
+    try {
+      final areas = await ref
+          .read(firestoreShoppingServiceProvider)
+          .getShoppingAreas(limit: 100);
+      state = state.copyWith(
         isLoading: false,
-        items: items,
+        items: areas,
         currentPage: 1,
-        hasMore: items.length >= 20,
-      ),
-      err: (e) => state = state.copyWith(isLoading: false, error: e),
-    );
+        hasMore: false,
+      );
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
   }
 
-  Future<void> loadMore() async {
-    if (state.isLoadingMore || !state.hasMore) return;
-    state = state.copyWith(isLoadingMore: true);
-    final nextPage = state.currentPage + 1;
-    final result = await ref
-        .read(listingsServiceProvider)
-        .getShoppingAreas(page: nextPage);
-    result.when(
-      ok: (items) => state = state.copyWith(
-        isLoadingMore: false,
-        items: [...state.items, ...items],
-        currentPage: nextPage,
-        hasMore: items.length >= 20,
-      ),
-      err: (e) => state = state.copyWith(isLoadingMore: false, error: e),
-    );
-  }
+  Future<void> loadMore() async {} // No-op: all loaded at once
 
   Future<void> refresh() => loadFirst();
 }
@@ -396,37 +330,22 @@ class EventsNotifier extends Notifier<PaginatedState<EventModel>> {
 
   Future<void> loadFirst() async {
     state = state.copyWith(isLoading: true, error: null);
-    final result = await ref
-        .read(listingsServiceProvider)
-        .getEvents(page: 1, upcomingOnly: true);
-    result.when(
-      ok: (items) => state = state.copyWith(
+    try {
+      final events = await ref
+          .read(firestoreEventsServiceProvider)
+          .getEvents(limit: 100, upcomingOnly: true);
+      state = state.copyWith(
         isLoading: false,
-        items: items,
+        items: events,
         currentPage: 1,
-        hasMore: items.length >= 20,
-      ),
-      err: (e) => state = state.copyWith(isLoading: false, error: e),
-    );
+        hasMore: false,
+      );
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
   }
 
-  Future<void> loadMore() async {
-    if (state.isLoadingMore || !state.hasMore) return;
-    state = state.copyWith(isLoadingMore: true);
-    final nextPage = state.currentPage + 1;
-    final result = await ref
-        .read(listingsServiceProvider)
-        .getEvents(page: nextPage, upcomingOnly: true);
-    result.when(
-      ok: (items) => state = state.copyWith(
-        isLoadingMore: false,
-        items: [...state.items, ...items],
-        currentPage: nextPage,
-        hasMore: items.length >= 20,
-      ),
-      err: (e) => state = state.copyWith(isLoadingMore: false, error: e),
-    );
-  }
+  Future<void> loadMore() async {} // No-op: all loaded at once
 
   Future<void> refresh() => loadFirst();
 }
