@@ -22,6 +22,9 @@ import '../../screens/listings/listing_detail_screen.dart';
 import '../../screens/listings/cafe_detail_screen.dart';
 import '../../screens/listings/hotel_detail_screen.dart';
 import '../../screens/listings/restaurant_detail_screen.dart';
+import '../../screens/community/bucket_list_detail_screen.dart';
+import '../../screens/community/create_bucket_list_screen.dart';
+import '../../screens/community/add_bucket_item_screen.dart';
 
 // Named route paths
 abstract class AppRoutes {
@@ -42,9 +45,17 @@ abstract class AppRoutes {
   static const listings = '/listings';
   static const listingDetail = '/listings/:type/:id';
 
+  static const createBucketList = '/community/bucket-lists/new';
+  static const bucketListDetail = '/community/bucket-lists/:id';
+  static const addBucketItem = '/community/bucket-lists/:listId/add-item';
+
   static String spotDetailPath(String id) => '/spots/$id';
   static String listingDetailPath(String type, String id) =>
       '/listings/$type/$id';
+  static String bucketListDetailPath(String id) =>
+      '/community/bucket-lists/$id';
+  static String addBucketItemPath(String listId) =>
+      '/community/bucket-lists/$listId/add-item';
 }
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -168,6 +179,25 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.createPost,
         pageBuilder: (_, state) =>
             _bottomSheet(state, const CreatePostScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.createBucketList,
+        pageBuilder: (_, state) =>
+            _bottomSheet(state, const CreateBucketListScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.bucketListDetail,
+        pageBuilder: (_, state) => _slide(
+          state,
+          BucketListDetailScreen(listId: state.pathParameters['id']!),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.addBucketItem,
+        pageBuilder: (_, state) => _slide(
+          state,
+          AddBucketItemScreen(listId: state.pathParameters['listId']!),
+        ),
       ),
       GoRoute(
         path: AppRoutes.contribute,

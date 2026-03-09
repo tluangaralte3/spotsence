@@ -1,0 +1,106 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helper functions ────────────────────────────────────────────────────
+
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    function isUser(uid) {
+      return isAuth() && request.auth.uid == uid;
+    }
+
+    // ── Users ───────────────────────────────────────────────────────────────
+
+    match /users/{userId} {
+      allow read: if isAuth();
+      allow create: if isUser(userId);
+      allow update: if isUser(userId);
+      allow delete: if isUser(userId);
+    }
+
+    // ── Listings (read-only for users, write via admin/functions) ───────────
+
+    match /spots/{docId} {
+      allow read: if true;
+      allow write: if isAuth();
+    }
+
+    match /restaurants/{docId} {
+      allow read: if true;
+      allow write: if isAuth();
+    }
+
+    match /cafes/{docId} {
+      allow read: if true;
+      allow write: if isAuth();
+    }
+
+    match /accommodations/{docId} {
+      allow read: if true;
+      allow write: if isAuth();
+    }
+
+    match /homestays/{docId} {
+      allow read: if true;
+      allow write: if isAuth();
+    }
+
+    match /adventureSpots/{docId} {
+      allow read: if true;
+      allow write: if isAuth();
+    }
+
+    match /shoppingAreas/{docId} {
+      allow read: if true;
+      allow write: if isAuth();
+    }
+
+    match /events/{docId} {
+      allow read: if true;
+      allow write: if isAuth();
+    }
+
+    // ── Reviews ─────────────────────────────────────────────────────────────
+
+    match /reviews/{docId} {
+      allow read: if true;
+      allow create: if isAuth();
+      allow update, delete: if isAuth() && request.auth.uid == resource.data.userId;
+    }
+
+    // ── Bookmarks ───────────────────────────────────────────────────────────
+
+    match /bookmarks/{docId} {
+      allow read, write: if isAuth() && request.auth.uid == resource.data.userId;
+      allow create: if isAuth();
+    }
+
+    // ── Bucket Lists ─────────────────────────────────────────────────────────
+
+    match /bucketLists/{listId} {
+      // Public lists readable by all; private only by host + members.
+      // resource == null guard prevents errors when the doc doesn't exist yet.
+      allow read: if resource == null
+                  || resource.data.visibility == 'public'
+                  || (isAuth() && (
+                       request.auth.uid == resource.data.hostId
+                       || request.auth.uid in resource.data.memberIds
+                     ));
+
+      // Any authenticated user can create a bucket list
+      allow create: if isAuth();
+
+      // Host can update anything; approved members can update (check-off items)
+      allow update: if isAuth()
+                    && (request.auth.uid == resource.data.hostId
+                        || request.auth.uid in resource.data.memberIds);
+
+      // Only host can delete
+      allow delete: if isAuth() && request.auth.uid == resource.data.hostId;
+    }
+  }
+}

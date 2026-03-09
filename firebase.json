@@ -1,1 +1,33 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"spotmizoram","appId":"1:195136676856:android:ef960a14247d52f663ac0d","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"spotmizoram","configurations":{"ios":"1:195136676856:ios:e1f64f535571b9f663ac0d"}}},"ios":{"default":{"projectId":"spotmizoram","appId":"1:195136676856:ios:e1f64f535571b9f663ac0d","uploadDebugSymbols":false,"fileOutput":"ios/Runner/GoogleService-Info.plist"}}}}}
+{
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "spotmizoram",
+          "appId": "1:195136676856:android:ef960a14247d52f663ac0d",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "spotmizoram",
+          "configurations": {
+            "ios": "1:195136676856:ios:e1f64f535571b9f663ac0d"
+          }
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "spotmizoram",
+          "appId": "1:195136676856:ios:e1f64f535571b9f663ac0d",
+          "uploadDebugSymbols": false,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      }
+    }
+  }
+}
