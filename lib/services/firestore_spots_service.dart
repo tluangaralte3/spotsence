@@ -84,4 +84,69 @@ class FirestoreSpotsService {
       return null;
     }
   }
+
+  // ── Reviews subcollection ─────────────────────────────────────────────────
+
+  /// Live stream of reviews for a spot.
+  Stream<List<Map<String, dynamic>>> watchReviews(
+    String spotId, {
+    int limit = 30,
+  }) {
+    return _db
+        .collection(_collection)
+        .doc(spotId)
+        .collection('reviews')
+        .orderBy('timestamp', descending: true)
+        .limit(limit)
+        .snapshots()
+        .map(
+          (snap) => snap.docs.map((d) => {'id': d.id, ...d.data()}).toList(),
+        );
+  }
+
+  /// Write a review to `spots/{id}/reviews` and update the running average.
+  Future<void> submitReview({
+    required String spotId,
+    required String userId,
+    required String userName,
+    required String userAvatar,
+    required double rating,
+    required String comment,
+  }) async {
+    await _db
+        .collection(_collection)
+        .doc(spotId)
+        .collection('reviews')
+        .doc()
+        .set({
+          'userId': userId,
+          'userName': userName,
+          'userAvatar': userAvatar,
+          'rating': rating,
+          'comment': comment,
+          'timestamp': FieldValue.serverTimestamp(),
+        });
+
+    // Best-effort: update running average on the parent doc.
+    try {
+      await _db.runTransaction((tx) async {
+        final docRef = _db.collection(_collection).doc(spotId);
+        final snap = await tx.get(docRef);
+        if (!snap.exists) return;
+        final data = snap.data() ?? {};
+        final oldCount = (data['ratingsCount'] as num?)?.toInt() ?? 0;
+        final oldRating =
+            (data['averageRating'] ?? data['rating'] as num?)?.toDouble() ??
+            0.0;
+        final newCount = oldCount + 1;
+        final newRating = ((oldRating * oldCount) + rating) / newCount;
+        tx.update(docRef, {
+          'averageRating': double.parse(newRating.toStringAsFixed(1)),
+          'ratingsCount': newCount,
+        });
+      });
+    } catch (_) {
+      // Non-critical — ignore if transaction fails.
+    }
+  }
 }

@@ -1,0 +1,42 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ── Helper ──────────────────────────────────────────────────────────────
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    // ── Community photos uploaded from place detail sheet ────────────────────
+    // Path: community_photos/{collection}/{placeId}/{userId}_{timestamp}.{ext}
+    match /community_photos/{collection}/{placeId}/{fileName} {
+      allow read: if true;
+      allow create: if isAuth()
+                    && request.resource.size < 10 * 1024 * 1024   // max 10 MB
+                    && request.resource.contentType.matches('image/.*');
+      allow delete: if isAuth()
+                    && fileName.matches(request.auth.uid + '_.*');
+    }
+
+    // ── Profile avatars ──────────────────────────────────────────────────────
+    match /avatars/{userId}/{fileName} {
+      allow read: if true;
+      allow write: if isAuth() && request.auth.uid == userId
+                   && request.resource.size < 5 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+    }
+
+    // ── Spot / listing hero images (admin upload only) ────────────────────────
+    match /spots/{fileName} {
+      allow read: if true;
+      allow write: if isAuth();
+    }
+
+    match /listings/{collection}/{fileName} {
+      allow read: if true;
+      allow write: if isAuth();
+    }
+
+  }
+}

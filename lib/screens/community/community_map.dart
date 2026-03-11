@@ -9,6 +9,7 @@ import '../../models/spot_model.dart';
 import '../../services/firestore_cafes_service.dart';
 import '../../services/firestore_restaurants_service.dart';
 import '../../services/firestore_spots_service.dart';
+import 'place_detail_sheet.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Data models for map pins
@@ -132,8 +133,6 @@ class CommunityMap extends ConsumerStatefulWidget {
 class _CommunityMapState extends ConsumerState<CommunityMap> {
   final _mapController = MapController();
   _MapCat _selectedCategory = _kMapCategories.first;
-  MapPlace? _selectedPlace;
-  SpotModel? _selectedSpot;
   String _searchQuery = '';
   final _searchCtrl = TextEditingController();
 
@@ -181,11 +180,8 @@ class _CommunityMapState extends ConsumerState<CommunityMap> {
             height: 76,
             child: _CirclePin(
               place: place,
-              isSelected: _selectedPlace?.id == place.id,
-              onTap: () => setState(() {
-                _selectedPlace = _selectedPlace?.id == place.id ? null : place;
-                _selectedSpot = null;
-              }),
+              isSelected: false,
+              onTap: () => showPlaceDetailSheet(context, place),
             ),
           ),
         )
@@ -202,11 +198,8 @@ class _CommunityMapState extends ConsumerState<CommunityMap> {
             height: 56,
             child: _SpotPin(
               spot: spot,
-              isSelected: _selectedSpot?.id == spot.id,
-              onTap: () => setState(() {
-                _selectedSpot = _selectedSpot?.id == spot.id ? null : spot;
-                _selectedPlace = null;
-              }),
+              isSelected: false,
+              onTap: () => showSpotDetailSheet(context, spot),
             ),
           ),
         )
@@ -239,10 +232,6 @@ class _CommunityMapState extends ConsumerState<CommunityMap> {
                   initialZoom: 13.5,
                   minZoom: 5,
                   maxZoom: 18,
-                  onTap: (_, __) => setState(() {
-                    _selectedPlace = null;
-                    _selectedSpot = null;
-                  }),
                   interactionOptions: const InteractionOptions(
                     flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
                     scrollWheelVelocity: 0.005,
@@ -339,29 +328,7 @@ class _CommunityMapState extends ConsumerState<CommunityMap> {
             child: _ZoomControls(mapController: _mapController),
           ),
 
-          // ── Bottom place card (restaurants/cafes) ─────────────────────────
-          if (_selectedPlace != null)
-            Positioned(
-              left: 16,
-              right: 16,
-              bottom: MediaQuery.of(context).padding.bottom + 16,
-              child: _PlaceCard(
-                place: _selectedPlace!,
-                onClose: () => setState(() => _selectedPlace = null),
-              ),
-            ),
-
-          // ── Bottom spot card (tourist spots) ──────────────────────────────
-          if (_selectedSpot != null)
-            Positioned(
-              left: 16,
-              right: 16,
-              bottom: MediaQuery.of(context).padding.bottom + 16,
-              child: _SpotCard(
-                spot: _selectedSpot!,
-                onClose: () => setState(() => _selectedSpot = null),
-              ),
-            ),
+          // Pin taps now open place_detail_sheet.dart via showPlaceDetailSheet / showSpotDetailSheet
         ],
       ),
     );
@@ -520,158 +487,6 @@ class _SpotPinState extends State<_SpotPin>
         return '📍';
     }
   }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Spot detail card
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _SpotCard extends StatelessWidget {
-  final SpotModel spot;
-  final VoidCallback onClose;
-
-  const _SpotCard({required this.spot, required this.onClose});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.5),
-            blurRadius: 20,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // Image
-          ClipRRect(
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(20),
-              bottomLeft: Radius.circular(20),
-            ),
-            child: spot.heroImage.isNotEmpty
-                ? CachedNetworkImage(
-                    imageUrl: spot.heroImage,
-                    width: 80,
-                    height: 80,
-                    fit: BoxFit.cover,
-                    errorWidget: (_, __, ___) => _spotImgFallback(),
-                  )
-                : _spotImgFallback(),
-          ),
-          // Info
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    spot.name,
-                    style: const TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 3),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.star_rounded,
-                        size: 13,
-                        color: AppColors.star,
-                      ),
-                      const SizedBox(width: 3),
-                      Text(
-                        spot.averageRating.toStringAsFixed(1),
-                        style: const TextStyle(
-                          color: AppColors.star,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 7,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          spot.category,
-                          style: const TextStyle(
-                            color: AppColors.primary,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (spot.locationAddress.isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.location_on_outlined,
-                          size: 11,
-                          color: AppColors.textMuted,
-                        ),
-                        const SizedBox(width: 3),
-                        Expanded(
-                          child: Text(
-                            spot.locationAddress,
-                            style: const TextStyle(
-                              color: AppColors.textMuted,
-                              fontSize: 11,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ),
-          // Close
-          GestureDetector(
-            onTap: onClose,
-            child: const Padding(
-              padding: EdgeInsets.all(12),
-              child: Icon(
-                Icons.close,
-                color: AppColors.textSecondary,
-                size: 18,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _spotImgFallback() => Container(
-    width: 80,
-    height: 80,
-    color: AppColors.surfaceElevated,
-    child: const Icon(Icons.terrain, color: AppColors.textMuted),
-  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -934,164 +749,6 @@ class _SearchBar extends StatelessWidget {
                 size: 18,
               ),
             ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Place Detail Card (bottom sheet-style)
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _PlaceCard extends StatelessWidget {
-  final MapPlace place;
-  final VoidCallback onClose;
-
-  const _PlaceCard({required this.place, required this.onClose});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.5),
-            blurRadius: 20,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(20),
-              bottomLeft: Radius.circular(20),
-            ),
-            child: place.imageUrl.isNotEmpty
-                ? CachedNetworkImage(
-                    imageUrl: place.imageUrl,
-                    width: 80,
-                    height: 80,
-                    fit: BoxFit.cover,
-                    errorWidget: (_, __, ___) => Container(
-                      width: 80,
-                      height: 80,
-                      color: AppColors.surfaceElevated,
-                      child: const Icon(
-                        Icons.restaurant,
-                        color: AppColors.textMuted,
-                      ),
-                    ),
-                  )
-                : Container(
-                    width: 80,
-                    height: 80,
-                    color: AppColors.surfaceElevated,
-                    child: const Icon(
-                      Icons.restaurant,
-                      color: AppColors.textMuted,
-                    ),
-                  ),
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    place.name,
-                    style: const TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 3),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.star_rounded,
-                        size: 13,
-                        color: AppColors.star,
-                      ),
-                      const SizedBox(width: 3),
-                      Text(
-                        place.rating.toStringAsFixed(1),
-                        style: const TextStyle(
-                          color: AppColors.star,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 7,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          place.type,
-                          style: const TextStyle(
-                            color: AppColors.primary,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (place.location.isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.location_on_outlined,
-                          size: 11,
-                          color: AppColors.textMuted,
-                        ),
-                        const SizedBox(width: 3),
-                        Expanded(
-                          child: Text(
-                            place.location,
-                            style: const TextStyle(
-                              color: AppColors.textMuted,
-                              fontSize: 11,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ),
-          GestureDetector(
-            onTap: onClose,
-            child: const Padding(
-              padding: EdgeInsets.all(12),
-              child: Icon(
-                Icons.close,
-                color: AppColors.textSecondary,
-                size: 18,
-              ),
-            ),
-          ),
         ],
       ),
     );

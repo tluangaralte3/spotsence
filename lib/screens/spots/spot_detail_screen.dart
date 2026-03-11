@@ -22,7 +22,7 @@ class SpotDetailScreen extends ConsumerWidget {
           child: CircularProgressIndicator(color: AppColors.primary),
         ),
       ),
-      error: (_, __) => Scaffold(
+      error: (e, _) => Scaffold(
         body: const EmptyState(emoji: '😕', title: 'Could not load spot'),
         appBar: AppBar(),
       ),
@@ -134,7 +134,7 @@ class _SpotDetailBodyState extends ConsumerState<_SpotDetailBody> {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.12),
+                      color: AppColors.primary.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -302,17 +302,6 @@ class _SpotDetailBodyState extends ConsumerState<_SpotDetailBody> {
           ),
         ],
       ),
-      // Write review FAB
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showReviewSheet(context, ref, spot.id),
-        backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.bg,
-        icon: const Icon(Icons.star_outline),
-        label: const Text(
-          'Write Review',
-          style: TextStyle(fontWeight: FontWeight.w700),
-        ),
-      ),
     );
   }
 
@@ -335,120 +324,44 @@ class _SpotDetailBodyState extends ConsumerState<_SpotDetailBody> {
         });
       }
     } catch (_) {}
-    if (mounted)
+    if (mounted) {
       setState(() {
         _bookmarked = !_bookmarked;
         _bookmarkLoading = false;
       });
-  }
-
-  void _showReviewSheet(BuildContext context, WidgetRef ref, String spotId) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: AppColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => _ReviewSheet(spotId: spotId),
-    );
+    }
   }
 }
 
-class _ReviewSection extends ConsumerWidget {
+// ─────────────────────────────────────────────────────────────────────────────
+// Reviews Section
+// ─────────────────────────────────────────────────────────────────────────────
+
+final _spotReviewsProvider = StreamProvider.autoDispose
+    .family<List<Map<String, dynamic>>, String>(
+      (ref, spotId) => FirebaseFirestore.instance
+          .collection('spots')
+          .doc(spotId)
+          .collection('reviews')
+          .orderBy('timestamp', descending: true)
+          .limit(30)
+          .snapshots()
+          .map((s) => s.docs.map((d) => {'id': d.id, ...d.data()}).toList()),
+    );
+
+class _ReviewSection extends ConsumerStatefulWidget {
   final String spotId;
   const _ReviewSection({required this.spotId});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // Read reviews live from Firestore 'reviews' subcollection
-    final reviewsAsync = ref.watch(
-      StreamProvider.autoDispose.family<List<Map<String, dynamic>>, String>(
-        (r, id) => FirebaseFirestore.instance
-            .collection('spots')
-            .doc(id)
-            .collection('reviews')
-            .orderBy('timestamp', descending: true)
-            .limit(20)
-            .snapshots()
-            .map((s) => s.docs.map((d) => d.data()).toList()),
-      )(spotId),
-    );
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Reviews', style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: 12),
-        reviewsAsync.when(
-          loading: () => const Center(
-            child: CircularProgressIndicator(color: AppColors.primary),
-          ),
-          error: (_, __) => const Text('Could not load reviews'),
-          data: (reviews) => reviews.isEmpty
-              ? const Text(
-                  'No reviews yet. Be the first!',
-                  style: TextStyle(color: AppColors.textSecondary),
-                )
-              : Column(
-                  children: reviews.take(10).map((r) {
-                    final userName = r['userName'] as String? ?? 'Anonymous';
-                    final rating = (r['rating'] as num?)?.toDouble() ?? 0;
-                    final comment = r['comment'] as String? ?? '';
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: AppColors.surface,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.border),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Text(
-                                userName,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                              const Spacer(),
-                              StarRating(rating: rating),
-                            ],
-                          ),
-                          if (comment.isNotEmpty) ...[
-                            const SizedBox(height: 6),
-                            Text(
-                              comment,
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
-                          ],
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                ),
-        ),
-      ],
-    );
-  }
+  ConsumerState<_ReviewSection> createState() => _ReviewSectionState();
 }
 
-class _ReviewSheet extends ConsumerStatefulWidget {
-  final String spotId;
-  const _ReviewSheet({required this.spotId});
-
-  @override
-  ConsumerState<_ReviewSheet> createState() => _ReviewSheetState();
-}
-
-class _ReviewSheetState extends ConsumerState<_ReviewSheet> {
-  double _rating = 0;
+class _ReviewSectionState extends ConsumerState<_ReviewSection> {
+  bool _showForm = false;
+  double _myRating = 5;
   final _commentCtrl = TextEditingController();
-  bool _loading = false;
+  bool _submitting = false;
 
   @override
   void dispose() {
@@ -457,119 +370,411 @@ class _ReviewSheetState extends ConsumerState<_ReviewSheet> {
   }
 
   Future<void> _submit() async {
-    if (_rating == 0) return;
-    setState(() => _loading = true);
+    final user = ref.read(currentUserProvider);
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Sign in to leave a review')),
+      );
+      return;
+    }
+    final comment = _commentCtrl.text.trim();
+    if (comment.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please write a comment')));
+      return;
+    }
+    setState(() => _submitting = true);
     try {
-      final user = ref.read(currentUserProvider);
       await FirebaseFirestore.instance
           .collection('spots')
           .doc(widget.spotId)
           .collection('reviews')
           .add({
-            'userId': user?.id ?? '',
-            'userName': user?.displayName ?? 'Anonymous',
-            'rating': _rating,
-            'comment': _commentCtrl.text.trim(),
+            'userId': user.id,
+            'userName': user.displayName,
+            'userAvatar': user.photoURL ?? '',
+            'rating': _myRating,
+            'comment': comment,
             'timestamp': FieldValue.serverTimestamp(),
           });
+      _commentCtrl.clear();
+      setState(() {
+        _showForm = false;
+        _submitting = false;
+        _myRating = 5;
+      });
       if (mounted) {
-        setState(() => _loading = false);
-        Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('⭐ Review submitted!'),
-            backgroundColor: AppColors.success,
+            content: Text('Review submitted! ✨'),
+            backgroundColor: AppColors.primary,
           ),
         );
       }
     } catch (e) {
+      setState(() => _submitting = false);
       if (mounted) {
-        setState(() => _loading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to submit: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        20,
-        20,
-        20,
-        MediaQuery.of(context).viewInsets.bottom + 20,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.border,
-                borderRadius: BorderRadius.circular(2),
+    final reviewsAsync = ref.watch(_spotReviewsProvider(widget.spotId));
+    final user = ref.watch(currentUserProvider);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Header row
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Reviews',
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
               ),
             ),
-          ),
-          const SizedBox(height: 20),
-          Text('Write a Review', style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 16),
-
-          // Star selector
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(5, (i) {
-              final starVal = (i + 1).toDouble();
-              return GestureDetector(
-                onTap: () => setState(() => _rating = starVal),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: Icon(
-                    _rating >= starVal
-                        ? Icons.star_rounded
-                        : Icons.star_outline_rounded,
-                    color: AppColors.star,
-                    size: 36,
+            if (user != null)
+              GestureDetector(
+                onTap: () => setState(() => _showForm = !_showForm),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 7,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _showForm
+                        ? AppColors.primary.withValues(alpha: 0.12)
+                        : AppColors.surfaceElevated,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: _showForm ? AppColors.primary : AppColors.border,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        _showForm
+                            ? Icons.close_rounded
+                            : Icons.rate_review_rounded,
+                        size: 14,
+                        color: _showForm
+                            ? AppColors.primary
+                            : AppColors.textSecondary,
+                      ),
+                      const SizedBox(width: 5),
+                      Text(
+                        _showForm ? 'Cancel' : 'Write Review',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: _showForm
+                              ? AppColors.primary
+                              : AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              );
-            }),
-          ),
-          const SizedBox(height: 16),
+              ),
+          ],
+        ),
 
-          TextField(
-            controller: _commentCtrl,
-            maxLines: 3,
-            decoration: const InputDecoration(
-              hintText: 'Share your experience...',
+        // Write-review form
+        if (_showForm) ...[
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceElevated,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Your Rating',
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: List.generate(5, (i) {
+                    final starVal = (i + 1).toDouble();
+                    return GestureDetector(
+                      onTap: () => setState(() => _myRating = starVal),
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: Icon(
+                          _myRating >= starVal
+                              ? Icons.star_rounded
+                              : Icons.star_outline_rounded,
+                          color: AppColors.star,
+                          size: 32,
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: _commentCtrl,
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 14,
+                  ),
+                  cursorColor: AppColors.primary,
+                  maxLines: 3,
+                  maxLength: 300,
+                  decoration: InputDecoration(
+                    hintText: 'Share your experience…',
+                    hintStyle: const TextStyle(
+                      color: AppColors.textMuted,
+                      fontSize: 14,
+                    ),
+                    filled: true,
+                    fillColor: AppColors.surface,
+                    counterStyle: const TextStyle(color: AppColors.textMuted),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: AppColors.border),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: AppColors.border),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: AppColors.primary),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: _submitting ? null : _submit,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    icon: _submitting
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.black,
+                            ),
+                          )
+                        : const Icon(Icons.send_rounded, size: 18),
+                    label: Text(
+                      _submitting ? 'Submitting…' : 'Submit Review',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: (_loading || _rating == 0) ? null : _submit,
-            child: _loading
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: AppColors.bg,
-                    ),
-                  )
-                : const Text('Submit Review (+10 XP)'),
+        ],
+
+        const SizedBox(height: 16),
+
+        // Reviews list
+        reviewsAsync.when(
+          loading: () => const Center(
+            child: Padding(
+              padding: EdgeInsets.all(16),
+              child: CircularProgressIndicator(color: AppColors.primary),
+            ),
           ),
+          error: (e, _) => const Padding(
+            padding: EdgeInsets.all(8),
+            child: Text(
+              'Could not load reviews',
+              style: TextStyle(color: AppColors.textMuted),
+            ),
+          ),
+          data: (reviews) => reviews.isEmpty
+              ? Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceElevated,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: const Center(
+                    child: Text(
+                      'No reviews yet — be the first! ✨',
+                      style: TextStyle(color: AppColors.textMuted),
+                    ),
+                  ),
+                )
+              : ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: reviews.length,
+                  separatorBuilder: (context, _) => const SizedBox(height: 10),
+                  itemBuilder: (context, i) => _ReviewCard(review: reviews[i]),
+                ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Review Card
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _ReviewCard extends StatelessWidget {
+  final Map<String, dynamic> review;
+  const _ReviewCard({required this.review});
+
+  @override
+  Widget build(BuildContext context) {
+    final rating = (review['rating'] as num?)?.toDouble() ?? 0.0;
+    final comment = review['comment']?.toString() ?? '';
+    final userName = review['userName']?.toString() ?? 'Anonymous';
+    final userAvatar = review['userAvatar']?.toString() ?? '';
+    final ts = review['timestamp'];
+    final DateTime? date = ts != null
+        ? (ts as dynamic).toDate() as DateTime?
+        : null;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceElevated,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 18,
+                backgroundColor: AppColors.primary.withValues(alpha: 0.12),
+                backgroundImage: userAvatar.isNotEmpty
+                    ? NetworkImage(userAvatar)
+                    : null,
+                child: userAvatar.isEmpty
+                    ? Text(
+                        userName.isNotEmpty ? userName[0].toUpperCase() : '?',
+                        style: const TextStyle(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                        ),
+                      )
+                    : null,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      userName,
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
+                    ),
+                    if (date != null)
+                      Text(
+                        _formatDate(date),
+                        style: const TextStyle(
+                          color: AppColors.textMuted,
+                          fontSize: 11,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              // Star badge
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.star.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.star_rounded,
+                      size: 13,
+                      color: AppColors.star,
+                    ),
+                    const SizedBox(width: 3),
+                    Text(
+                      rating.toStringAsFixed(1),
+                      style: const TextStyle(
+                        color: AppColors.star,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          if (comment.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Text(
+              comment,
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 13,
+                height: 1.5,
+              ),
+            ),
+          ],
         ],
       ),
     );
   }
+
+  String _formatDate(DateTime d) {
+    final diff = DateTime.now().difference(d);
+    if (diff.inDays == 0) return 'Today';
+    if (diff.inDays == 1) return 'Yesterday';
+    if (diff.inDays < 7) return '${diff.inDays}d ago';
+    if (diff.inDays < 30) return '${(diff.inDays / 7).floor()}w ago';
+    if (diff.inDays < 365) return '${(diff.inDays / 30).floor()}mo ago';
+    return '${(diff.inDays / 365).floor()}y ago';
+  }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Info Pill
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _InfoPill extends StatelessWidget {
   final IconData icon;

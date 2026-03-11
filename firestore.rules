@@ -27,36 +27,96 @@ service cloud.firestore {
     match /spots/{docId} {
       allow read: if true;
       allow write: if isAuth();
+
+      match /reviews/{reviewId} {
+        allow read: if true;
+        allow create: if isAuth();
+        allow update, delete: if isAuth() && request.auth.uid == resource.data.userId;
+      }
+
+      match /communityPhotos/{photoId} {
+        allow read: if true;
+        allow create: if isAuth();
+        allow delete: if isAuth() && request.auth.uid == resource.data.userId;
+      }
     }
 
     match /restaurants/{docId} {
       allow read: if true;
       allow write: if isAuth();
+
+      match /reviews/{reviewId} {
+        allow read: if true;
+        allow create: if isAuth();
+        allow update, delete: if isAuth() && request.auth.uid == resource.data.userId;
+      }
+
+      match /communityPhotos/{photoId} {
+        allow read: if true;
+        allow create: if isAuth();
+        allow delete: if isAuth() && request.auth.uid == resource.data.userId;
+      }
     }
 
     match /cafes/{docId} {
       allow read: if true;
       allow write: if isAuth();
+
+      match /reviews/{reviewId} {
+        allow read: if true;
+        allow create: if isAuth();
+        allow update, delete: if isAuth() && request.auth.uid == resource.data.userId;
+      }
+
+      match /communityPhotos/{photoId} {
+        allow read: if true;
+        allow create: if isAuth();
+        allow delete: if isAuth() && request.auth.uid == resource.data.userId;
+      }
     }
 
     match /accommodations/{docId} {
       allow read: if true;
       allow write: if isAuth();
+
+      match /reviews/{reviewId} {
+        allow read: if true;
+        allow create: if isAuth();
+        allow update, delete: if isAuth() && request.auth.uid == resource.data.userId;
+      }
     }
 
     match /homestays/{docId} {
       allow read: if true;
       allow write: if isAuth();
+
+      match /reviews/{reviewId} {
+        allow read: if true;
+        allow create: if isAuth();
+        allow update, delete: if isAuth() && request.auth.uid == resource.data.userId;
+      }
     }
 
     match /adventureSpots/{docId} {
       allow read: if true;
       allow write: if isAuth();
+
+      match /reviews/{reviewId} {
+        allow read: if true;
+        allow create: if isAuth();
+        allow update, delete: if isAuth() && request.auth.uid == resource.data.userId;
+      }
     }
 
     match /shoppingAreas/{docId} {
       allow read: if true;
       allow write: if isAuth();
+
+      match /reviews/{reviewId} {
+        allow read: if true;
+        allow create: if isAuth();
+        allow update, delete: if isAuth() && request.auth.uid == resource.data.userId;
+      }
     }
 
     match /events/{docId} {
