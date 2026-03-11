@@ -98,6 +98,23 @@ class _DetailBody extends ConsumerWidget {
                   onSelected: (v) => _onHostMenu(context, ref, v),
                   itemBuilder: (_) => [
                     const PopupMenuItem(
+                      value: 'edit',
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.edit_outlined,
+                            color: AppColors.textSecondary,
+                            size: 18,
+                          ),
+                          SizedBox(width: 10),
+                          Text(
+                            'Edit List',
+                            style: TextStyle(color: AppColors.textPrimary),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem(
                       value: 'share',
                       child: Row(
                         children: [
@@ -348,6 +365,10 @@ class _DetailBody extends ConsumerWidget {
   }
 
   void _onHostMenu(BuildContext context, WidgetRef ref, String action) {
+    if (action == 'edit') {
+      context.push(AppRoutes.editBucketListPath(list.id));
+      return;
+    }
     if (action == 'share') {
       Clipboard.setData(ClipboardData(text: list.joinCode));
       ScaffoldMessenger.of(context).showSnackBar(

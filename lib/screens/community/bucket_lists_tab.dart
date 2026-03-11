@@ -1,5 +1,5 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../controllers/auth_controller.dart';
@@ -115,8 +115,8 @@ class _MyListsView extends ConsumerWidget {
       child: ListView.separated(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
         itemCount: state.myLists.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 14),
-        itemBuilder: (_, i) => _BucketListCard(
+        separatorBuilder: (context, _) => const SizedBox(height: 14),
+        itemBuilder: (context, i) => _BucketListCard(
           list: state.myLists[i],
           currentUserId: userId!,
           onTap: () =>
@@ -179,8 +179,8 @@ class _DiscoverView extends ConsumerWidget {
     return ListView.separated(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
       itemCount: state.publicLists.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 14),
-      itemBuilder: (_, i) => _BucketListCard(
+      separatorBuilder: (context, _) => const SizedBox(height: 14),
+      itemBuilder: (context, i) => _BucketListCard(
         list: state.publicLists[i],
         currentUserId: user?.id ?? '',
         onTap: () => context.push(
@@ -799,27 +799,131 @@ class _BannerImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final w = width ?? double.infinity;
+
     if (url.isEmpty) {
-      return Container(
-        height: height,
-        width: width,
-        color: AppColors.surfaceElevated,
-        child: const Center(
-          child: Icon(Icons.image_outlined, color: AppColors.textMuted),
-        ),
-      );
+      return _placeholder(w);
     }
-    return Image.network(
-      url,
+
+    return CachedNetworkImage(
+      imageUrl: url,
       height: height,
-      width: width ?? double.infinity,
+      width: w,
       fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => Container(
-        height: height,
-        width: width,
-        color: AppColors.surfaceElevated,
-        child: const Center(
-          child: Icon(Icons.broken_image, color: AppColors.textMuted),
+      placeholder: (ctx, _) => _shimmer(w),
+      errorWidget: (ctx, url2, _) => _placeholder(w),
+      imageBuilder: (ctx, imageProvider) => Stack(
+        fit: StackFit.passthrough,
+        children: [
+          // The image itself
+          Container(
+            height: height,
+            width: w,
+            decoration: BoxDecoration(
+              image: DecorationImage(image: imageProvider, fit: BoxFit.cover),
+            ),
+          ),
+          // Subtle bottom gradient so badges stay readable
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              height: height * 0.45,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                  colors: [Colors.black54, Colors.transparent],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _shimmer(double w) {
+    return _AnimatedShimmer(height: height, width: w);
+  }
+
+  Widget _placeholder(double w) {
+    return Container(
+      height: height,
+      width: w,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.surfaceElevated,
+            AppColors.border.withValues(alpha: 0.6),
+          ],
+        ),
+      ),
+      child: const Center(
+        child: Icon(
+          Icons.photo_camera_outlined,
+          color: AppColors.textMuted,
+          size: 28,
+        ),
+      ),
+    );
+  }
+}
+
+// Animated shimmer loading placeholder
+class _AnimatedShimmer extends StatefulWidget {
+  final double height;
+  final double width;
+  const _AnimatedShimmer({required this.height, required this.width});
+
+  @override
+  State<_AnimatedShimmer> createState() => _AnimatedShimmerState();
+}
+
+class _AnimatedShimmerState extends State<_AnimatedShimmer>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _anim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat();
+    _anim = Tween<double>(
+      begin: -1.5,
+      end: 1.5,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _anim,
+      builder: (context, _) => Container(
+        height: widget.height,
+        width: widget.width,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment(_anim.value - 1, 0),
+            end: Alignment(_anim.value + 1, 0),
+            colors: const [
+              AppColors.surfaceElevated,
+              AppColors.border,
+              AppColors.surfaceElevated,
+            ],
+          ),
         ),
       ),
     );

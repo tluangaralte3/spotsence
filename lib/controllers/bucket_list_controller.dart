@@ -273,6 +273,54 @@ class BucketListController extends Notifier<BucketListState> {
     }
   }
 
+  /// Update editable fields of a bucket list (host only).
+  Future<bool> updateList({
+    required String listId,
+    required String title,
+    required String description,
+    required String bannerUrl,
+    required BucketCategory category,
+    String? customCategory,
+    required BucketVisibility visibility,
+    required int maxMembers,
+    required int xpReward,
+    String? challengeTitle,
+  }) async {
+    try {
+      final fields = <String, dynamic>{
+        'title': title,
+        'description': description,
+        'bannerUrl': bannerUrl,
+        'category': category.name,
+        'customCategory': customCategory,
+        'visibility': visibility.name,
+        'maxMembers': maxMembers,
+        'xpReward': xpReward,
+        'challengeTitle': challengeTitle,
+        'updatedAt': DateTime.now().toIso8601String(),
+      };
+      await _svc.update(listId, fields);
+      _updateLocal(
+        listId,
+        (l) => l.copyWith(
+          title: title,
+          description: description,
+          bannerUrl: bannerUrl,
+          category: category,
+          customCategory: customCategory,
+          visibility: visibility,
+          maxMembers: maxMembers,
+          xpReward: xpReward,
+          challengeTitle: challengeTitle,
+        ),
+      );
+      return true;
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
+      return false;
+    }
+  }
+
   // ── Helpers ───────────────────────────────────────────────────────────────
 
   void _updateLocal(

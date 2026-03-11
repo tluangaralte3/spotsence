@@ -1,6 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
+/// Sentinel object used in copyWith to distinguish null from "not provided".
+const Object _sentinel = Object();
+
 // ─────────────────────────────────────────────────────────────────────────────
 // BucketCategory
 // ─────────────────────────────────────────────────────────────────────────────
@@ -314,6 +317,51 @@ class BucketListModel {
       category == BucketCategory.other && customCategory != null
       ? customCategory!
       : category.label;
+
+  // ── copyWith ───────────────────────────────────────────────────────────
+
+  BucketListModel copyWith({
+    String? title,
+    String? description,
+    String? bannerUrl,
+    BucketCategory? category,
+    Object? customCategory = _sentinel,
+    BucketVisibility? visibility,
+    int? maxMembers,
+    int? xpReward,
+    Object? challengeTitle = _sentinel,
+    List<BucketItem>? items,
+    List<BucketMember>? members,
+    List<BucketMember>? joinRequests,
+    DateTime? completedAt,
+  }) {
+    return BucketListModel(
+      id: id,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      bannerUrl: bannerUrl ?? this.bannerUrl,
+      category: category ?? this.category,
+      customCategory: customCategory == _sentinel
+          ? this.customCategory
+          : customCategory as String?,
+      visibility: visibility ?? this.visibility,
+      maxMembers: maxMembers ?? this.maxMembers,
+      joinCode: joinCode,
+      hostId: hostId,
+      hostName: hostName,
+      hostPhoto: hostPhoto,
+      items: items ?? this.items,
+      members: members ?? this.members,
+      joinRequests: joinRequests ?? this.joinRequests,
+      createdAt: createdAt,
+      completedAt: completedAt ?? this.completedAt,
+      xpReward: xpReward ?? this.xpReward,
+      badges: badges,
+      challengeTitle: challengeTitle == _sentinel
+          ? this.challengeTitle
+          : challengeTitle as String?,
+    );
+  }
 
   // ── Firestore ──────────────────────────────────────────────────────────
 

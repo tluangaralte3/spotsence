@@ -1,40 +1,108 @@
 import 'dart:io';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import '../../controllers/auth_controller.dart';
+
 import '../../controllers/bucket_list_controller.dart';
-import '../../core/router/app_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/bucket_list_models.dart';
 
-class CreateBucketListScreen extends ConsumerStatefulWidget {
-  const CreateBucketListScreen({super.key});
+// ─────────────────────────────────────────────────────────────────────────────
+// EditBucketListScreen
+// ─────────────────────────────────────────────────────────────────────────────
+
+class EditBucketListScreen extends ConsumerWidget {
+  final String listId;
+  const EditBucketListScreen({super.key, required this.listId});
 
   @override
-  ConsumerState<CreateBucketListScreen> createState() =>
-      _CreateBucketListScreenState();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(bucketListDetailProvider(listId));
+
+    return async.when(
+      loading: () => const Scaffold(
+        backgroundColor: AppColors.bg,
+        body: Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
+      ),
+      error: (e, _) => Scaffold(
+        backgroundColor: AppColors.bg,
+        appBar: AppBar(backgroundColor: AppColors.bg),
+        body: Center(
+          child: Text(
+            'Error: $e',
+            style: const TextStyle(color: AppColors.error),
+          ),
+        ),
+      ),
+      data: (list) => list == null
+          ? Scaffold(
+              backgroundColor: AppColors.bg,
+              appBar: AppBar(backgroundColor: AppColors.bg),
+              body: const Center(
+                child: Text(
+                  'List not found',
+                  style: TextStyle(color: AppColors.textSecondary),
+                ),
+              ),
+            )
+          : _EditBody(list: list),
+    );
+  }
 }
 
-class _CreateBucketListScreenState
-    extends ConsumerState<CreateBucketListScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _titleCtrl = TextEditingController();
-  final _descCtrl = TextEditingController();
-  final _customCatCtrl = TextEditingController();
-  final _challengeCtrl = TextEditingController();
+// ─────────────────────────────────────────────────────────────────────────────
+// _EditBody
+// ─────────────────────────────────────────────────────────────────────────────
 
-  File? _bannerFile; // local file picked from device
-  String? _bannerUrl; // uploaded URL (set after upload)
+class _EditBody extends ConsumerStatefulWidget {
+  final BucketListModel list;
+  const _EditBody({required this.list});
+
+  @override
+  ConsumerState<_EditBody> createState() => _EditBodyState();
+}
+
+class _EditBodyState extends ConsumerState<_EditBody> {
+  final _formKey = GlobalKey<FormState>();
+
+  // Text controllers pre-filled from the existing list
+  late final TextEditingController _titleCtrl;
+  late final TextEditingController _descCtrl;
+  late final TextEditingController _customCatCtrl;
+  late final TextEditingController _challengeCtrl;
+
+  // Banner state
+  File? _newBannerFile; // picked but not uploaded yet
+  late String _bannerUrl; // current URL (existing or freshly uploaded)
   bool _uploadingBanner = false;
 
-  BucketCategory _category = BucketCategory.spot;
-  BucketVisibility _visibility = BucketVisibility.public;
-  int _maxMembers = 6;
-  int _xpReward = 100;
+  // Editable fields
+  late BucketCategory _category;
+  late BucketVisibility _visibility;
+  late int _maxMembers;
+  late int _xpReward;
+
   bool _saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final l = widget.list;
+    _titleCtrl = TextEditingController(text: l.title);
+    _descCtrl = TextEditingController(text: l.description);
+    _customCatCtrl = TextEditingController(text: l.customCategory ?? '');
+    _challengeCtrl = TextEditingController(text: l.challengeTitle ?? '');
+    _bannerUrl = l.bannerUrl;
+    _category = l.category;
+    _visibility = l.visibility;
+    _maxMembers = l.maxMembers;
+    _xpReward = l.xpReward;
+  }
 
   @override
   void dispose() {
@@ -45,56 +113,75 @@ class _CreateBucketListScreenState
     super.dispose();
   }
 
+  // ── Banner helpers ────────────────────────────────────────────────────────
+
   Future<void> _pickBanner() async {
-    final picker = ImagePicker();
-    final xFile = await picker.pickImage(
+    final xFile = await ImagePicker().pickImage(
       source: ImageSource.gallery,
       maxWidth: 1200,
       imageQuality: 85,
     );
     if (xFile == null) return;
     setState(() {
-      _bannerFile = File(xFile.path);
-      _bannerUrl = null; // reset old upload
+      _newBannerFile = File(xFile.path);
+      _bannerUrl = ''; // will be replaced after upload
     });
   }
 
-  Future<String?> _uploadBanner(String userId) async {
-    if (_bannerFile == null) return _bannerUrl;
+  /// Uploads [_newBannerFile] to Firebase Storage and returns the download URL.
+  /// Returns [_bannerUrl] unchanged when no new file was picked.
+  /// Throws on upload failure so the caller can surface the error.
+  Future<String> _uploadBannerIfNeeded() async {
+    if (_newBannerFile == null) return _bannerUrl;
     setState(() => _uploadingBanner = true);
     try {
-      final fileName = '${userId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final ref = FirebaseStorage.instance.ref().child(
-        'bucket_list_banners/$fileName',
+      // Use actual file extension (could be .heic / .png / .jpg on iOS)
+      final ext = _newBannerFile!.path.split('.').last.toLowerCase();
+      final name =
+          '${widget.list.hostId}_${DateTime.now().millisecondsSinceEpoch}.$ext';
+      final storageRef = FirebaseStorage.instance.ref().child(
+        'bucket_list_banners/$name',
       );
-      await ref.putFile(_bannerFile!);
-      final url = await ref.getDownloadURL();
-      setState(() => _bannerUrl = url);
+
+      // putData avoids iOS NSURL content-decode errors caused by MIME mismatch
+      final bytes = await _newBannerFile!.readAsBytes();
+      final snapshot = await storageRef.putData(bytes);
+      final url = await snapshot.ref.getDownloadURL();
       return url;
-    } catch (e) {
-      debugPrint('Banner upload error: $e');
-      return null;
     } finally {
-      setState(() => _uploadingBanner = false);
+      if (mounted) setState(() => _uploadingBanner = false);
     }
   }
 
+  // ── Save ─────────────────────────────────────────────────────────────────
+
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
-    final user = ref.read(currentUserProvider);
-    if (user == null) return;
-
     setState(() => _saving = true);
 
-    // Upload banner if a local file was picked
-    final bannerUrl = await _uploadBanner(user.id);
+    final String finalBannerUrl;
+    try {
+      finalBannerUrl = await _uploadBannerIfNeeded();
+    } catch (e) {
+      if (mounted) {
+        setState(() => _saving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Banner upload failed: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+      return;
+    }
 
-    final result = await ref
+    final ok = await ref
         .read(bucketListControllerProvider.notifier)
-        .create(
+        .updateList(
+          listId: widget.list.id,
           title: _titleCtrl.text.trim(),
           description: _descCtrl.text.trim(),
-          bannerUrl: bannerUrl ?? '',
+          bannerUrl: finalBannerUrl,
           category: _category,
           customCategory:
               _category == BucketCategory.other &&
@@ -103,9 +190,6 @@ class _CreateBucketListScreenState
               : null,
           visibility: _visibility,
           maxMembers: _maxMembers,
-          hostId: user.id,
-          hostName: user.displayName,
-          hostPhoto: user.photoURL,
           xpReward: _xpReward,
           challengeTitle: _challengeCtrl.text.trim().isNotEmpty
               ? _challengeCtrl.text.trim()
@@ -115,21 +199,24 @@ class _CreateBucketListScreenState
     if (!mounted) return;
     setState(() => _saving = false);
 
-    if (result != null) {
-      // pushReplacement atomically swaps the modal for the detail screen
-      // without the pop+push race condition that caused SIGABRT
-      context.pushReplacement(AppRoutes.bucketListDetailPath(result.id));
-    } else {
-      final errMsg = ref.read(bucketListControllerProvider).error;
-      debugPrint('Create bucket list failed: $errMsg');
+    if (ok) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(errMsg ?? 'Failed to create list. Please try again.'),
-          backgroundColor: AppColors.error,
+        const SnackBar(
+          content: Text('Bucket list updated ✨'),
+          backgroundColor: AppColors.primary,
         ),
+      );
+      context.pop();
+    } else {
+      final err =
+          ref.read(bucketListControllerProvider).error ?? 'Update failed';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(err), backgroundColor: AppColors.error),
       );
     }
   }
+
+  // ── Build ─────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -138,7 +225,7 @@ class _CreateBucketListScreenState
       appBar: AppBar(
         backgroundColor: AppColors.bg,
         title: const Text(
-          'New Bucket List',
+          'Edit Bucket List',
           style: TextStyle(color: AppColors.textPrimary),
         ),
         leading: IconButton(
@@ -149,7 +236,7 @@ class _CreateBucketListScreenState
           Padding(
             padding: const EdgeInsets.only(right: 12),
             child: FilledButton(
-              onPressed: _saving ? null : _save,
+              onPressed: (_saving || _uploadingBanner) ? null : _save,
               style: FilledButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: AppColors.bg,
@@ -157,7 +244,7 @@ class _CreateBucketListScreenState
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              child: _saving
+              child: (_saving || _uploadingBanner)
                   ? const SizedBox(
                       height: 16,
                       width: 16,
@@ -166,7 +253,7 @@ class _CreateBucketListScreenState
                         color: AppColors.bg,
                       ),
                     )
-                  : const Text('Create'),
+                  : const Text('Save'),
             ),
           ),
         ],
@@ -176,128 +263,8 @@ class _CreateBucketListScreenState
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
           children: [
-            // ── Banner Image ───────────────────────────────────────────
-            _Section(
-              title: 'Banner Image',
-              child: _bannerFile != null
-                  // ── Preview with overlay controls ──────────────────
-                  ? Stack(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(14),
-                          child: Image.file(
-                            _bannerFile!,
-                            height: 160,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                        if (_uploadingBanner)
-                          Positioned.fill(
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.black45,
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                              child: const Center(
-                                child: CircularProgressIndicator(
-                                  color: AppColors.primary,
-                                ),
-                              ),
-                            ),
-                          ),
-                        // Remove button
-                        Positioned(
-                          top: 8,
-                          right: 8,
-                          child: GestureDetector(
-                            onTap: () => setState(() => _bannerFile = null),
-                            child: Container(
-                              padding: const EdgeInsets.all(6),
-                              decoration: const BoxDecoration(
-                                color: Colors.black54,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.close_rounded,
-                                color: Colors.white,
-                                size: 16,
-                              ),
-                            ),
-                          ),
-                        ),
-                        // Change button
-                        Positioned(
-                          bottom: 8,
-                          right: 8,
-                          child: GestureDetector(
-                            onTap: _pickBanner,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.black54,
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.photo_library_rounded,
-                                    color: Colors.white,
-                                    size: 14,
-                                  ),
-                                  SizedBox(width: 4),
-                                  Text(
-                                    'Change',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    )
-                  // ── Empty tap-to-pick area ─────────────────────────
-                  : GestureDetector(
-                      onTap: _pickBanner,
-                      child: Container(
-                        height: 120,
-                        decoration: BoxDecoration(
-                          color: AppColors.surfaceElevated,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: AppColors.border),
-                        ),
-                        child: const Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.add_photo_alternate_outlined,
-                                color: AppColors.textMuted,
-                                size: 32,
-                              ),
-                              SizedBox(height: 8),
-                              Text(
-                                'Tap to pick a banner photo',
-                                style: TextStyle(
-                                  color: AppColors.textMuted,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-            ),
+            // ── Banner ─────────────────────────────────────────────────
+            _Section(title: 'Banner Image', child: _buildBannerPicker()),
 
             const SizedBox(height: 20),
 
@@ -319,7 +286,7 @@ class _CreateBucketListScreenState
               title: 'Short Description',
               child: _AppField(
                 controller: _descCtrl,
-                hint: 'What\'s this adventure about?',
+                hint: "What's this adventure about?",
                 maxLines: 3,
               ),
             ),
@@ -439,7 +406,6 @@ class _CreateBucketListScreenState
               title: '🎮 Gamification',
               child: Column(
                 children: [
-                  // XP reward
                   Row(
                     children: [
                       const Expanded(
@@ -488,8 +454,6 @@ class _CreateBucketListScreenState
                     ),
                   ),
                   const SizedBox(height: 12),
-
-                  // Challenge title
                   _AppField(
                     controller: _challengeCtrl,
                     hint: 'Challenge name (optional, e.g. "7 Wonders Sprint")',
@@ -502,10 +466,149 @@ class _CreateBucketListScreenState
       ),
     );
   }
+
+  // ── Banner picker widget ───────────────────────────────────────────────────
+
+  Widget _buildBannerPicker() {
+    // A new file has been picked — show local preview
+    if (_newBannerFile != null) {
+      return Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(14),
+            child: Image.file(
+              _newBannerFile!,
+              height: 160,
+              width: double.infinity,
+              fit: BoxFit.cover,
+            ),
+          ),
+          if (_uploadingBanner)
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.black45,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Center(
+                  child: CircularProgressIndicator(color: AppColors.primary),
+                ),
+              ),
+            ),
+          _overlayRemoveButton(() => setState(() => _newBannerFile = null)),
+          _overlayChangeButton(),
+        ],
+      );
+    }
+
+    // Existing network banner
+    if (_bannerUrl.isNotEmpty) {
+      return Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(14),
+            child: CachedNetworkImage(
+              imageUrl: _bannerUrl,
+              height: 160,
+              width: double.infinity,
+              fit: BoxFit.cover,
+              placeholder: (context0, url0) => Container(
+                height: 160,
+                color: AppColors.surfaceElevated,
+                child: const Center(
+                  child: CircularProgressIndicator(color: AppColors.primary),
+                ),
+              ),
+              errorWidget: (context0, url0, err) =>
+                  Container(height: 160, color: AppColors.surfaceElevated),
+            ),
+          ),
+          _overlayRemoveButton(() => setState(() => _bannerUrl = '')),
+          _overlayChangeButton(),
+        ],
+      );
+    }
+
+    // No banner — tap to pick
+    return GestureDetector(
+      onTap: _pickBanner,
+      child: Container(
+        height: 120,
+        decoration: BoxDecoration(
+          color: AppColors.surfaceElevated,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: const Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.add_photo_alternate_outlined,
+                color: AppColors.textMuted,
+                size: 32,
+              ),
+              SizedBox(height: 8),
+              Text(
+                'Tap to pick a banner photo',
+                style: TextStyle(color: AppColors.textMuted, fontSize: 13),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _overlayRemoveButton(VoidCallback onTap) => Positioned(
+    top: 8,
+    right: 8,
+    child: GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(6),
+        decoration: const BoxDecoration(
+          color: Colors.black54,
+          shape: BoxShape.circle,
+        ),
+        child: const Icon(Icons.close_rounded, color: Colors.white, size: 16),
+      ),
+    ),
+  );
+
+  Widget _overlayChangeButton() => Positioned(
+    bottom: 8,
+    right: 8,
+    child: GestureDetector(
+      onTap: _pickBanner,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: Colors.black54,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.photo_library_rounded, color: Colors.white, size: 14),
+            SizedBox(width: 4),
+            Text(
+              'Change',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Shared form widgets
+// Shared form widgets (mirrors create_bucket_list_screen.dart)
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _Section extends StatelessWidget {

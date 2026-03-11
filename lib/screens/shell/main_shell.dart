@@ -34,9 +34,9 @@ class MainShell extends ConsumerWidget {
               label: 'Explore',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.search_outlined),
-              activeIcon: Icon(Icons.search_rounded),
-              label: 'Search',
+              icon: Icon(Icons.leaderboard_outlined),
+              activeIcon: Icon(Icons.leaderboard_rounded),
+              label: 'Rankings',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.people_outline),
@@ -57,7 +57,7 @@ class MainShell extends ConsumerWidget {
   int _indexForLocation(String location) {
     if (location.startsWith(AppRoutes.listings)) return 1;
     if (location.startsWith(AppRoutes.spots)) return 1;
-    if (location.startsWith(AppRoutes.search)) return 2;
+    if (location.startsWith(AppRoutes.leaderboard)) return 2;
     if (location.startsWith(AppRoutes.community)) return 3;
     if (location.startsWith(AppRoutes.profile)) return 4;
     return 0;
@@ -70,7 +70,7 @@ class MainShell extends ConsumerWidget {
       case 1:
         context.go(AppRoutes.listings);
       case 2:
-        context.go(AppRoutes.search);
+        context.go(AppRoutes.leaderboard);
       case 3:
         context.go(AppRoutes.community);
       case 4:

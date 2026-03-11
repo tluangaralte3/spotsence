@@ -24,6 +24,7 @@ import '../../screens/listings/hotel_detail_screen.dart';
 import '../../screens/listings/restaurant_detail_screen.dart';
 import '../../screens/community/bucket_list_detail_screen.dart';
 import '../../screens/community/create_bucket_list_screen.dart';
+import '../../screens/community/edit_bucket_list_screen.dart';
 import '../../screens/community/add_bucket_item_screen.dart';
 
 // Named route paths
@@ -47,6 +48,7 @@ abstract class AppRoutes {
 
   static const createBucketList = '/community/bucket-lists/new';
   static const bucketListDetail = '/community/bucket-lists/:id';
+  static const editBucketList = '/community/bucket-lists/:id/edit';
   static const addBucketItem = '/community/bucket-lists/:listId/add-item';
 
   static String spotDetailPath(String id) => '/spots/$id';
@@ -54,6 +56,8 @@ abstract class AppRoutes {
       '/listings/$type/$id';
   static String bucketListDetailPath(String id) =>
       '/community/bucket-lists/$id';
+  static String editBucketListPath(String id) =>
+      '/community/bucket-lists/$id/edit';
   static String addBucketItemPath(String listId) =>
       '/community/bucket-lists/$listId/add-item';
 }
@@ -184,6 +188,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.createBucketList,
         pageBuilder: (_, state) =>
             _bottomSheet(state, const CreateBucketListScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.editBucketList,
+        pageBuilder: (_, state) => _slide(
+          state,
+          EditBucketListScreen(listId: state.pathParameters['id']!),
+        ),
       ),
       GoRoute(
         path: AppRoutes.bucketListDetail,
