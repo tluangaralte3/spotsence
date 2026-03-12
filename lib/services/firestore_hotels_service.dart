@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/listing_models.dart';
+import 'firestore_place_rankings_service.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FirestoreHotelsService
@@ -110,6 +111,27 @@ class FirestoreHotelsService {
           'ratingsCount': newCount,
         });
       });
+
+      // Rebuild the place_rankings entry for this hotel.
+      final hotelDoc = await _db
+          .collection('accommodations')
+          .doc(hotelId)
+          .get();
+      if (hotelDoc.exists) {
+        final d = hotelDoc.data() ?? {};
+        final images = d['images'] as List<dynamic>?;
+        final heroImg = images != null && images.isNotEmpty
+            ? images.first.toString()
+            : '';
+        await FirestorePlaceRankingsService(_db).updateRankingAfterReview(
+          category: 'hotel',
+          placeId: hotelId,
+          placeName: d['name']?.toString() ?? '',
+          heroImage: heroImg,
+          newRating: (d['rating'] as num?)?.toDouble() ?? 0.0,
+          newRatingsCount: (d['ratingsCount'] as num?)?.toInt() ?? 0,
+        );
+      }
     } catch (_) {}
   }
 }

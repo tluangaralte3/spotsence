@@ -65,6 +65,7 @@ class SpotModel {
   final String district;
   final double averageRating;
   final double popularity; // stored as double in Firestore (9.0 / 7.5)
+  final int ratingsCount;
   final List<String> imagesUrl;
   final bool featured;
   final String status;
@@ -99,6 +100,7 @@ class SpotModel {
     required this.district,
     required this.averageRating,
     required this.popularity,
+    required this.ratingsCount,
     required this.imagesUrl,
     required this.featured,
     required this.status,
@@ -133,6 +135,7 @@ class SpotModel {
     district: json['district'] as String? ?? '',
     averageRating: (json['averageRating'] as num?)?.toDouble() ?? 0,
     popularity: (json['popularity'] as num?)?.toDouble() ?? 0,
+    ratingsCount: (json['ratingsCount'] as num?)?.toInt() ?? 0,
     imagesUrl: List<String>.from(json['imagesUrl'] as List? ?? []),
     featured: json['featured'] as bool? ?? false,
     status: json['status'] as String? ?? '',
@@ -220,6 +223,7 @@ class SpotModel {
       district: d['district'] as String? ?? '',
       averageRating: avgRating,
       popularity: (d['popularity'] as num?)?.toDouble() ?? 0,
+      ratingsCount: (d['ratingsCount'] as num?)?.toInt() ?? 0,
       imagesUrl: images,
       featured: d['featured'] as bool? ?? false,
       status: d['status'] as String? ?? '',

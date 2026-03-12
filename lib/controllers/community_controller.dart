@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/community_models.dart';
 import '../models/gamification_models.dart';
 import '../services/community_service.dart';
+import '../services/firestore_place_rankings_service.dart';
 
 // ── Community Posts ───────────────────────────────────────────────────────────
 
@@ -170,4 +171,81 @@ final leaderboardProvider = FutureProvider<List<LeaderboardEntry>>((ref) async {
       .read(communityServiceProvider)
       .getLeaderboard(limit: 50);
   return result.when(ok: (list) => list, err: (_) => []);
+});
+
+// ── Place Rankings ────────────────────────────────────────────────────────────
+
+class PlaceRankEntry {
+  final String id;
+  final String name;
+  final String heroImage;
+  final double rating;
+  final int ratingsCount;
+  final String
+  category; // 'spot' | 'cafe' | 'restaurant' | 'hotel' | 'homestay'
+
+  const PlaceRankEntry({
+    required this.id,
+    required this.name,
+    required this.heroImage,
+    required this.rating,
+    required this.ratingsCount,
+    required this.category,
+  });
+}
+
+class PlaceRankings {
+  final List<PlaceRankEntry> spots;
+  final List<PlaceRankEntry> cafes;
+  final List<PlaceRankEntry> restaurants;
+  final List<PlaceRankEntry> hotels;
+  final List<PlaceRankEntry> homestays;
+
+  const PlaceRankings({
+    required this.spots,
+    required this.cafes,
+    required this.restaurants,
+    required this.hotels,
+    required this.homestays,
+  });
+}
+
+final placeRankingsProvider = FutureProvider<PlaceRankings>((ref) async {
+  final svc = ref.read(placeRankingsServiceProvider);
+
+  // Read all 5 categories from place_rankings collection in parallel.
+  final results = await Future.wait([
+    svc.getTopForCategory('spot'),
+    svc.getTopForCategory('cafe'),
+    svc.getTopForCategory('restaurant'),
+    svc.getTopForCategory('hotel'),
+    svc.getTopForCategory('homestay'),
+  ]);
+
+  final spots = results[0];
+  final cafes = results[1];
+  final restaurants = results[2];
+  final hotels = results[3];
+  final homestays = results[4];
+
+  // If the rankings collection is empty (first run), trigger a background rebuild
+  // so rankings will be available next time.
+  final allEmpty =
+      spots.isEmpty &&
+      cafes.isEmpty &&
+      restaurants.isEmpty &&
+      hotels.isEmpty &&
+      homestays.isEmpty;
+  if (allEmpty) {
+    // fire-and-forget rebuild — don't await so we don't block the UI
+    svc.rebuildAllRankings();
+  }
+
+  return PlaceRankings(
+    spots: spots.take(3).toList(),
+    cafes: cafes.take(3).toList(),
+    restaurants: restaurants.take(3).toList(),
+    hotels: hotels.take(3).toList(),
+    homestays: homestays.take(3).toList(),
+  );
 });

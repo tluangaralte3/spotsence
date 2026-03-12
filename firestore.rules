@@ -162,5 +162,14 @@ service cloud.firestore {
       // Only host can delete
       allow delete: if isAuth() && request.auth.uid == resource.data.hostId;
     }
+
+    // ── Place Rankings (leaderboard aggregation) ─────────────────────────────
+
+    match /place_rankings/{category} {
+      // Anyone can read the rankings
+      allow read: if true;
+      // Only authenticated users can write (triggered client-side after review)
+      allow write: if isAuth();
+    }
   }
 }

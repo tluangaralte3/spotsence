@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/listing_models.dart';
+import 'firestore_place_rankings_service.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FirestoreCafesService
@@ -92,6 +93,24 @@ class FirestoreCafesService {
           'ratingsCount': newCount,
         });
       });
+
+      // Rebuild the place_rankings entry for this cafe.
+      final cafeDoc = await _db.collection('cafes').doc(cafeId).get();
+      if (cafeDoc.exists) {
+        final d = cafeDoc.data() ?? {};
+        final images = d['images'] as List<dynamic>?;
+        final heroImg = images != null && images.isNotEmpty
+            ? images.first.toString()
+            : '';
+        await FirestorePlaceRankingsService(_db).updateRankingAfterReview(
+          category: 'cafe',
+          placeId: cafeId,
+          placeName: d['name']?.toString() ?? '',
+          heroImage: heroImg,
+          newRating: (d['rating'] as num?)?.toDouble() ?? 0.0,
+          newRatingsCount: (d['ratingsCount'] as num?)?.toInt() ?? 0,
+        );
+      }
     } catch (_) {}
   }
 }

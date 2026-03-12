@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/listing_models.dart';
+import 'firestore_place_rankings_service.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FirestoreRestaurantsService
@@ -123,6 +124,27 @@ class FirestoreRestaurantsService {
           'ratingsCount': newCount,
         });
       });
+
+      // Rebuild the place_rankings entry for this restaurant.
+      final restDoc = await _db
+          .collection('restaurants')
+          .doc(restaurantId)
+          .get();
+      if (restDoc.exists) {
+        final d = restDoc.data() ?? {};
+        final images = d['images'] as List<dynamic>?;
+        final heroImg = images != null && images.isNotEmpty
+            ? images.first.toString()
+            : '';
+        await FirestorePlaceRankingsService(_db).updateRankingAfterReview(
+          category: 'restaurant',
+          placeId: restaurantId,
+          placeName: d['name']?.toString() ?? '',
+          heroImage: heroImg,
+          newRating: (d['rating'] as num?)?.toDouble() ?? 0.0,
+          newRatingsCount: (d['ratingsCount'] as num?)?.toInt() ?? 0,
+        );
+      }
     } catch (_) {
       // Non-critical — ignore if transaction fails.
     }

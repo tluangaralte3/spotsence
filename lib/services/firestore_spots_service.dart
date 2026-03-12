@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/spot_model.dart';
+import 'firestore_place_rankings_service.dart';
 
 final firestoreSpotsServiceProvider = Provider<FirestoreSpotsService>((ref) {
   return FirestoreSpotsService(FirebaseFirestore.instance);
@@ -145,6 +146,24 @@ class FirestoreSpotsService {
           'ratingsCount': newCount,
         });
       });
+
+      // Rebuild the place_rankings entry for this spot.
+      final spotDoc = await _db.collection(_collection).doc(spotId).get();
+      if (spotDoc.exists) {
+        final d = spotDoc.data() ?? {};
+        final images = (d['imagesUrl'] as List<dynamic>?);
+        final heroImg = images != null && images.isNotEmpty
+            ? images.first.toString()
+            : '';
+        await FirestorePlaceRankingsService(_db).updateRankingAfterReview(
+          category: 'spot',
+          placeId: spotId,
+          placeName: d['name']?.toString() ?? '',
+          heroImage: heroImg,
+          newRating: (d['averageRating'] as num?)?.toDouble() ?? 0.0,
+          newRatingsCount: (d['ratingsCount'] as num?)?.toInt() ?? 0,
+        );
+      }
     } catch (_) {
       // Non-critical — ignore if transaction fails.
     }
