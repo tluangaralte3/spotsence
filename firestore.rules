@@ -171,5 +171,18 @@ service cloud.firestore {
       // Only authenticated users can write (triggered client-side after review)
       allow write: if isAuth();
     }
+
+    // ── Dilemmas (community voting posts) ────────────────────────────────────
+
+    match /dilemmas/{dilemmaId} {
+      // Anyone can read dilemmas
+      allow read: if true;
+      // Authenticated users can create dilemmas
+      allow create: if isAuth();
+      // Authenticated users can update (voting updates votesA/votesB arrays)
+      allow update: if isAuth();
+      // Only the author can delete their own dilemma
+      allow delete: if isAuth() && request.auth.uid == resource.data.authorId;
+    }
   }
 }

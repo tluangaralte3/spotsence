@@ -2,13 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../controllers/auth_controller.dart';
-import '../../controllers/community_controller.dart';
 import '../../core/router/app_router.dart';
 import '../../core/theme/app_theme.dart';
-import '../../models/community_models.dart';
-import '../../widgets/shared_widgets.dart';
-import 'community_map.dart';
 import 'bucket_lists_tab.dart';
+import 'community_map.dart';
+import 'dilemmas_tab.dart';
 
 class CommunityScreen extends ConsumerStatefulWidget {
   const CommunityScreen({super.key});
@@ -59,7 +57,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen>
           physics: _tabs.index == 0
               ? const NeverScrollableScrollPhysics()
               : const AlwaysScrollableScrollPhysics(),
-          children: const [CommunityMap(), BucketListsTab(), _DilemmasTab()],
+          children: const [CommunityMap(), BucketListsTab(), DilemmasTab()],
         ),
       ),
       floatingActionButton: ListenableBuilder(
@@ -117,185 +115,6 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen>
             child: const Icon(Icons.add),
           );
         },
-      ),
-    );
-  }
-}
-
-// ── Dilemmas ──────────────────────────────────────────────────────────────────
-
-class _DilemmasTab extends ConsumerWidget {
-  const _DilemmasTab();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final dilemmas = ref.watch(dilemmasControllerProvider);
-    final user = ref.watch(currentUserProvider);
-
-    if (dilemmas.isEmpty) {
-      return const EmptyState(
-        emoji: '🤔',
-        title: 'No dilemmas yet',
-        subtitle: 'Post a travel dilemma for the community to vote!',
-      );
-    }
-
-    return ListView.separated(
-      padding: const EdgeInsets.all(16),
-      itemCount: dilemmas.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
-      itemBuilder: (_, i) => _DilemmaCard(
-        dilemma: dilemmas[i],
-        userId: user?.id,
-        onVote: (option) => ref
-            .read(dilemmasControllerProvider.notifier)
-            .vote(dilemmas[i].id, option, user?.id ?? ''),
-      ),
-    );
-  }
-}
-
-class _DilemmaCard extends StatelessWidget {
-  final Dilemma dilemma;
-  final String? userId;
-  final void Function(String) onVote;
-  const _DilemmaCard({
-    required this.dilemma,
-    required this.userId,
-    required this.onVote,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final myVote = userId != null ? dilemma.userVote(userId!) : null;
-    final voted = myVote != null;
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            dilemma.question,
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'by ${dilemma.authorName}',
-            style: const TextStyle(
-              fontSize: 12,
-              color: AppColors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Voting options
-          Row(
-            children: [
-              Expanded(
-                child: _VoteOption(
-                  option: dilemma.optionA,
-                  label: 'A',
-                  percent: dilemma.percentA,
-                  voted: voted,
-                  isMyVote: myVote == 'A',
-                  onTap: voted ? null : () => onVote('A'),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _VoteOption(
-                  option: dilemma.optionB,
-                  label: 'B',
-                  percent: dilemma.percentB,
-                  voted: voted,
-                  isMyVote: myVote == 'B',
-                  onTap: voted ? null : () => onVote('B'),
-                ),
-              ),
-            ],
-          ),
-
-          if (voted) ...[
-            const SizedBox(height: 10),
-            Text(
-              '${dilemma.totalVotes} votes total',
-              style: const TextStyle(
-                fontSize: 12,
-                color: AppColors.textSecondary,
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _VoteOption extends StatelessWidget {
-  final DilemmaOption option;
-  final String label;
-  final double percent;
-  final bool voted;
-  final bool isMyVote;
-  final VoidCallback? onTap;
-
-  const _VoteOption({
-    required this.option,
-    required this.label,
-    required this.percent,
-    required this.voted,
-    required this.isMyVote,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isMyVote
-              ? AppColors.primary.withOpacity(0.15)
-              : AppColors.surfaceElevated,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isMyVote ? AppColors.primary : AppColors.border,
-            width: isMyVote ? 1.5 : 1,
-          ),
-        ),
-        child: Column(
-          children: [
-            Text(
-              option.name,
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 13,
-                color: isMyVote ? AppColors.primary : AppColors.textPrimary,
-              ),
-              textAlign: TextAlign.center,
-              maxLines: 2,
-            ),
-            if (voted) ...[
-              const SizedBox(height: 8),
-              Text(
-                '${(percent * 100).toInt()}%',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: isMyVote ? AppColors.primary : AppColors.textSecondary,
-                ),
-              ),
-            ],
-          ],
-        ),
       ),
     );
   }

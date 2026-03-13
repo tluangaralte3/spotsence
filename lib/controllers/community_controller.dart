@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/community_models.dart';
 import '../models/gamification_models.dart';
 import '../services/community_service.dart';
+import '../services/firestore_dilemmas_service.dart';
 import '../services/firestore_place_rankings_service.dart';
 
 // ── Community Posts ───────────────────────────────────────────────────────────
@@ -122,42 +123,77 @@ final bucketListsProvider = FutureProvider<List<BucketList>>((ref) async {
 
 // ── Dilemmas ──────────────────────────────────────────────────────────────────
 
+/// Stream provider — live list of dilemmas from Firestore.
+final dilemmasStreamProvider = StreamProvider<List<Dilemma>>((ref) {
+  return ref.read(firestoreDilemmasServiceProvider).watchDilemmas();
+});
+
+/// Notifier that wraps voting and creation, keeping local optimistic state.
 class DilemmasController extends Notifier<List<Dilemma>> {
+  FirestoreDilemmasService get _svc =>
+      ref.read(firestoreDilemmasServiceProvider);
+
   @override
   List<Dilemma> build() {
-    Future.microtask(() => _load());
+    // Mirror the stream into local state so optimistic updates work
+    ref.listen(dilemmasStreamProvider, (_, next) {
+      next.whenData((list) => state = list);
+    });
     return [];
   }
 
-  Future<void> _load() async {
-    final result = await ref.read(communityServiceProvider).getDilemmas();
-    result.when(ok: (list) => state = list, err: (_) {});
+  /// Optimistically toggle vote, then write to Firestore.
+  Future<void> vote(String dilemmaId, String option, String uid) async {
+    // Optimistic update
+    state = state.map((d) {
+      if (d.id != dilemmaId) return d;
+      final votesA = List<String>.from(d.votesA)..remove(uid);
+      final votesB = List<String>.from(d.votesB)..remove(uid);
+      if (option == 'A') votesA.add(uid);
+      if (option == 'B') votesB.add(uid);
+      return Dilemma(
+        id: d.id,
+        question: d.question,
+        optionA: d.optionA,
+        optionB: d.optionB,
+        votesA: votesA,
+        votesB: votesB,
+        authorId: d.authorId,
+        authorName: d.authorName,
+        authorPhoto: d.authorPhoto,
+        status: d.status,
+        expiresAt: d.expiresAt,
+        createdAt: d.createdAt,
+      );
+    }).toList();
+
+    // Persist to Firestore (the stream will sync back)
+    await _svc.vote(dilemmaId: dilemmaId, userId: uid, option: option);
   }
 
-  Future<void> vote(String dilemmaId, String option, String uid) async {
-    final result = await ref
-        .read(communityServiceProvider)
-        .voteDilemma(dilemmaId, option);
-    if (result.isOk) {
-      // Update local state optimistically
-      state = state.map((d) {
-        if (d.id != dilemmaId) return d;
-        final votesA = option == 'A' ? [...d.votesA, uid] : d.votesA;
-        final votesB = option == 'B' ? [...d.votesB, uid] : d.votesB;
-        return Dilemma(
-          id: d.id,
-          question: d.question,
-          optionA: d.optionA,
-          optionB: d.optionB,
-          votesA: votesA,
-          votesB: votesB,
-          authorId: d.authorId,
-          authorName: d.authorName,
-          status: d.status,
-          createdAt: d.createdAt,
-        );
-      }).toList();
-    }
+  Future<String?> createDilemma({
+    required String question,
+    required DilemmaOption optionA,
+    required DilemmaOption optionB,
+    required String authorId,
+    required String authorName,
+    String? authorPhoto,
+    Duration? duration,
+  }) async {
+    return _svc.createDilemma(
+      question: question,
+      optionA: optionA,
+      optionB: optionB,
+      authorId: authorId,
+      authorName: authorName,
+      authorPhoto: authorPhoto,
+      duration: duration,
+    );
+  }
+
+  Future<void> deleteDilemma(String dilemmaId) async {
+    state = state.where((d) => d.id != dilemmaId).toList();
+    await _svc.deleteDilemma(dilemmaId);
   }
 }
 

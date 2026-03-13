@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
 @immutable
@@ -180,14 +181,17 @@ class BucketList {
 class DilemmaOption {
   final String? spotId;
   final String name;
-  final String? category;
+  final String?
+  category; // 'spot' | 'cafe' | 'restaurant' | 'hotel' | 'homestay'
   final String? imageUrl;
+  final String? district;
 
   const DilemmaOption({
     this.spotId,
     required this.name,
     this.category,
     this.imageUrl,
+    this.district,
   });
 
   factory DilemmaOption.fromJson(Map<String, dynamic> json) => DilemmaOption(
@@ -195,7 +199,16 @@ class DilemmaOption {
     name: json['name'] as String? ?? '',
     category: json['category'] as String?,
     imageUrl: json['imageUrl'] as String?,
+    district: json['district'] as String?,
   );
+
+  Map<String, dynamic> toMap() => {
+    if (spotId != null) 'spotId': spotId,
+    'name': name,
+    if (category != null) 'category': category,
+    if (imageUrl != null) 'imageUrl': imageUrl,
+    if (district != null) 'district': district,
+  };
 }
 
 @immutable
@@ -208,8 +221,11 @@ class Dilemma {
   final List<String> votesB;
   final String authorId;
   final String authorName;
-  final String status;
-  final String createdAt;
+  final String? authorPhoto;
+  final String status; // 'active' | 'closed'
+  /// null = no deadline (open indefinitely)
+  final DateTime? expiresAt;
+  final DateTime createdAt;
 
   const Dilemma({
     required this.id,
@@ -220,13 +236,18 @@ class Dilemma {
     required this.votesB,
     required this.authorId,
     required this.authorName,
+    this.authorPhoto,
     required this.status,
+    this.expiresAt,
     required this.createdAt,
   });
 
   int get totalVotes => votesA.length + votesB.length;
   double get percentA => totalVotes == 0 ? 0.5 : votesA.length / totalVotes;
   double get percentB => totalVotes == 0 ? 0.5 : votesB.length / totalVotes;
+
+  bool get isExpired => expiresAt != null && DateTime.now().isAfter(expiresAt!);
+  bool get isActive => status == 'active' && !isExpired;
 
   String? userVote(String uid) {
     if (votesA.contains(uid)) return 'A';
@@ -247,7 +268,42 @@ class Dilemma {
     votesB: List<String>.from(json['votesB'] as List? ?? []),
     authorId: json['authorId'] as String? ?? '',
     authorName: json['authorName'] as String? ?? '',
+    authorPhoto: json['authorPhoto'] as String?,
     status: json['status'] as String? ?? 'active',
-    createdAt: json['createdAt'] as String? ?? '',
+    expiresAt: json['expiresAt'] == null
+        ? null
+        : DateTime.tryParse(json['expiresAt'] as String),
+    createdAt:
+        DateTime.tryParse(json['createdAt'] as String? ?? '') ?? DateTime.now(),
   );
+
+  factory Dilemma.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
+    final d = doc.data() ?? {};
+    DateTime? expiresAt;
+    if (d['expiresAt'] is Timestamp) {
+      expiresAt = (d['expiresAt'] as Timestamp).toDate();
+    }
+    DateTime createdAt = DateTime.now();
+    if (d['createdAt'] is Timestamp) {
+      createdAt = (d['createdAt'] as Timestamp).toDate();
+    }
+    return Dilemma(
+      id: doc.id,
+      question: d['question'] as String? ?? '',
+      optionA: DilemmaOption.fromJson(
+        d['optionA'] as Map<String, dynamic>? ?? {},
+      ),
+      optionB: DilemmaOption.fromJson(
+        d['optionB'] as Map<String, dynamic>? ?? {},
+      ),
+      votesA: List<String>.from(d['votesA'] as List? ?? []),
+      votesB: List<String>.from(d['votesB'] as List? ?? []),
+      authorId: d['authorId'] as String? ?? '',
+      authorName: d['authorName'] as String? ?? '',
+      authorPhoto: d['authorPhoto'] as String?,
+      status: d['status'] as String? ?? 'active',
+      expiresAt: expiresAt,
+      createdAt: createdAt,
+    );
+  }
 }
