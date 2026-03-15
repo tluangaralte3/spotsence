@@ -47,20 +47,20 @@ class _ListingsScreenState extends ConsumerState<ListingsScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: context.col.bg,
       body: NestedScrollView(
         headerSliverBuilder: (context, _) => [
           SliverAppBar(
-            backgroundColor: AppColors.bg,
+            backgroundColor: context.col.bg,
             floating: true,
             snap: true,
             pinned: false,
             elevation: 0,
             automaticallyImplyLeading: false,
-            title: const Text(
+            title: Text(
               'Explore Mizoram',
               style: TextStyle(
-                color: AppColors.textPrimary,
+                color: context.col.textPrimary,
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
               ),
@@ -68,9 +68,9 @@ class _ListingsScreenState extends ConsumerState<ListingsScreen>
             actions: [
               IconButton(
                 onPressed: () => context.push(AppRoutes.search),
-                icon: const Icon(
+                icon: Icon(
                   Icons.search_rounded,
-                  color: AppColors.textSecondary,
+                  color: context.col.textSecondary,
                 ),
               ),
             ],
@@ -81,7 +81,7 @@ class _ListingsScreenState extends ConsumerState<ListingsScreen>
               indicatorColor: AppColors.primary,
               indicatorWeight: 2.5,
               labelColor: AppColors.primary,
-              unselectedLabelColor: AppColors.textSecondary,
+              unselectedLabelColor: context.col.textSecondary,
               labelStyle: const TextStyle(
                 fontWeight: FontWeight.w600,
                 fontSize: 13,
@@ -124,21 +124,21 @@ class _ListingsScreenState extends ConsumerState<ListingsScreen>
 // Shared helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
-Widget _ratingBadge(double rating) => Container(
-  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+Widget _ratingBadge(BuildContext context, double rating) => Container(
+  padding: EdgeInsets.symmetric(horizontal: 6, vertical: 3),
   decoration: BoxDecoration(
-    color: AppColors.surface,
+    color: context.col.surface,
     borderRadius: BorderRadius.circular(8),
   ),
   child: Row(
     mainAxisSize: MainAxisSize.min,
     children: [
-      const Icon(Icons.star_rounded, size: 12, color: AppColors.star),
-      const SizedBox(width: 3),
+      Icon(Icons.star_rounded, size: 12, color: AppColors.star),
+      SizedBox(width: 3),
       Text(
         rating.toStringAsFixed(1),
-        style: const TextStyle(
-          color: AppColors.textPrimary,
+        style: TextStyle(
+          color: context.col.textPrimary,
           fontSize: 11,
           fontWeight: FontWeight.w600,
         ),
@@ -163,27 +163,27 @@ Widget _priceBadge(String price) => Container(
   ),
 );
 
-Widget _chip(String label) => Container(
-  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+Widget _chip(BuildContext context, String label) => Container(
+  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
   decoration: BoxDecoration(
-    color: AppColors.surfaceElevated,
+    color: context.col.surfaceElevated,
     borderRadius: BorderRadius.circular(20),
-    border: Border.all(color: AppColors.border),
+    border: Border.all(color: context.col.border),
   ),
   child: Text(
     label,
-    style: const TextStyle(color: AppColors.textSecondary, fontSize: 11),
+    style: TextStyle(color: context.col.textSecondary, fontSize: 11),
   ),
 );
 
-Widget _featureDot(IconData icon, String label) => Row(
+Widget _featureDot(BuildContext context, IconData icon, String label) => Row(
   mainAxisSize: MainAxisSize.min,
   children: [
     Icon(icon, size: 13, color: AppColors.primary),
-    const SizedBox(width: 4),
+    SizedBox(width: 4),
     Text(
       label,
-      style: const TextStyle(color: AppColors.textSecondary, fontSize: 11),
+      style: TextStyle(color: context.col.textSecondary, fontSize: 11),
     ),
   ],
 );
@@ -206,11 +206,11 @@ class _HeroImage extends StatelessWidget {
       child: url.isEmpty
           ? Container(
               height: height,
-              color: AppColors.surfaceElevated,
-              child: const Center(
+              color: context.col.surfaceElevated,
+              child: Center(
                 child: Icon(
                   Icons.image_not_supported_outlined,
-                  color: AppColors.textMuted,
+                  color: context.col.textMuted,
                   size: 32,
                 ),
               ),
@@ -221,14 +221,14 @@ class _HeroImage extends StatelessWidget {
               width: double.infinity,
               fit: BoxFit.cover,
               placeholder: (_, __) =>
-                  Container(height: height, color: AppColors.surfaceElevated),
+                  Container(height: height, color: context.col.surfaceElevated),
               errorWidget: (_, __, ___) => Container(
                 height: height,
-                color: AppColors.surfaceElevated,
-                child: const Center(
+                color: context.col.surfaceElevated,
+                child: Center(
                   child: Icon(
                     Icons.broken_image_outlined,
-                    color: AppColors.textMuted,
+                    color: context.col.textMuted,
                   ),
                 ),
               ),
@@ -293,15 +293,15 @@ class _ListingListState<T> extends State<_ListingList<T>> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
+            Icon(
               Icons.wifi_off_rounded,
-              color: AppColors.textMuted,
+              color: context.col.textMuted,
               size: 48,
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             Text(
               widget.state.error!,
-              style: const TextStyle(color: AppColors.textSecondary),
+              style: TextStyle(color: context.col.textSecondary),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
@@ -322,14 +322,14 @@ class _ListingListState<T> extends State<_ListingList<T>> {
       return Center(
         child: Text(
           widget.emptyMessage,
-          style: const TextStyle(color: AppColors.textSecondary),
+          style: TextStyle(color: context.col.textSecondary),
         ),
       );
     }
 
     return RefreshIndicator(
       color: AppColors.primary,
-      backgroundColor: AppColors.surface,
+      backgroundColor: context.col.surface,
       onRefresh: () async => widget.onRefresh(),
       child: ListView.separated(
         controller: _scrollController,
@@ -384,9 +384,9 @@ class _ListingCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: context.col.surface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: context.col.border),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -394,7 +394,11 @@ class _ListingCard extends StatelessWidget {
             Stack(
               children: [
                 _HeroImage(url: heroImageUrl),
-                Positioned(top: 10, right: 10, child: _ratingBadge(rating)),
+                Positioned(
+                  top: 10,
+                  right: 10,
+                  child: _ratingBadge(context, rating),
+                ),
                 if (priceRange != null)
                   Positioned(
                     top: 10,
@@ -404,34 +408,34 @@ class _ListingCard extends StatelessWidget {
               ],
             ),
             Padding(
-              padding: const EdgeInsets.all(12),
+              padding: EdgeInsets.all(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
-                      color: AppColors.textPrimary,
+                    style: TextStyle(
+                      color: context.col.textPrimary,
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                   Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.location_on_outlined,
                         size: 13,
-                        color: AppColors.textMuted,
+                        color: context.col.textMuted,
                       ),
-                      const SizedBox(width: 3),
+                      SizedBox(width: 3),
                       Expanded(
                         child: Text(
                           subtitle,
-                          style: const TextStyle(
-                            color: AppColors.textSecondary,
+                          style: TextStyle(
+                            color: context.col.textSecondary,
                             fontSize: 12,
                           ),
                           maxLines: 1,
@@ -483,12 +487,16 @@ class _TouristSpotsTab extends ConsumerWidget {
             : spot.district,
         rating: spot.averageRating,
         chips: [
-          if (spot.category.isNotEmpty) _chip(spot.category),
-          if (spot.district.isNotEmpty) _chip(spot.district),
+          if (spot.category.isNotEmpty) _chip(context, spot.category),
+          if (spot.district.isNotEmpty) _chip(context, spot.district),
         ],
         featureDots: [
           if (spot.views > 0)
-            _featureDot(Icons.visibility_outlined, '${spot.views} views'),
+            _featureDot(
+              context,
+              Icons.visibility_outlined,
+              '${spot.views} views',
+            ),
         ],
         onTap: () => context.push(AppRoutes.spotDetailPath(spot.id)),
       ),
@@ -519,14 +527,14 @@ class _RestaurantsTab extends ConsumerWidget {
         subtitle: r.location,
         rating: r.rating,
         priceRange: r.priceRange,
-        chips: r.cuisineTypes.take(3).map((c) => _chip(c)).toList(),
+        chips: r.cuisineTypes.take(3).map((c) => _chip(context, c)).toList(),
         featureDots: [
           if (r.hasDelivery)
-            _featureDot(Icons.delivery_dining_rounded, 'Delivery'),
+            _featureDot(context, Icons.delivery_dining_rounded, 'Delivery'),
           if (r.hasReservation)
-            _featureDot(Icons.calendar_today_outlined, 'Reservations'),
+            _featureDot(context, Icons.calendar_today_outlined, 'Reservations'),
           if (r.openingHours.isNotEmpty)
-            _featureDot(Icons.schedule_outlined, r.openingHours),
+            _featureDot(context, Icons.schedule_outlined, r.openingHours),
         ],
         onTap: () =>
             context.push(AppRoutes.listingDetailPath('restaurants', r.id)),
@@ -558,13 +566,14 @@ class _HotelsTab extends ConsumerWidget {
         subtitle: h.location,
         rating: h.rating,
         priceRange: h.priceRange,
-        chips: h.amenities.take(3).map((a) => _chip(a)).toList(),
+        chips: h.amenities.take(3).map((a) => _chip(context, a)).toList(),
         featureDots: [
-          if (h.hasWifi) _featureDot(Icons.wifi_rounded, 'Free WiFi'),
-          if (h.hasParking) _featureDot(Icons.local_parking_rounded, 'Parking'),
+          if (h.hasWifi) _featureDot(context, Icons.wifi_rounded, 'Free WiFi'),
+          if (h.hasParking)
+            _featureDot(context, Icons.local_parking_rounded, 'Parking'),
           if (h.hasRestaurant)
-            _featureDot(Icons.restaurant_menu_rounded, 'Restaurant'),
-          if (h.hasPool) _featureDot(Icons.pool_rounded, 'Pool'),
+            _featureDot(context, Icons.restaurant_menu_rounded, 'Restaurant'),
+          if (h.hasPool) _featureDot(context, Icons.pool_rounded, 'Pool'),
         ],
         onTap: () => context.push(AppRoutes.listingDetailPath('hotels', h.id)),
       ),
@@ -595,13 +604,13 @@ class _CafesTab extends ConsumerWidget {
         subtitle: c.location,
         rating: c.rating,
         priceRange: c.priceRange,
-        chips: c.specialties.take(3).map((s) => _chip(s)).toList(),
+        chips: c.specialties.take(3).map((s) => _chip(context, s)).toList(),
         featureDots: [
-          if (c.hasWifi) _featureDot(Icons.wifi_rounded, 'Free WiFi'),
+          if (c.hasWifi) _featureDot(context, Icons.wifi_rounded, 'Free WiFi'),
           if (c.hasOutdoorSeating)
-            _featureDot(Icons.deck_rounded, 'Outdoor Seating'),
+            _featureDot(context, Icons.deck_rounded, 'Outdoor Seating'),
           if (c.openingHours.isNotEmpty)
-            _featureDot(Icons.schedule_outlined, c.openingHours),
+            _featureDot(context, Icons.schedule_outlined, c.openingHours),
         ],
         onTap: () => context.push(AppRoutes.listingDetailPath('cafes', c.id)),
       ),
@@ -632,15 +641,19 @@ class _HomestaysTab extends ConsumerWidget {
         subtitle: h.location,
         rating: h.rating,
         priceRange: h.priceRange,
-        chips: h.amenities.take(3).map((a) => _chip(a)).toList(),
+        chips: h.amenities.take(3).map((a) => _chip(context, a)).toList(),
         featureDots: [
-          _featureDot(Icons.person_outline, 'Host: ${h.hostName}'),
+          _featureDot(context, Icons.person_outline, 'Host: ${h.hostName}'),
           if (h.maxGuests > 0)
-            _featureDot(Icons.group_outlined, '${h.maxGuests} guests max'),
+            _featureDot(
+              context,
+              Icons.group_outlined,
+              '${h.maxGuests} guests max',
+            ),
           if (h.hasBreakfast)
-            _featureDot(Icons.free_breakfast_outlined, 'Breakfast'),
+            _featureDot(context, Icons.free_breakfast_outlined, 'Breakfast'),
           if (h.hasFreePickup)
-            _featureDot(Icons.directions_car_outlined, 'Free Pickup'),
+            _featureDot(context, Icons.directions_car_outlined, 'Free Pickup'),
         ],
         onTap: () =>
             context.push(AppRoutes.listingDetailPath('homestays', h.id)),
@@ -653,7 +666,7 @@ class _HomestaysTab extends ConsumerWidget {
 // Tab: Adventure
 // ─────────────────────────────────────────────────────────────────────────────
 
-Color _difficultyColor(String d) {
+Color _difficultyColor(BuildContext context, String d) {
   switch (d.toLowerCase()) {
     case 'easy':
       return AppColors.success;
@@ -662,9 +675,9 @@ Color _difficultyColor(String d) {
     case 'challenging':
       return AppColors.error;
     case 'extreme':
-      return const Color(0xFF9C27B0);
+      return AppColors.categoryPurple;
     default:
-      return AppColors.textSecondary;
+      return context.col.textSecondary;
   }
 }
 
@@ -690,29 +703,36 @@ class _AdventureTab extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: _difficultyColor(a.difficulty).withValues(alpha: 0.15),
+              color: _difficultyColor(
+                context,
+                a.difficulty,
+              ).withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: _difficultyColor(a.difficulty).withValues(alpha: 0.4),
+                color: _difficultyColor(
+                  context,
+                  a.difficulty,
+                ).withValues(alpha: 0.4),
               ),
             ),
             child: Text(
               '${AdventureSpotModel.difficultyEmoji(a.difficulty)} ${a.difficulty}',
               style: TextStyle(
-                color: _difficultyColor(a.difficulty),
+                color: _difficultyColor(context, a.difficulty),
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
               ),
             ),
           ),
-          ...a.activities.take(2).map((act) => _chip(act)),
+          ...a.activities.take(2).map((act) => _chip(context, act)),
         ],
         featureDots: [
           if (a.duration.isNotEmpty)
-            _featureDot(Icons.timer_outlined, a.duration),
+            _featureDot(context, Icons.timer_outlined, a.duration),
           if (a.bestSeason.isNotEmpty)
-            _featureDot(Icons.wb_sunny_outlined, a.bestSeason),
-          if (a.isPopular) _featureDot(Icons.trending_up_rounded, 'Popular'),
+            _featureDot(context, Icons.wb_sunny_outlined, a.bestSeason),
+          if (a.isPopular)
+            _featureDot(context, Icons.trending_up_rounded, 'Popular'),
         ],
         onTap: () =>
             context.push(AppRoutes.listingDetailPath('adventure-spots', a.id)),
@@ -745,17 +765,18 @@ class _ShoppingTab extends ConsumerWidget {
         rating: s.rating,
         priceRange: s.priceRange,
         chips: [
-          _chip(s.type.toUpperCase()),
-          ...s.products.take(2).map((p) => _chip(p)),
+          _chip(context, s.type.toUpperCase()),
+          ...s.products.take(2).map((p) => _chip(context, p)),
         ],
         featureDots: [
-          if (s.hasParking) _featureDot(Icons.local_parking_rounded, 'Parking'),
+          if (s.hasParking)
+            _featureDot(context, Icons.local_parking_rounded, 'Parking'),
           if (s.acceptsCards)
-            _featureDot(Icons.credit_card_outlined, 'Cards accepted'),
+            _featureDot(context, Icons.credit_card_outlined, 'Cards accepted'),
           if (s.hasDelivery)
-            _featureDot(Icons.delivery_dining_rounded, 'Delivery'),
+            _featureDot(context, Icons.delivery_dining_rounded, 'Delivery'),
           if (s.openingHours.isNotEmpty)
-            _featureDot(Icons.schedule_outlined, s.openingHours),
+            _featureDot(context, Icons.schedule_outlined, s.openingHours),
         ],
         onTap: () =>
             context.push(AppRoutes.listingDetailPath('shopping-areas', s.id)),
@@ -819,9 +840,9 @@ class _EventCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: context.col.surface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: context.col.border),
         ),
         child: Row(
           children: [
@@ -896,50 +917,50 @@ class _EventCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 6),
+                    SizedBox(height: 6),
                     Text(
                       event.title,
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
+                      style: TextStyle(
+                        color: context.col.textPrimary,
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 6),
+                    SizedBox(height: 6),
                     if (formattedDate.isNotEmpty)
                       Row(
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.calendar_today_outlined,
                             size: 12,
-                            color: AppColors.textMuted,
+                            color: context.col.textMuted,
                           ),
-                          const SizedBox(width: 4),
+                          SizedBox(width: 4),
                           Text(
                             formattedDate,
-                            style: const TextStyle(
-                              color: AppColors.textSecondary,
+                            style: TextStyle(
+                              color: context.col.textSecondary,
                               fontSize: 11,
                             ),
                           ),
                         ],
                       ),
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4),
                     Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.location_on_outlined,
                           size: 12,
-                          color: AppColors.textMuted,
+                          color: context.col.textMuted,
                         ),
-                        const SizedBox(width: 4),
+                        SizedBox(width: 4),
                         Expanded(
                           child: Text(
                             event.location,
-                            style: const TextStyle(
-                              color: AppColors.textSecondary,
+                            style: TextStyle(
+                              color: context.col.textSecondary,
                               fontSize: 11,
                             ),
                             maxLines: 1,
@@ -974,11 +995,11 @@ class _EventCard extends StatelessWidget {
               ),
             ),
             // Arrow
-            const Padding(
+            Padding(
               padding: EdgeInsets.only(right: 12),
               child: Icon(
                 Icons.chevron_right_rounded,
-                color: AppColors.textMuted,
+                color: context.col.textMuted,
                 size: 20,
               ),
             ),

@@ -54,7 +54,7 @@ class StarRating extends StatelessWidget {
           style: TextStyle(
             fontWeight: FontWeight.w700,
             fontSize: size - 2,
-            color: AppColors.textPrimary,
+            color: context.col.textPrimary,
           ),
         ),
       ],
@@ -81,7 +81,7 @@ class ShimmerBox extends StatelessWidget {
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: AppColors.surfaceElevated,
+        color: context.col.surfaceElevated,
         borderRadius: BorderRadius.circular(radius),
       ),
     );
@@ -113,10 +113,10 @@ class CategoryChip extends StatelessWidget {
         decoration: BoxDecoration(
           color: selected
               ? AppColors.primary.withOpacity(0.15)
-              : AppColors.surfaceElevated,
+              : context.col.surfaceElevated,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: selected ? AppColors.primary : AppColors.border,
+            color: selected ? AppColors.primary : context.col.border,
             width: selected ? 1.5 : 1,
           ),
         ),
@@ -130,7 +130,7 @@ class CategoryChip extends StatelessWidget {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                color: selected ? AppColors.primary : AppColors.textSecondary,
+                color: selected ? AppColors.primary : context.col.textSecondary,
               ),
             ),
           ],
@@ -216,10 +216,10 @@ class SpotLogo extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 10),
-        const Text(
+        Text(
           'SpotMizoram',
           style: TextStyle(
-            color: AppColors.textPrimary,
+            color: context.col.textPrimary,
             fontSize: 20,
             fontWeight: FontWeight.w800,
             letterSpacing: -0.5,
@@ -243,9 +243,9 @@ class CompactSpotCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.surfaceElevated,
+          color: context.col.surfaceElevated,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: context.col.border),
         ),
         clipBehavior: Clip.antiAlias,
         child: Row(
@@ -259,18 +259,18 @@ class CompactSpotCard extends StatelessWidget {
                       imageUrl: spot.heroImage,
                       fit: BoxFit.cover,
                       errorWidget: (_, __, ___) => Container(
-                        color: AppColors.surface,
-                        child: const Icon(
+                        color: context.col.surface,
+                        child: Icon(
                           Icons.image_outlined,
-                          color: AppColors.textMuted,
+                          color: context.col.textMuted,
                         ),
                       ),
                     )
                   : Container(
-                      color: AppColors.surface,
-                      child: const Icon(
+                      color: context.col.surface,
+                      child: Icon(
                         Icons.image_outlined,
-                        color: AppColors.textMuted,
+                        color: context.col.textMuted,
                       ),
                     ),
             ),
@@ -286,10 +286,10 @@ class CompactSpotCard extends StatelessWidget {
                   children: [
                     Text(
                       spot.name,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 14,
-                        color: AppColors.textPrimary,
+                        color: context.col.textPrimary,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -297,9 +297,9 @@ class CompactSpotCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       spot.locationAddress,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: AppColors.textSecondary,
+                        color: context.col.textSecondary,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -310,11 +310,11 @@ class CompactSpotCard extends StatelessWidget {
                 ),
               ),
             ),
-            const Padding(
+            Padding(
               padding: EdgeInsets.only(right: 12),
               child: Icon(
                 Icons.chevron_right_rounded,
-                color: AppColors.textMuted,
+                color: context.col.textMuted,
               ),
             ),
           ],

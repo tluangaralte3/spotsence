@@ -21,7 +21,7 @@ class FeaturedSpotCard extends StatelessWidget {
         margin: const EdgeInsets.only(right: 12),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
-          color: AppColors.surface,
+          color: context.col.surface,
         ),
         clipBehavior: Clip.antiAlias,
         child: Stack(
@@ -140,9 +140,9 @@ class SpotCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: context.col.surface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: context.col.border),
         ),
         clipBehavior: Clip.antiAlias,
         child: Column(
@@ -196,10 +196,10 @@ class SpotCard extends StatelessWidget {
                   const SizedBox(height: 6),
                   Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.location_on,
                         size: 12,
-                        color: AppColors.textSecondary,
+                        color: context.col.textSecondary,
                       ),
                       const SizedBox(width: 2),
                       Expanded(
@@ -207,9 +207,9 @@ class SpotCard extends StatelessWidget {
                           spot.district.isNotEmpty
                               ? spot.district
                               : spot.locationAddress,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
-                            color: AppColors.textSecondary,
+                            color: context.col.textSecondary,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -233,9 +233,9 @@ class _PlaceholderBg extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: AppColors.surfaceElevated,
-      child: const Center(
-        child: Icon(Icons.image_outlined, size: 40, color: AppColors.textMuted),
+      color: context.col.surfaceElevated,
+      child: Center(
+        child: Icon(Icons.image_outlined, size: 40, color: context.col.textMuted),
       ),
     );
   }

@@ -65,9 +65,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             right: 20,
             child: TextButton(
               onPressed: _finish,
-              child: const Text(
+              child: Text(
                 'Skip',
-                style: TextStyle(color: AppColors.textSecondary),
+                style: TextStyle(color: context.col.textSecondary),
               ),
             ),
           ),
@@ -92,7 +92,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       decoration: BoxDecoration(
                         color: _current == i
                             ? AppColors.primary
-                            : AppColors.border,
+                            : context.col.border,
                         borderRadius: BorderRadius.circular(4),
                       ),
                     ),
@@ -124,9 +124,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   const SizedBox(height: 12),
                   TextButton(
                     onPressed: () => context.go(AppRoutes.home),
-                    child: const Text(
+                    child: Text(
                       'Continue as Guest',
-                      style: TextStyle(color: AppColors.textSecondary),
+                      style: TextStyle(color: context.col.textSecondary),
                     ),
                   ),
                 ],
@@ -183,8 +183,8 @@ class _OnboardingPage extends StatelessWidget {
               const SizedBox(height: 16),
               Text(
                 subtitle,
-                style: const TextStyle(
-                  color: AppColors.textSecondary,
+                style: TextStyle(
+                  color: context.col.textSecondary,
                   fontSize: 15,
                   height: 1.6,
                 ),

@@ -42,11 +42,11 @@ class _ListingResult {
       id: doc.id,
       name: d['name']?.toString() ?? d['title']?.toString() ?? '',
       location: d['location']?.toString() ?? d['address']?.toString() ?? '',
-      imageUrl: d['imageUrl']?.toString() ??
+      imageUrl:
+          d['imageUrl']?.toString() ??
           d['image']?.toString() ??
           (images.isNotEmpty ? images.first : ''),
-      rating:
-          ((d['rating'] ?? d['averageRating']) as num?)?.toDouble() ?? 0.0,
+      rating: ((d['rating'] ?? d['averageRating']) as num?)?.toDouble() ?? 0.0,
       collection: collection,
       bucketCategory: category,
     );
@@ -74,12 +74,27 @@ class _TabConfig {
 
 const _tabs = [
   _TabConfig('Spots', '\u{1F5FA}\uFE0F', 'spots', BucketCategory.spot),
-  _TabConfig('Restaurants', '\u{1F37D}\uFE0F', 'restaurants', BucketCategory.restaurant),
+  _TabConfig(
+    'Restaurants',
+    '\u{1F37D}\uFE0F',
+    'restaurants',
+    BucketCategory.restaurant,
+  ),
   _TabConfig('Caf\u00E9s', '\u2615', 'cafes', BucketCategory.cafe),
   _TabConfig('Hotels', '\u{1F3E8}', 'hotels', BucketCategory.hotel),
   _TabConfig('Homestays', '\u{1F3E1}', 'homestays', BucketCategory.homestay),
-  _TabConfig('Adventure', '\u{1F9D7}', 'adventureSpots', BucketCategory.adventure),
-  _TabConfig('Shopping', '\u{1F6CD}\uFE0F', 'shoppingAreas', BucketCategory.shopping),
+  _TabConfig(
+    'Adventure',
+    '\u{1F9D7}',
+    'adventureSpots',
+    BucketCategory.adventure,
+  ),
+  _TabConfig(
+    'Shopping',
+    '\u{1F6CD}\uFE0F',
+    'shoppingAreas',
+    BucketCategory.shopping,
+  ),
   _TabConfig('Custom', '\u270F\uFE0F', '', BucketCategory.other),
 ];
 
@@ -89,18 +104,21 @@ const _tabs = [
 
 final _listingSearchProvider = FutureProvider.autoDispose
     .family<List<_ListingResult>, _TabConfig>((ref, tab) async {
-  if (tab.collection.isEmpty) return [];
-  final db = FirebaseFirestore.instance;
-  try {
-    final snap =
-        await db.collection(tab.collection).orderBy('name').limit(80).get();
-    return _mapDocs(snap.docs, tab);
-  } catch (_) {
-    // Fallback without orderBy if index is missing
-    final snap = await db.collection(tab.collection).limit(80).get();
-    return _mapDocs(snap.docs, tab);
-  }
-});
+      if (tab.collection.isEmpty) return [];
+      final db = FirebaseFirestore.instance;
+      try {
+        final snap = await db
+            .collection(tab.collection)
+            .orderBy('name')
+            .limit(80)
+            .get();
+        return _mapDocs(snap.docs, tab);
+      } catch (_) {
+        // Fallback without orderBy if index is missing
+        final snap = await db.collection(tab.collection).limit(80).get();
+        return _mapDocs(snap.docs, tab);
+      }
+    });
 
 List<_ListingResult> _mapDocs(
   List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
@@ -196,13 +214,12 @@ class _AddBucketItemScreenState extends ConsumerState<AddBucketItemScreen>
       id: const Uuid().v4(),
       name: _nameCtrl.text.trim(),
       category: _customCategory,
-      customCategory: _customCategory == BucketCategory.other &&
+      customCategory:
+          _customCategory == BucketCategory.other &&
               _customCatCtrl.text.trim().isNotEmpty
           ? _customCatCtrl.text.trim()
           : null,
-      imageUrl: _imageCtrl.text.trim().isEmpty
-          ? null
-          : _imageCtrl.text.trim(),
+      imageUrl: _imageCtrl.text.trim().isEmpty ? null : _imageCtrl.text.trim(),
       note: _noteCtrl.text.trim().isEmpty ? null : _noteCtrl.text.trim(),
       isChecked: false,
     );
@@ -217,7 +234,7 @@ class _AddBucketItemScreenState extends ConsumerState<AddBucketItemScreen>
     final noteCtrl = TextEditingController();
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.surface,
+      backgroundColor: context.col.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -238,7 +255,7 @@ class _AddBucketItemScreenState extends ConsumerState<AddBucketItemScreen>
                 width: 36,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.border,
+                  color: context.col.border,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -254,8 +271,8 @@ class _AddBucketItemScreenState extends ConsumerState<AddBucketItemScreen>
                     children: [
                       Text(
                         listing.name,
-                        style: const TextStyle(
-                          color: AppColors.textPrimary,
+                        style: TextStyle(
+                          color: context.col.textPrimary,
                           fontWeight: FontWeight.w700,
                           fontSize: 15,
                         ),
@@ -266,25 +283,33 @@ class _AddBucketItemScreenState extends ConsumerState<AddBucketItemScreen>
                         const SizedBox(height: 2),
                         Text(
                           listing.location,
-                          style: const TextStyle(
-                              color: AppColors.textMuted, fontSize: 12),
+                          style: TextStyle(
+                            color: context.col.textMuted,
+                            fontSize: 12,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ],
                       if (listing.rating > 0) ...[
                         const SizedBox(height: 4),
-                        Row(children: [
-                          const Icon(Icons.star_rounded,
-                              color: AppColors.star, size: 13),
-                          const SizedBox(width: 3),
-                          Text(
-                            listing.rating.toStringAsFixed(1),
-                            style: const TextStyle(
-                                color: AppColors.textSecondary,
-                                fontSize: 12),
-                          ),
-                        ]),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.star_rounded,
+                              color: AppColors.star,
+                              size: 13,
+                            ),
+                            const SizedBox(width: 3),
+                            Text(
+                              listing.rating.toStringAsFixed(1),
+                              style: TextStyle(
+                                color: context.col.textSecondary,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
                       ],
                     ],
                   ),
@@ -292,29 +317,33 @@ class _AddBucketItemScreenState extends ConsumerState<AddBucketItemScreen>
               ],
             ),
             const SizedBox(height: 16),
-            const Divider(color: AppColors.border),
+            Divider(color: context.col.border),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'Note (optional)',
               style: TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600),
+                color: context.col.textSecondary,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             const SizedBox(height: 8),
             TextField(
               controller: noteCtrl,
-              style: const TextStyle(
-                  color: AppColors.textPrimary, fontSize: 14),
+              style: TextStyle(color: context.col.textPrimary, fontSize: 14),
               maxLines: 2,
               decoration: InputDecoration(
                 hintText: 'e.g. Try their special dish!',
-                hintStyle: const TextStyle(
-                    color: AppColors.textMuted, fontSize: 14),
+                hintStyle: TextStyle(
+                  color: context.col.textMuted,
+                  fontSize: 14,
+                ),
                 filled: true,
-                fillColor: AppColors.surfaceElevated,
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                fillColor: context.col.surfaceElevated,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -340,15 +369,15 @@ class _AddBucketItemScreenState extends ConsumerState<AddBucketItemScreen>
                 },
                 style: FilledButton.styleFrom(
                   backgroundColor: AppColors.primary,
-                  foregroundColor: AppColors.bg,
+                  foregroundColor: context.col.bg,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
                 child: const Text(
                   'Add to List',
-                  style: TextStyle(
-                      fontWeight: FontWeight.w700, fontSize: 15),
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
                 ),
               ),
             ),
@@ -361,19 +390,18 @@ class _AddBucketItemScreenState extends ConsumerState<AddBucketItemScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: context.col.bg,
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: context.col.surface,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.close_rounded,
-              color: AppColors.textSecondary),
+          icon: Icon(Icons.close_rounded, color: context.col.textSecondary),
           onPressed: () => context.pop(),
         ),
-        title: const Text(
+        title: Text(
           'Add to Bucket List',
           style: TextStyle(
-            color: AppColors.textPrimary,
+            color: context.col.textPrimary,
             fontWeight: FontWeight.w700,
             fontSize: 16,
           ),
@@ -387,14 +415,14 @@ class _AddBucketItemScreenState extends ConsumerState<AddBucketItemScreen>
             indicatorColor: AppColors.primary,
             indicatorWeight: 2.5,
             labelColor: AppColors.primary,
-            unselectedLabelColor: AppColors.textSecondary,
+            unselectedLabelColor: context.col.textSecondary,
             labelStyle: const TextStyle(
-                fontSize: 12, fontWeight: FontWeight.w600),
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
             unselectedLabelStyle: const TextStyle(fontSize: 12),
-            dividerColor: AppColors.border,
-            tabs: _tabs
-                .map((t) => Tab(text: '${t.emoji} ${t.label}'))
-                .toList(),
+            dividerColor: context.col.border,
+            tabs: _tabs.map((t) => Tab(text: '${t.emoji} ${t.label}')).toList(),
           ),
         ),
       ),
@@ -455,19 +483,23 @@ class _ListingTab extends ConsumerWidget {
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
           child: TextField(
             controller: searchCtrl,
-            style:
-                const TextStyle(color: AppColors.textPrimary, fontSize: 14),
+            style: TextStyle(color: context.col.textPrimary, fontSize: 14),
             onChanged: onQueryChanged,
             decoration: InputDecoration(
               hintText: 'Search ${tab.label.toLowerCase()}...',
-              hintStyle:
-                  const TextStyle(color: AppColors.textMuted, fontSize: 14),
-              prefixIcon: const Icon(Icons.search_rounded,
-                  color: AppColors.textMuted, size: 20),
+              hintStyle: TextStyle(color: context.col.textMuted, fontSize: 14),
+              prefixIcon: Icon(
+                Icons.search_rounded,
+                color: context.col.textMuted,
+                size: 20,
+              ),
               suffixIcon: query.isNotEmpty
                   ? IconButton(
-                      icon: const Icon(Icons.clear_rounded,
-                          color: AppColors.textMuted, size: 18),
+                      icon: Icon(
+                        Icons.clear_rounded,
+                        color: context.col.textMuted,
+                        size: 18,
+                      ),
                       onPressed: () {
                         searchCtrl.clear();
                         onQueryChanged('');
@@ -475,7 +507,7 @@ class _ListingTab extends ConsumerWidget {
                     )
                   : null,
               filled: true,
-              fillColor: AppColors.surfaceElevated,
+              fillColor: context.col.surfaceElevated,
               contentPadding: const EdgeInsets.symmetric(vertical: 10),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -499,19 +531,26 @@ class _ListingTab extends ConsumerWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.cloud_off_rounded,
-                        color: AppColors.textMuted, size: 40),
+                    Icon(
+                      Icons.cloud_off_rounded,
+                      color: context.col.textMuted,
+                      size: 40,
+                    ),
                     const SizedBox(height: 12),
                     Text(
                       'Could not load ${tab.label}',
-                      style: const TextStyle(
-                          color: AppColors.textSecondary, fontSize: 14),
+                      style: TextStyle(
+                        color: context.col.textSecondary,
+                        fontSize: 14,
+                      ),
                     ),
                     const SizedBox(height: 6),
                     Text(
                       e.toString(),
-                      style: const TextStyle(
-                          color: AppColors.textMuted, fontSize: 11),
+                      style: TextStyle(
+                        color: context.col.textMuted,
+                        fontSize: 11,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                   ],
@@ -522,29 +561,32 @@ class _ListingTab extends ConsumerWidget {
               final filtered = query.isEmpty
                   ? listings
                   : listings
-                      .where((l) =>
-                          l.name
-                              .toLowerCase()
-                              .contains(query.toLowerCase()) ||
-                          l.location
-                              .toLowerCase()
-                              .contains(query.toLowerCase()))
-                      .toList();
+                        .where(
+                          (l) =>
+                              l.name.toLowerCase().contains(
+                                query.toLowerCase(),
+                              ) ||
+                              l.location.toLowerCase().contains(
+                                query.toLowerCase(),
+                              ),
+                        )
+                        .toList();
 
               if (filtered.isEmpty) {
                 return Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(tab.emoji,
-                          style: const TextStyle(fontSize: 40)),
+                      Text(tab.emoji, style: const TextStyle(fontSize: 40)),
                       const SizedBox(height: 12),
                       Text(
                         query.isEmpty
                             ? 'No ${tab.label} available'
                             : 'No results for "\$query"',
-                        style: const TextStyle(
-                            color: AppColors.textSecondary, fontSize: 14),
+                        style: TextStyle(
+                          color: context.col.textSecondary,
+                          fontSize: 14,
+                        ),
                       ),
                     ],
                   ),
@@ -555,11 +597,9 @@ class _ListingTab extends ConsumerWidget {
                 padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
                 itemCount: filtered.length,
                 separatorBuilder: (_, __) =>
-                    const Divider(color: AppColors.border, height: 1),
-                itemBuilder: (_, i) => _ListingTile(
-                  listing: filtered[i],
-                  onTap: onSelect,
-                ),
+                    Divider(color: context.col.border, height: 1),
+                itemBuilder: (_, i) =>
+                    _ListingTile(listing: filtered[i], onTap: onSelect),
               );
             },
           ),
@@ -595,8 +635,8 @@ class _ListingTile extends StatelessWidget {
                 children: [
                   Text(
                     listing.name,
-                    style: const TextStyle(
-                      color: AppColors.textPrimary,
+                    style: TextStyle(
+                      color: context.col.textPrimary,
                       fontWeight: FontWeight.w600,
                       fontSize: 14,
                     ),
@@ -607,37 +647,46 @@ class _ListingTile extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       listing.location,
-                      style: const TextStyle(
-                          color: AppColors.textMuted, fontSize: 12),
+                      style: TextStyle(
+                        color: context.col.textMuted,
+                        fontSize: 12,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],
                   if (listing.rating > 0) ...[
                     const SizedBox(height: 4),
-                    Row(children: [
-                      const Icon(Icons.star_rounded,
-                          color: AppColors.star, size: 12),
-                      const SizedBox(width: 3),
-                      Text(
-                        listing.rating.toStringAsFixed(1),
-                        style: const TextStyle(
-                            color: AppColors.textSecondary, fontSize: 11),
-                      ),
-                    ]),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.star_rounded,
+                          color: AppColors.star,
+                          size: 12,
+                        ),
+                        const SizedBox(width: 3),
+                        Text(
+                          listing.rating.toStringAsFixed(1),
+                          style: TextStyle(
+                            color: context.col.textSecondary,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ],
               ),
             ),
             const SizedBox(width: 8),
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
                 color: AppColors.primary.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                    color: AppColors.primary.withValues(alpha: 0.35)),
+                  color: AppColors.primary.withValues(alpha: 0.35),
+                ),
               ),
               child: const Text(
                 '+ Add',
@@ -674,19 +723,22 @@ class _ListingThumb extends StatelessWidget {
               width: size,
               height: size,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => _placeholder(),
+              errorBuilder: (ctx, __, ___) => _placeholder(ctx),
             )
-          : _placeholder(),
+          : _placeholder(context),
     );
   }
 
-  Widget _placeholder() => Container(
-        width: size,
-        height: size,
-        color: AppColors.surfaceElevated,
-        child: const Icon(Icons.image_not_supported_rounded,
-            color: AppColors.textMuted, size: 22),
-      );
+  Widget _placeholder(BuildContext context) => Container(
+    width: size,
+    height: size,
+    color: context.col.surfaceElevated,
+    child: Icon(
+      Icons.image_not_supported_rounded,
+      color: context.col.textMuted,
+      size: 22,
+    ),
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -723,23 +775,24 @@ class _CustomItemTab extends StatelessWidget {
       child: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          const Text(
+          Text(
             'Add a custom item not found in the listings above.',
-            style: TextStyle(color: AppColors.textMuted, fontSize: 13),
+            style: TextStyle(color: context.col.textMuted, fontSize: 13),
           ),
           const SizedBox(height: 20),
-          _label('Item Name *'),
+          _label(context, 'Item Name *'),
           TextFormField(
             controller: nameCtrl,
-            style: const TextStyle(
-                color: AppColors.textPrimary, fontSize: 14),
-            decoration:
-                _deco(hint: 'e.g. Visit a hidden waterfall trail'),
+            style: TextStyle(color: context.col.textPrimary, fontSize: 14),
+            decoration: _deco(
+              context,
+              hint: 'e.g. Visit a hidden waterfall trail',
+            ),
             validator: (v) =>
                 v == null || v.trim().isEmpty ? 'Name is required' : null,
           ),
           const SizedBox(height: 20),
-          _label('Category'),
+          _label(context, 'Category'),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
@@ -751,14 +804,16 @@ class _CustomItemTab extends StatelessWidget {
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 140),
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 8),
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: sel
                         ? AppColors.primary.withValues(alpha: 0.15)
-                        : AppColors.surfaceElevated,
+                        : context.col.surfaceElevated,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: sel ? AppColors.primary : AppColors.border,
+                      color: sel ? AppColors.primary : context.col.border,
                       width: sel ? 1.5 : 1,
                     ),
                   ),
@@ -767,10 +822,9 @@ class _CustomItemTab extends StatelessWidget {
                     style: TextStyle(
                       color: sel
                           ? AppColors.primary
-                          : AppColors.textSecondary,
+                          : context.col.textSecondary,
                       fontSize: 12,
-                      fontWeight:
-                          sel ? FontWeight.w600 : FontWeight.normal,
+                      fontWeight: sel ? FontWeight.w600 : FontWeight.normal,
                     ),
                   ),
                 ),
@@ -779,29 +833,26 @@ class _CustomItemTab extends StatelessWidget {
           ),
           if (category == BucketCategory.other) ...[
             const SizedBox(height: 12),
-            _label('Custom Category Name'),
+            _label(context, 'Custom Category Name'),
             TextFormField(
               controller: customCatCtrl,
-              style: const TextStyle(
-                  color: AppColors.textPrimary, fontSize: 14),
-              decoration: _deco(hint: 'e.g. Street Food'),
+              style: TextStyle(color: context.col.textPrimary, fontSize: 14),
+              decoration: _deco(context, hint: 'e.g. Street Food'),
             ),
           ],
           const SizedBox(height: 20),
-          _label('Image URL (optional)'),
+          _label(context, 'Image URL (optional)'),
           TextFormField(
             controller: imageCtrl,
-            style: const TextStyle(
-                color: AppColors.textPrimary, fontSize: 14),
-            decoration: _deco(hint: 'https://...'),
+            style: TextStyle(color: context.col.textPrimary, fontSize: 14),
+            decoration: _deco(context, hint: 'https://...'),
           ),
           const SizedBox(height: 20),
-          _label('Note (optional)'),
+          _label(context, 'Note (optional)'),
           TextFormField(
             controller: noteCtrl,
-            style: const TextStyle(
-                color: AppColors.textPrimary, fontSize: 14),
-            decoration: _deco(hint: 'Tips or things to remember...'),
+            style: TextStyle(color: context.col.textPrimary, fontSize: 14),
+            decoration: _deco(context, hint: 'Tips or things to remember...'),
             maxLines: 3,
           ),
           const SizedBox(height: 32),
@@ -811,22 +862,27 @@ class _CustomItemTab extends StatelessWidget {
               onPressed: onSave,
               style: FilledButton.styleFrom(
                 backgroundColor: AppColors.primary,
-                foregroundColor: AppColors.bg,
+                foregroundColor: context.col.bg,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
               child: saving
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 18,
                       height: 18,
                       child: CircularProgressIndicator(
-                          strokeWidth: 2, color: AppColors.bg),
+                        strokeWidth: 2,
+                        color: context.col.bg,
+                      ),
                     )
                   : const Text(
                       'Add Custom Item',
                       style: TextStyle(
-                          fontWeight: FontWeight.w700, fontSize: 15),
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                      ),
                     ),
             ),
           ),
@@ -836,26 +892,28 @@ class _CustomItemTab extends StatelessWidget {
     );
   }
 
-  static Widget _label(String text) => Padding(
-        padding: const EdgeInsets.only(bottom: 6),
-        child: Text(
-          text,
-          style: const TextStyle(
-            color: AppColors.textSecondary,
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      );
+  static Widget _label(BuildContext context, String text) => Padding(
+    padding: const EdgeInsets.only(bottom: 6),
+    child: Text(
+      text,
+      style: TextStyle(
+        color: context.col.textSecondary,
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+      ),
+    ),
+  );
 
-  static InputDecoration _deco({required String hint}) => InputDecoration(
+  static InputDecoration _deco(BuildContext context, {required String hint}) =>
+      InputDecoration(
         hintText: hint,
-        hintStyle:
-            const TextStyle(color: AppColors.textMuted, fontSize: 14),
+        hintStyle: TextStyle(color: context.col.textMuted, fontSize: 14),
         filled: true,
-        fillColor: AppColors.surfaceElevated,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        fillColor: context.col.surfaceElevated,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 12,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,

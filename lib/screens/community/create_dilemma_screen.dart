@@ -145,9 +145,9 @@ class _CreateDilemmaScreenState extends ConsumerState<CreateDilemmaScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: context.col.bg,
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: context.col.surface,
         title: const Text('New Dilemma'),
         leading: IconButton(
           icon: const Icon(Icons.close_rounded),
@@ -170,7 +170,7 @@ class _CreateDilemmaScreenState extends ConsumerState<CreateDilemmaScreen> {
                     style: TextStyle(
                       color: _canSubmit
                           ? AppColors.primary
-                          : AppColors.textMuted,
+                          : context.col.textMuted,
                       fontWeight: FontWeight.w700,
                       fontSize: 16,
                     ),
@@ -195,22 +195,22 @@ class _CreateDilemmaScreenState extends ConsumerState<CreateDilemmaScreen> {
               maxLines: 3,
               maxLength: 200,
               textCapitalization: TextCapitalization.sentences,
-              style: const TextStyle(
-                color: AppColors.textPrimary,
+              style: TextStyle(
+                color: context.col.textPrimary,
                 fontSize: 15,
               ),
               decoration: InputDecoration(
                 hintText: 'e.g. "Which is better for a weekend trip?"',
-                hintStyle: const TextStyle(color: AppColors.textMuted),
+                hintStyle: TextStyle(color: context.col.textMuted),
                 filled: true,
-                fillColor: AppColors.surface,
+                fillColor: context.col.surface,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.border),
+                  borderSide: BorderSide(color: context.col.border),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.border),
+                  borderSide: BorderSide(color: context.col.border),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -219,8 +219,8 @@ class _CreateDilemmaScreenState extends ConsumerState<CreateDilemmaScreen> {
                     width: 1.5,
                   ),
                 ),
-                counterStyle: const TextStyle(
-                  color: AppColors.textMuted,
+                counterStyle: TextStyle(
+                  color: context.col.textMuted,
                   fontSize: 11,
                 ),
               ),
@@ -294,10 +294,10 @@ class _CreateDilemmaScreenState extends ConsumerState<CreateDilemmaScreen> {
                     decoration: BoxDecoration(
                       color: selected
                           ? AppColors.primary.withValues(alpha: 0.18)
-                          : AppColors.surface,
+                          : context.col.surface,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: selected ? AppColors.primary : AppColors.border,
+                        color: selected ? AppColors.primary : context.col.border,
                         width: selected ? 1.5 : 1,
                       ),
                     ),
@@ -307,7 +307,7 @@ class _CreateDilemmaScreenState extends ConsumerState<CreateDilemmaScreen> {
                         fontSize: 13,
                         color: selected
                             ? AppColors.primary
-                            : AppColors.textSecondary,
+                            : context.col.textSecondary,
                         fontWeight: selected
                             ? FontWeight.w600
                             : FontWeight.normal,
@@ -326,24 +326,24 @@ class _CreateDilemmaScreenState extends ConsumerState<CreateDilemmaScreen> {
               child: ElevatedButton.icon(
                 onPressed: _canSubmit && !_saving ? _submit : null,
                 icon: _saving
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 16,
                         height: 16,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: AppColors.bg,
+                          color: context.col.bg,
                         ),
                       )
                     : const Icon(Icons.how_to_vote_outlined),
                 label: Text(_saving ? 'Posting...' : 'Post Dilemma'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
-                  foregroundColor: AppColors.bg,
+                  foregroundColor: context.col.bg,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  disabledBackgroundColor: AppColors.border,
+                  disabledBackgroundColor: context.col.border,
                   textStyle: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
@@ -375,8 +375,8 @@ class _SectionLabel extends StatelessWidget {
         const SizedBox(width: 6),
         Text(
           label,
-          style: const TextStyle(
-            color: AppColors.textSecondary,
+          style: TextStyle(
+            color: context.col.textSecondary,
             fontSize: 12,
             fontWeight: FontWeight.w600,
             letterSpacing: 0.5,
@@ -399,16 +399,16 @@ class _VsChip extends StatelessWidget {
       height: 32,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: AppColors.surfaceElevated,
-        border: Border.all(color: AppColors.border),
+        color: context.col.surfaceElevated,
+        border: Border.all(color: context.col.border),
       ),
       alignment: Alignment.center,
-      child: const Text(
+      child: Text(
         'VS',
         style: TextStyle(
           fontSize: 9,
           fontWeight: FontWeight.w900,
-          color: AppColors.textSecondary,
+          color: context.col.textSecondary,
           letterSpacing: 0.5,
         ),
       ),
@@ -438,12 +438,12 @@ class _PlaceSlot extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         height: 120,
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: context.col.surface,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: option != null
                 ? color.withValues(alpha: 0.6)
-                : AppColors.border,
+                : context.col.border,
             width: option != null ? 1.5 : 1,
           ),
         ),
@@ -463,9 +463,9 @@ class _PlaceSlot extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 2),
-                  const Text(
+                  Text(
                     'Tap to select',
-                    style: TextStyle(color: AppColors.textMuted, fontSize: 10),
+                    style: TextStyle(color: context.col.textMuted, fontSize: 10),
                   ),
                 ],
               )
@@ -705,7 +705,7 @@ class _PlacePickerSheetState extends State<_PlacePickerSheet> {
     return Container(
       margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.col.surface,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
@@ -717,19 +717,19 @@ class _PlacePickerSheetState extends State<_PlacePickerSheet> {
             width: 36,
             height: 4,
             decoration: BoxDecoration(
-              color: AppColors.border,
+              color: context.col.border,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
           const SizedBox(height: 16),
-          const Padding(
+          Padding(
             padding: EdgeInsets.symmetric(horizontal: 20),
             child: Align(
               alignment: Alignment.centerLeft,
               child: Text(
                 'Select a place',
                 style: TextStyle(
-                  color: AppColors.textPrimary,
+                  color: context.col.textPrimary,
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                 ),
@@ -743,21 +743,21 @@ class _PlacePickerSheetState extends State<_PlacePickerSheet> {
             child: TextField(
               controller: _ctrl,
               autofocus: true,
-              style: const TextStyle(
-                color: AppColors.textPrimary,
+              style: TextStyle(
+                color: context.col.textPrimary,
                 fontSize: 14,
               ),
               decoration: InputDecoration(
                 hintText: 'Search spots, cafés, restaurants...',
-                hintStyle: const TextStyle(
-                  color: AppColors.textMuted,
+                hintStyle: TextStyle(
+                  color: context.col.textMuted,
                   fontSize: 13,
                 ),
                 filled: true,
-                fillColor: AppColors.surfaceElevated,
-                prefixIcon: const Icon(
+                fillColor: context.col.surfaceElevated,
+                prefixIcon: Icon(
                   Icons.search_rounded,
-                  color: AppColors.textSecondary,
+                  color: context.col.textSecondary,
                   size: 20,
                 ),
                 suffixIcon: _loading
@@ -797,9 +797,9 @@ class _PlacePickerSheetState extends State<_PlacePickerSheet> {
                     padding: EdgeInsets.only(top: 32, bottom: 32 + bottom),
                     child: Column(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.search_rounded,
-                          color: AppColors.textMuted,
+                          color: context.col.textMuted,
                           size: 40,
                         ),
                         const SizedBox(height: 10),
@@ -807,8 +807,8 @@ class _PlacePickerSheetState extends State<_PlacePickerSheet> {
                           _ctrl.text.length < 2
                               ? 'Type to search places'
                               : 'No results found',
-                          style: const TextStyle(
-                            color: AppColors.textSecondary,
+                          style: TextStyle(
+                            color: context.col.textSecondary,
                             fontSize: 13,
                           ),
                         ),
@@ -843,8 +843,8 @@ class _PlacePickerSheetState extends State<_PlacePickerSheet> {
                         ),
                         title: Text(
                           place.name,
-                          style: const TextStyle(
-                            color: AppColors.textPrimary,
+                          style: TextStyle(
+                            color: context.col.textPrimary,
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                           ),
@@ -854,8 +854,8 @@ class _PlacePickerSheetState extends State<_PlacePickerSheet> {
                             _catLabel(place.category),
                             if (place.district != null) place.district!,
                           ].join(' · '),
-                          style: const TextStyle(
-                            color: AppColors.textSecondary,
+                          style: TextStyle(
+                            color: context.col.textSecondary,
                             fontSize: 12,
                           ),
                         ),

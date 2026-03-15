@@ -22,14 +22,14 @@ class BucketListDetailScreen extends ConsumerWidget {
     final user = ref.watch(currentUserProvider);
 
     return async.when(
-      loading: () => const Scaffold(
-        backgroundColor: AppColors.bg,
+      loading: () => Scaffold(
+        backgroundColor: context.col.bg,
         body: Center(
           child: CircularProgressIndicator(color: AppColors.primary),
         ),
       ),
       error: (e, _) => Scaffold(
-        backgroundColor: AppColors.bg,
+        backgroundColor: context.col.bg,
         body: Center(
           child: Text(
             'Error: $e',
@@ -39,12 +39,12 @@ class BucketListDetailScreen extends ConsumerWidget {
       ),
       data: (list) {
         if (list == null) {
-          return const Scaffold(
-            backgroundColor: AppColors.bg,
+          return Scaffold(
+            backgroundColor: context.col.bg,
             body: Center(
               child: Text(
                 'List not found',
-                style: TextStyle(color: AppColors.textSecondary),
+                style: TextStyle(color: context.col.textSecondary),
               ),
             ),
           );
@@ -72,14 +72,14 @@ class _DetailBody extends ConsumerWidget {
     final pct = (list.progress * 100).toInt();
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: context.col.bg,
       body: CustomScrollView(
         slivers: [
           // ── Banner SliverAppBar ────────────────────────────────────
           SliverAppBar(
             expandedHeight: 200,
             pinned: true,
-            backgroundColor: AppColors.bg,
+            backgroundColor: context.col.bg,
             leading: IconButton(
               icon: const Icon(
                 Icons.arrow_back_ios_new_rounded,
@@ -94,39 +94,39 @@ class _DetailBody extends ConsumerWidget {
                     Icons.more_vert_rounded,
                     color: Colors.white,
                   ),
-                  color: AppColors.surface,
+                  color: context.col.surface,
                   onSelected: (v) => _onHostMenu(context, ref, v),
                   itemBuilder: (_) => [
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: 'edit',
                       child: Row(
                         children: [
                           Icon(
                             Icons.edit_outlined,
-                            color: AppColors.textSecondary,
+                            color: context.col.textSecondary,
                             size: 18,
                           ),
                           SizedBox(width: 10),
                           Text(
                             'Edit List',
-                            style: TextStyle(color: AppColors.textPrimary),
+                            style: TextStyle(color: context.col.textPrimary),
                           ),
                         ],
                       ),
                     ),
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: 'share',
                       child: Row(
                         children: [
                           Icon(
                             Icons.share_outlined,
-                            color: AppColors.textSecondary,
+                            color: context.col.textSecondary,
                             size: 18,
                           ),
                           SizedBox(width: 10),
                           Text(
                             'Share Code',
-                            style: TextStyle(color: AppColors.textPrimary),
+                            style: TextStyle(color: context.col.textPrimary),
                           ),
                         ],
                       ),
@@ -168,9 +168,9 @@ class _DetailBody extends ConsumerWidget {
                           list.bannerUrl,
                           fit: BoxFit.cover,
                           errorBuilder: (_, __, ___) =>
-                              Container(color: AppColors.surfaceElevated),
+                              Container(color: context.col.surfaceElevated),
                         )
-                      : Container(color: AppColors.surfaceElevated),
+                      : Container(color: context.col.surfaceElevated),
                   Container(
                     decoration: const BoxDecoration(
                       gradient: LinearGradient(
@@ -269,11 +269,11 @@ class _DetailBody extends ConsumerWidget {
                   // ── Bucket Items ─────────────────────────────────
                   Row(
                     children: [
-                      const Expanded(
+                      Expanded(
                         child: Text(
                           'Bucket List Items',
                           style: TextStyle(
-                            color: AppColors.textPrimary,
+                            color: context.col.textPrimary,
                             fontSize: 17,
                             fontWeight: FontWeight.w700,
                           ),
@@ -356,7 +356,7 @@ class _DetailBody extends ConsumerWidget {
           ? FloatingActionButton.extended(
               onPressed: () => _confirmJoin(context, ref),
               backgroundColor: AppColors.primary,
-              foregroundColor: AppColors.bg,
+              foregroundColor: context.col.bg,
               icon: const Icon(Icons.group_add_rounded),
               label: const Text('Join This List'),
             )
@@ -383,21 +383,21 @@ class _DetailBody extends ConsumerWidget {
       showDialog(
         context: context,
         builder: (_) => AlertDialog(
-          backgroundColor: AppColors.surface,
-          title: const Text(
+          backgroundColor: context.col.surface,
+          title: Text(
             'Delete List?',
-            style: TextStyle(color: AppColors.textPrimary),
+            style: TextStyle(color: context.col.textPrimary),
           ),
-          content: const Text(
+          content: Text(
             'This will permanently delete the bucket list and all its items.',
-            style: TextStyle(color: AppColors.textSecondary),
+            style: TextStyle(color: context.col.textSecondary),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text(
+              child: Text(
                 'Cancel',
-                style: TextStyle(color: AppColors.textSecondary),
+                style: TextStyle(color: context.col.textSecondary),
               ),
             ),
             TextButton(
@@ -423,21 +423,21 @@ class _DetailBody extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: const Text(
+        backgroundColor: context.col.surface,
+        title: Text(
           'Leave List?',
-          style: TextStyle(color: AppColors.textPrimary),
+          style: TextStyle(color: context.col.textPrimary),
         ),
-        content: const Text(
+        content: Text(
           'You will need a join code to rejoin.',
-          style: TextStyle(color: AppColors.textSecondary),
+          style: TextStyle(color: context.col.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text(
+            child: Text(
               'Cancel',
-              style: TextStyle(color: AppColors.textSecondary),
+              style: TextStyle(color: context.col.textSecondary),
             ),
           ),
           TextButton(
@@ -478,21 +478,21 @@ class _DetailBody extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: const Text(
+        backgroundColor: context.col.surface,
+        title: Text(
           'Join this list?',
-          style: TextStyle(color: AppColors.textPrimary),
+          style: TextStyle(color: context.col.textPrimary),
         ),
         content: Text(
           'Your request will be sent to ${list.hostName} for approval.',
-          style: const TextStyle(color: AppColors.textSecondary),
+          style: TextStyle(color: context.col.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text(
+            child: Text(
               'Cancel',
-              style: TextStyle(color: AppColors.textSecondary),
+              style: TextStyle(color: context.col.textSecondary),
             ),
           ),
           FilledButton(
@@ -518,7 +518,7 @@ class _DetailBody extends ConsumerWidget {
             },
             style: FilledButton.styleFrom(
               backgroundColor: AppColors.primary,
-              foregroundColor: AppColors.bg,
+              foregroundColor: context.col.bg,
             ),
             child: const Text('Send Request'),
           ),
@@ -543,9 +543,9 @@ class _ProgressCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.col.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.col.border),
       ),
       child: Column(
         children: [
@@ -560,12 +560,12 @@ class _ProgressCard extends StatelessWidget {
               _Stat(
                 label: 'Checked',
                 value: '${list.checkedCount}/${list.items.length}',
-                color: AppColors.textPrimary,
+                color: context.col.textPrimary,
               ),
               _Stat(
                 label: 'Members',
                 value: '${list.approvedCount}/${list.maxMembers}',
-                color: AppColors.textPrimary,
+                color: context.col.textPrimary,
               ),
               _Stat(
                 label: 'XP Reward',
@@ -579,7 +579,7 @@ class _ProgressCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(6),
             child: LinearProgressIndicator(
               value: list.progress,
-              backgroundColor: AppColors.border,
+              backgroundColor: context.col.border,
               valueColor: const AlwaysStoppedAnimation<Color>(
                 AppColors.primary,
               ),
@@ -613,7 +613,7 @@ class _Stat extends StatelessWidget {
         ),
         Text(
           label,
-          style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
+          style: TextStyle(color: context.col.textMuted, fontSize: 11),
         ),
       ],
     );
@@ -645,10 +645,10 @@ class _JoinCodeCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Join Code',
                   style: TextStyle(
-                    color: AppColors.textSecondary,
+                    color: context.col.textSecondary,
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                   ),
@@ -726,7 +726,7 @@ class _PendingRequestsCard extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 16,
-                    backgroundColor: AppColors.surfaceElevated,
+                    backgroundColor: context.col.surfaceElevated,
                     backgroundImage: req.userPhoto != null
                         ? NetworkImage(req.userPhoto!)
                         : null,
@@ -747,8 +747,8 @@ class _PendingRequestsCard extends StatelessWidget {
                   Expanded(
                     child: Text(
                       req.userName,
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
+                      style: TextStyle(
+                        color: context.col.textPrimary,
                         fontWeight: FontWeight.w600,
                         fontSize: 13,
                       ),
@@ -832,7 +832,7 @@ class _MembersRow extends StatelessWidget {
                     children: [
                       CircleAvatar(
                         radius: 18,
-                        backgroundColor: AppColors.surfaceElevated,
+                        backgroundColor: context.col.surfaceElevated,
                         backgroundImage: m.userPhoto != null
                             ? NetworkImage(m.userPhoto!)
                             : null,
@@ -858,12 +858,12 @@ class _MembersRow extends StatelessWidget {
                             decoration: BoxDecoration(
                               color: AppColors.accent,
                               shape: BoxShape.circle,
-                              border: Border.all(color: AppColors.bg, width: 1),
+                              border: Border.all(color: context.col.bg, width: 1),
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.star_rounded,
                               size: 8,
-                              color: AppColors.bg,
+                              color: context.col.bg,
                             ),
                           ),
                         ),
@@ -875,11 +875,11 @@ class _MembersRow extends StatelessWidget {
         if (approved.length > 6)
           CircleAvatar(
             radius: 18,
-            backgroundColor: AppColors.surfaceElevated,
+            backgroundColor: context.col.surfaceElevated,
             child: Text(
               '+${approved.length - 6}',
-              style: const TextStyle(
-                color: AppColors.textSecondary,
+              style: TextStyle(
+                color: context.col.textSecondary,
                 fontSize: 10,
               ),
             ),
@@ -887,7 +887,7 @@ class _MembersRow extends StatelessWidget {
         const SizedBox(width: 8),
         Text(
           '${approved.length} traveler${approved.length != 1 ? 's' : ''}',
-          style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+          style: TextStyle(color: context.col.textSecondary, fontSize: 12),
         ),
       ],
     );
@@ -924,12 +924,12 @@ class _BucketItemTile extends ConsumerWidget {
         decoration: BoxDecoration(
           color: item.isChecked
               ? AppColors.primary.withValues(alpha: 0.07)
-              : AppColors.surface,
+              : context.col.surface,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: item.isChecked
                 ? AppColors.primary.withValues(alpha: 0.4)
-                : AppColors.border,
+                : context.col.border,
           ),
         ),
         child: ListTile(
@@ -957,17 +957,17 @@ class _BucketItemTile extends ConsumerWidget {
                 shape: BoxShape.circle,
                 color: item.isChecked
                     ? AppColors.primary
-                    : AppColors.surfaceElevated,
+                    : context.col.surfaceElevated,
                 border: Border.all(
-                  color: item.isChecked ? AppColors.primary : AppColors.border,
+                  color: item.isChecked ? AppColors.primary : context.col.border,
                   width: 2,
                 ),
               ),
               child: item.isChecked
-                  ? const Icon(
+                  ? Icon(
                       Icons.check_rounded,
                       size: 16,
-                      color: AppColors.bg,
+                      color: context.col.bg,
                     )
                   : null,
             ),
@@ -976,8 +976,8 @@ class _BucketItemTile extends ConsumerWidget {
             item.name,
             style: TextStyle(
               color: item.isChecked
-                  ? AppColors.textSecondary
-                  : AppColors.textPrimary,
+                  ? context.col.textSecondary
+                  : context.col.textPrimary,
               fontWeight: FontWeight.w600,
               fontSize: 14,
               decoration: item.isChecked ? TextDecoration.lineThrough : null,
@@ -988,8 +988,8 @@ class _BucketItemTile extends ConsumerWidget {
             children: [
               Text(
                 '${item.category.emoji} ${item.displayCategory}',
-                style: const TextStyle(
-                  color: AppColors.textMuted,
+                style: TextStyle(
+                  color: context.col.textMuted,
                   fontSize: 11,
                 ),
               ),
@@ -1006,8 +1006,8 @@ class _BucketItemTile extends ConsumerWidget {
                   padding: const EdgeInsets.only(top: 2),
                   child: Text(
                     '📝 ${item.note}',
-                    style: const TextStyle(
-                      color: AppColors.textSecondary,
+                    style: TextStyle(
+                      color: context.col.textSecondary,
                       fontSize: 11,
                       fontStyle: FontStyle.italic,
                     ),
@@ -1048,26 +1048,26 @@ class _EmptyItems extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.col.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border, style: BorderStyle.solid),
+        border: Border.all(color: context.col.border, style: BorderStyle.solid),
       ),
       child: Column(
         children: [
           const Text('📍', style: TextStyle(fontSize: 36)),
           const SizedBox(height: 10),
-          const Text(
+          Text(
             'No items yet',
             style: TextStyle(
-              color: AppColors.textPrimary,
+              color: context.col.textPrimary,
               fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'Add places, restaurants, cafés and more!',
             textAlign: TextAlign.center,
-            style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+            style: TextStyle(color: context.col.textSecondary, fontSize: 12),
           ),
           if (canAdd) ...[
             const SizedBox(height: 14),
@@ -1116,10 +1116,10 @@ class _CompletionBanner extends StatelessWidget {
         children: [
           const Text('🎉', style: TextStyle(fontSize: 40)),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Adventure Complete!',
             style: TextStyle(
-              color: AppColors.textPrimary,
+              color: context.col.textPrimary,
               fontSize: 18,
               fontWeight: FontWeight.w800,
             ),
@@ -1128,8 +1128,8 @@ class _CompletionBanner extends StatelessWidget {
           Text(
             'You\'ve conquered every stop on this bucket list!',
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: AppColors.textSecondary,
+            style: TextStyle(
+              color: context.col.textSecondary,
               fontSize: 13,
             ),
           ),

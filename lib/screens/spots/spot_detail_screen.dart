@@ -61,7 +61,7 @@ class _SpotDetailBodyState extends ConsumerState<_SpotDetailBody> {
           SliverAppBar(
             expandedHeight: 280,
             pinned: true,
-            backgroundColor: AppColors.bg,
+            backgroundColor: context.col.bg,
             actions: [
               if (user != null)
                 IconButton(
@@ -89,7 +89,7 @@ class _SpotDetailBodyState extends ConsumerState<_SpotDetailBody> {
                             fit: BoxFit.cover,
                           ),
                         )
-                      : Container(color: AppColors.surfaceElevated),
+                      : Container(color: context.col.surfaceElevated),
 
                   // Page dots
                   if (spot.imagesUrl.length > 1)
@@ -169,10 +169,10 @@ class _SpotDetailBodyState extends ConsumerState<_SpotDetailBody> {
                   // Location
                   Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.location_on,
                         size: 14,
-                        color: AppColors.textSecondary,
+                        color: context.col.textSecondary,
                       ),
                       const SizedBox(width: 4),
                       Expanded(
@@ -242,15 +242,15 @@ class _SpotDetailBodyState extends ConsumerState<_SpotDetailBody> {
                                 vertical: 6,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.surfaceElevated,
+                                color: context.col.surfaceElevated,
                                 borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: AppColors.border),
+                                border: Border.all(color: context.col.border),
                               ),
                               child: Text(
                                 t,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 13,
-                                  color: AppColors.textSecondary,
+                                  color: context.col.textSecondary,
                                 ),
                               ),
                             ),
@@ -434,10 +434,10 @@ class _ReviewSectionState extends ConsumerState<_ReviewSection> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
+            Text(
               'Reviews',
               style: TextStyle(
-                color: AppColors.textPrimary,
+                color: context.col.textPrimary,
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
               ),
@@ -453,10 +453,10 @@ class _ReviewSectionState extends ConsumerState<_ReviewSection> {
                   decoration: BoxDecoration(
                     color: _showForm
                         ? AppColors.primary.withValues(alpha: 0.12)
-                        : AppColors.surfaceElevated,
+                        : context.col.surfaceElevated,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: _showForm ? AppColors.primary : AppColors.border,
+                      color: _showForm ? AppColors.primary : context.col.border,
                     ),
                   ),
                   child: Row(
@@ -469,7 +469,7 @@ class _ReviewSectionState extends ConsumerState<_ReviewSection> {
                         size: 14,
                         color: _showForm
                             ? AppColors.primary
-                            : AppColors.textSecondary,
+                            : context.col.textSecondary,
                       ),
                       const SizedBox(width: 5),
                       Text(
@@ -479,7 +479,7 @@ class _ReviewSectionState extends ConsumerState<_ReviewSection> {
                           fontWeight: FontWeight.w600,
                           color: _showForm
                               ? AppColors.primary
-                              : AppColors.textSecondary,
+                              : context.col.textSecondary,
                         ),
                       ),
                     ],
@@ -495,17 +495,17 @@ class _ReviewSectionState extends ConsumerState<_ReviewSection> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppColors.surfaceElevated,
+              color: context.col.surfaceElevated,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AppColors.border),
+              border: Border.all(color: context.col.border),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Your Rating',
                   style: TextStyle(
-                    color: AppColors.textSecondary,
+                    color: context.col.textSecondary,
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                   ),
@@ -532,8 +532,8 @@ class _ReviewSectionState extends ConsumerState<_ReviewSection> {
                 const SizedBox(height: 14),
                 TextField(
                   controller: _commentCtrl,
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
+                  style: TextStyle(
+                    color: context.col.textPrimary,
                     fontSize: 14,
                   ),
                   cursorColor: AppColors.primary,
@@ -541,20 +541,20 @@ class _ReviewSectionState extends ConsumerState<_ReviewSection> {
                   maxLength: 300,
                   decoration: InputDecoration(
                     hintText: 'Share your experience…',
-                    hintStyle: const TextStyle(
-                      color: AppColors.textMuted,
+                    hintStyle: TextStyle(
+                      color: context.col.textMuted,
                       fontSize: 14,
                     ),
                     filled: true,
-                    fillColor: AppColors.surface,
-                    counterStyle: const TextStyle(color: AppColors.textMuted),
+                    fillColor: context.col.surface,
+                    counterStyle: TextStyle(color: context.col.textMuted),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.border),
+                      borderSide: BorderSide(color: context.col.border),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.border),
+                      borderSide: BorderSide(color: context.col.border),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -609,25 +609,25 @@ class _ReviewSectionState extends ConsumerState<_ReviewSection> {
               child: CircularProgressIndicator(color: AppColors.primary),
             ),
           ),
-          error: (e, _) => const Padding(
+          error: (e, _) => Padding(
             padding: EdgeInsets.all(8),
             child: Text(
               'Could not load reviews',
-              style: TextStyle(color: AppColors.textMuted),
+              style: TextStyle(color: context.col.textMuted),
             ),
           ),
           data: (reviews) => reviews.isEmpty
               ? Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: AppColors.surfaceElevated,
+                    color: context.col.surfaceElevated,
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: AppColors.border),
+                    border: Border.all(color: context.col.border),
                   ),
-                  child: const Center(
+                  child: Center(
                     child: Text(
                       'No reviews yet — be the first! ✨',
-                      style: TextStyle(color: AppColors.textMuted),
+                      style: TextStyle(color: context.col.textMuted),
                     ),
                   ),
                 )
@@ -666,9 +666,9 @@ class _ReviewCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.surfaceElevated,
+        color: context.col.surfaceElevated,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.col.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -699,8 +699,8 @@ class _ReviewCard extends StatelessWidget {
                   children: [
                     Text(
                       userName,
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
+                      style: TextStyle(
+                        color: context.col.textPrimary,
                         fontWeight: FontWeight.w600,
                         fontSize: 13,
                       ),
@@ -708,8 +708,8 @@ class _ReviewCard extends StatelessWidget {
                     if (date != null)
                       Text(
                         _formatDate(date),
-                        style: const TextStyle(
-                          color: AppColors.textMuted,
+                        style: TextStyle(
+                          color: context.col.textMuted,
                           fontSize: 11,
                         ),
                       ),
@@ -749,8 +749,8 @@ class _ReviewCard extends StatelessWidget {
             const SizedBox(height: 10),
             Text(
               comment,
-              style: const TextStyle(
-                color: AppColors.textSecondary,
+              style: TextStyle(
+                color: context.col.textSecondary,
                 fontSize: 13,
                 height: 1.5,
               ),
@@ -786,23 +786,23 @@ class _InfoPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: AppColors.surfaceElevated,
+        color: context.col.surfaceElevated,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.col.border),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 13, color: AppColors.textSecondary),
+          Icon(icon, size: 13, color: context.col.textSecondary),
           const SizedBox(width: 4),
           Flexible(
             child: Text(
               label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
-                color: AppColors.textSecondary,
+                color: context.col.textSecondary,
               ),
             ),
           ),

@@ -102,12 +102,12 @@ class _FormView extends StatelessWidget {
         ElevatedButton(
           onPressed: loading ? null : onSubmit,
           child: loading
-              ? const SizedBox(
+              ? SizedBox(
                   height: 20,
                   width: 20,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: AppColors.bg,
+                    color: context.col.bg,
                   ),
                 )
               : const Text('Send Reset Link'),
@@ -177,10 +177,10 @@ class _SpotLogo extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 10),
-        const Text(
+        Text(
           'SpotSence',
           style: TextStyle(
-            color: AppColors.textPrimary,
+            color: context.col.textPrimary,
             fontSize: 20,
             fontWeight: FontWeight.w800,
           ),

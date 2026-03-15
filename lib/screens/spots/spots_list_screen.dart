@@ -74,10 +74,10 @@ class _SpotsListScreenState extends ConsumerState<SpotsListScreen> {
                     decoration: BoxDecoration(
                       color: selected
                           ? AppColors.primary
-                          : AppColors.surfaceElevated,
+                          : context.col.surfaceElevated,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: selected ? AppColors.primary : AppColors.border,
+                        color: selected ? AppColors.primary : context.col.border,
                       ),
                     ),
                     child: Text(
@@ -87,7 +87,7 @@ class _SpotsListScreenState extends ConsumerState<SpotsListScreen> {
                         fontWeight: FontWeight.w500,
                         color: selected
                             ? Colors.white
-                            : AppColors.textSecondary,
+                            : context.col.textSecondary,
                       ),
                     ),
                   ),

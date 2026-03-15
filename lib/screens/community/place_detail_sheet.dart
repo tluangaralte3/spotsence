@@ -375,27 +375,27 @@ class _PlaceDetailSheetState extends ConsumerState<_PlaceDetailSheet> {
     return await showDialog<String>(
           context: context,
           builder: (ctx) => AlertDialog(
-            backgroundColor: AppColors.surfaceElevated,
+            backgroundColor: context.col.surfaceElevated,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
-            title: const Text(
+            title: Text(
               'Add a caption',
-              style: TextStyle(color: AppColors.textPrimary, fontSize: 16),
+              style: TextStyle(color: context.col.textPrimary, fontSize: 16),
             ),
             content: TextField(
               controller: _captionCtrl,
-              style: const TextStyle(color: AppColors.textPrimary),
+              style: TextStyle(color: context.col.textPrimary),
               cursorColor: AppColors.primary,
               maxLength: 120,
               decoration: InputDecoration(
                 hintText: 'Describe this photo…',
-                hintStyle: const TextStyle(color: AppColors.textMuted),
+                hintStyle: TextStyle(color: context.col.textMuted),
                 filled: true,
-                fillColor: AppColors.surface,
+                fillColor: context.col.surface,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: AppColors.border),
+                  borderSide: BorderSide(color: context.col.border),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -406,9 +406,9 @@ class _PlaceDetailSheetState extends ConsumerState<_PlaceDetailSheet> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx, ''),
-                child: const Text(
+                child: Text(
                   'Skip',
-                  style: TextStyle(color: AppColors.textSecondary),
+                  style: TextStyle(color: context.col.textSecondary),
                 ),
               ),
               FilledButton(
@@ -430,7 +430,7 @@ class _PlaceDetailSheetState extends ConsumerState<_PlaceDetailSheet> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(msg),
-        backgroundColor: AppColors.surfaceElevated,
+        backgroundColor: context.col.surfaceElevated,
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -455,8 +455,8 @@ class _PlaceDetailSheetState extends ConsumerState<_PlaceDetailSheet> {
       snapSizes: const [0.5, 0.68, 0.95],
       builder: (ctx, scrollCtrl) {
         return Container(
-          decoration: const BoxDecoration(
-            color: AppColors.surface,
+          decoration: BoxDecoration(
+            color: context.col.surface,
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: Column(
@@ -467,7 +467,7 @@ class _PlaceDetailSheetState extends ConsumerState<_PlaceDetailSheet> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.border,
+                  color: context.col.border,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -562,11 +562,11 @@ class _PlaceDetailSheetState extends ConsumerState<_PlaceDetailSheet> {
           right: 0,
           height: 120,
           child: Container(
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [Colors.transparent, AppColors.surface],
+                colors: [Colors.transparent, context.col.surface],
               ),
             ),
           ),
@@ -619,8 +619,8 @@ class _PlaceDetailSheetState extends ConsumerState<_PlaceDetailSheet> {
             children: [
               Text(
                 widget.name,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
+                style: TextStyle(
+                  color: context.col.textPrimary,
                   fontSize: 22,
                   fontWeight: FontWeight.w800,
                   letterSpacing: -0.3,
@@ -646,25 +646,25 @@ class _PlaceDetailSheetState extends ConsumerState<_PlaceDetailSheet> {
                     const SizedBox(width: 4),
                     Text(
                       '(${widget.ratingCount})',
-                      style: const TextStyle(
-                        color: AppColors.textMuted,
+                      style: TextStyle(
+                        color: context.col.textMuted,
                         fontSize: 12,
                       ),
                     ),
                   ],
                   if (widget.location.isNotEmpty) ...[
                     const SizedBox(width: 10),
-                    const Icon(
+                    Icon(
                       Icons.location_on_outlined,
                       size: 12,
-                      color: AppColors.textMuted,
+                      color: context.col.textMuted,
                     ),
                     const SizedBox(width: 2),
                     Expanded(
                       child: Text(
                         widget.location,
-                        style: const TextStyle(
-                          color: AppColors.textMuted,
+                        style: TextStyle(
+                          color: context.col.textMuted,
                           fontSize: 12,
                         ),
                         maxLines: 1,
@@ -684,7 +684,7 @@ class _PlaceDetailSheetState extends ConsumerState<_PlaceDetailSheet> {
   Widget _imageFallback() => Container(
     width: double.infinity,
     height: 220,
-    color: AppColors.surfaceElevated,
+    color: context.col.surfaceElevated,
     child: Center(
       child: Text(_emojiForType, style: const TextStyle(fontSize: 48)),
     ),
@@ -699,7 +699,7 @@ class _PlaceDetailSheetState extends ConsumerState<_PlaceDetailSheet> {
         margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          color: AppColors.surfaceElevated,
+          color: context.col.surfaceElevated,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: AppColors.primary.withValues(alpha: 0.4)),
         ),
@@ -714,7 +714,7 @@ class _PlaceDetailSheetState extends ConsumerState<_PlaceDetailSheet> {
                   padding: const EdgeInsets.only(right: 3),
                   child: Icon(
                     filled ? Icons.star_rounded : Icons.star_outline_rounded,
-                    color: filled ? AppColors.star : AppColors.border,
+                    color: filled ? AppColors.star : context.col.border,
                     size: 26,
                   ),
                 );
@@ -727,16 +727,16 @@ class _PlaceDetailSheetState extends ConsumerState<_PlaceDetailSheet> {
                 children: [
                   Text(
                     _ratingLabel(_submittedStar),
-                    style: const TextStyle(
-                      color: AppColors.textPrimary,
+                    style: TextStyle(
+                      color: context.col.textPrimary,
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                   const SizedBox(height: 2),
-                  const Text(
+                  Text(
                     'Your rating has been saved',
-                    style: TextStyle(color: AppColors.textMuted, fontSize: 11),
+                    style: TextStyle(color: context.col.textMuted, fontSize: 11),
                   ),
                 ],
               ),
@@ -763,9 +763,9 @@ class _PlaceDetailSheetState extends ConsumerState<_PlaceDetailSheet> {
       margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: AppColors.surfaceElevated,
+        color: context.col.surfaceElevated,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.col.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -785,10 +785,10 @@ class _PlaceDetailSheetState extends ConsumerState<_PlaceDetailSheet> {
                 ),
               ),
               const SizedBox(width: 10),
-              const Text(
+              Text(
                 'Rate this place',
                 style: TextStyle(
-                  color: AppColors.textPrimary,
+                  color: context.col.textPrimary,
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
                 ),
@@ -817,7 +817,7 @@ class _PlaceDetailSheetState extends ConsumerState<_PlaceDetailSheet> {
                         filled
                             ? Icons.star_rounded
                             : Icons.star_outline_rounded,
-                        color: filled ? AppColors.star : AppColors.border,
+                        color: filled ? AppColors.star : context.col.border,
                         size: 38,
                       ),
                     ),
@@ -842,8 +842,8 @@ class _PlaceDetailSheetState extends ConsumerState<_PlaceDetailSheet> {
             // Optional review text
             TextField(
               controller: _reviewCtrl,
-              style: const TextStyle(
-                color: AppColors.textPrimary,
+              style: TextStyle(
+                color: context.col.textPrimary,
                 fontSize: 14,
               ),
               cursorColor: AppColors.primary,
@@ -851,20 +851,20 @@ class _PlaceDetailSheetState extends ConsumerState<_PlaceDetailSheet> {
               maxLength: 300,
               decoration: InputDecoration(
                 hintText: 'Write a quick review… (optional)',
-                hintStyle: const TextStyle(
-                  color: AppColors.textMuted,
+                hintStyle: TextStyle(
+                  color: context.col.textMuted,
                   fontSize: 14,
                 ),
                 filled: true,
-                fillColor: AppColors.surface,
-                counterStyle: const TextStyle(color: AppColors.textMuted),
+                fillColor: context.col.surface,
+                counterStyle: TextStyle(color: context.col.textMuted),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.border),
+                  borderSide: BorderSide(color: context.col.border),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.border),
+                  borderSide: BorderSide(color: context.col.border),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -947,18 +947,18 @@ class _PlaceDetailSheetState extends ConsumerState<_PlaceDetailSheet> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Reviews',
                         style: TextStyle(
-                          color: AppColors.textPrimary,
+                          color: context.col.textPrimary,
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
                       Text(
                         '${list.length} review${list.length == 1 ? '' : 's'}',
-                        style: const TextStyle(
-                          color: AppColors.textMuted,
+                        style: TextStyle(
+                          color: context.col.textMuted,
                           fontSize: 12,
                         ),
                       ),
@@ -1026,10 +1026,10 @@ class _PlaceDetailSheetState extends ConsumerState<_PlaceDetailSheet> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Community Photos',
                 style: TextStyle(
-                  color: AppColors.textPrimary,
+                  color: context.col.textPrimary,
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
                 ),
@@ -1038,8 +1038,8 @@ class _PlaceDetailSheetState extends ConsumerState<_PlaceDetailSheet> {
                 photos.isEmpty
                     ? 'Be the first to share!'
                     : '${photos.length} photo${photos.length == 1 ? '' : 's'}',
-                style: const TextStyle(
-                  color: AppColors.textMuted,
+                style: TextStyle(
+                  color: context.col.textMuted,
                   fontSize: 12,
                 ),
               ),
@@ -1118,28 +1118,28 @@ class _PlaceDetailSheetState extends ConsumerState<_PlaceDetailSheet> {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: AppColors.surfaceElevated,
+              color: context.col.surfaceElevated,
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.photo_camera_outlined,
-              color: AppColors.textMuted,
+              color: context.col.textMuted,
               size: 32,
             ),
           ),
           const SizedBox(height: 12),
-          const Text(
+          Text(
             'No community photos yet',
             style: TextStyle(
-              color: AppColors.textSecondary,
+              color: context.col.textSecondary,
               fontSize: 14,
               fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'Be the first to share your visit!',
-            style: TextStyle(color: AppColors.textMuted, fontSize: 12),
+            style: TextStyle(color: context.col.textMuted, fontSize: 12),
           ),
         ],
       ),
@@ -1168,10 +1168,10 @@ class _CommunityPhotoTile extends StatelessWidget {
               imageUrl: photo.imageUrl,
               fit: BoxFit.cover,
               errorWidget: (e0, e1, e2) => Container(
-                color: AppColors.surfaceElevated,
-                child: const Icon(
+                color: context.col.surfaceElevated,
+                child: Icon(
                   Icons.broken_image_outlined,
-                  color: AppColors.textMuted,
+                  color: context.col.textMuted,
                 ),
               ),
             ),
@@ -1216,7 +1216,7 @@ class _MiniAvatar extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         border: Border.all(color: Colors.white, width: 1.5),
-        color: AppColors.surfaceElevated,
+        color: context.col.surfaceElevated,
       ),
       child: ClipOval(
         child: url.isNotEmpty
@@ -1372,7 +1372,7 @@ class _StarDisplay extends StatelessWidget {
           half
               ? Icons.star_half_rounded
               : (filled ? Icons.star_rounded : Icons.star_outline_rounded),
-          color: (filled || half) ? AppColors.star : AppColors.border,
+          color: (filled || half) ? AppColors.star : context.col.border,
           size: 14,
         );
       }),
@@ -1403,9 +1403,9 @@ class _ReviewCard extends StatelessWidget {
       width: 200,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.surfaceElevated,
+        color: context.col.surfaceElevated,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.col.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1435,8 +1435,8 @@ class _ReviewCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   name,
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
+                  style: TextStyle(
+                    color: context.col.textPrimary,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
@@ -1454,8 +1454,8 @@ class _ReviewCard extends StatelessWidget {
               const SizedBox(width: 5),
               Text(
                 rating.toStringAsFixed(1),
-                style: const TextStyle(
-                  color: AppColors.textMuted,
+                style: TextStyle(
+                  color: context.col.textMuted,
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                 ),
@@ -1469,8 +1469,8 @@ class _ReviewCard extends StatelessWidget {
             Expanded(
               child: Text(
                 comment,
-                style: const TextStyle(
-                  color: AppColors.textSecondary,
+                style: TextStyle(
+                  color: context.col.textSecondary,
                   fontSize: 12,
                   height: 1.4,
                 ),
@@ -1485,7 +1485,7 @@ class _ReviewCard extends StatelessWidget {
           if (date != null)
             Text(
               _formatDate(date),
-              style: const TextStyle(color: AppColors.textMuted, fontSize: 10),
+              style: TextStyle(color: context.col.textMuted, fontSize: 10),
             ),
         ],
       ),

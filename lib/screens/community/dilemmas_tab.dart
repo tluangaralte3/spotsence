@@ -34,7 +34,7 @@ class _DilemmasTabState extends ConsumerState<DilemmasTab> {
     final user = ref.watch(currentUserProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: context.col.bg,
       body: dilemmasAsync.when(
         loading: () => const Center(
           child: CircularProgressIndicator(color: AppColors.primary),
@@ -45,9 +45,9 @@ class _DilemmasTabState extends ConsumerState<DilemmasTab> {
             children: [
               const Icon(Icons.error_outline, color: AppColors.error, size: 48),
               const SizedBox(height: 12),
-              const Text(
+              Text(
                 'Could not load dilemmas',
-                style: TextStyle(color: AppColors.textSecondary),
+                style: TextStyle(color: context.col.textSecondary),
               ),
               const SizedBox(height: 12),
               ElevatedButton(
@@ -70,7 +70,7 @@ class _DilemmasTabState extends ConsumerState<DilemmasTab> {
                       label: const Text('Post a Dilemma'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
-                        foregroundColor: AppColors.bg,
+                        foregroundColor: context.col.bg,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -100,7 +100,7 @@ class _DilemmasTabState extends ConsumerState<DilemmasTab> {
               heroTag: 'create_dilemma',
               onPressed: _openCreate,
               backgroundColor: AppColors.primary,
-              foregroundColor: AppColors.bg,
+              foregroundColor: context.col.bg,
               icon: const Icon(Icons.how_to_vote_outlined),
               label: const Text(
                 'New Dilemma',
@@ -156,11 +156,11 @@ class _DilemmaCardState extends ConsumerState<_DilemmaCard> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        backgroundColor: AppColors.surface,
+        backgroundColor: context.col.surface,
         title: const Text('Delete Dilemma?'),
-        content: const Text(
+        content: Text(
           'This will permanently remove the dilemma and all votes.',
-          style: TextStyle(color: AppColors.textSecondary),
+          style: TextStyle(color: context.col.textSecondary),
         ),
         actions: [
           TextButton(
@@ -187,7 +187,7 @@ class _DilemmaCardState extends ConsumerState<_DilemmaCard> {
   void _showMenu() async {
     await showModalBottomSheet<void>(
       context: context,
-      backgroundColor: AppColors.surface,
+      backgroundColor: context.col.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -208,9 +208,9 @@ class _DilemmaCardState extends ConsumerState<_DilemmaCard> {
               },
             ),
             ListTile(
-              leading: const Icon(
+              leading: Icon(
                 Icons.close_rounded,
-                color: AppColors.textSecondary,
+                color: context.col.textSecondary,
               ),
               title: const Text('Cancel'),
               onTap: () => Navigator.pop(context),
@@ -252,9 +252,9 @@ class _DilemmaCardState extends ConsumerState<_DilemmaCard> {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.col.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.col.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -291,8 +291,8 @@ class _DilemmaCardState extends ConsumerState<_DilemmaCard> {
                     children: [
                       Text(
                         d.authorName,
-                        style: const TextStyle(
-                          color: AppColors.textPrimary,
+                        style: TextStyle(
+                          color: context.col.textPrimary,
                           fontWeight: FontWeight.w600,
                           fontSize: 13,
                         ),
@@ -301,15 +301,15 @@ class _DilemmaCardState extends ConsumerState<_DilemmaCard> {
                         children: [
                           Text(
                             _timeAgo(d.createdAt),
-                            style: const TextStyle(
-                              color: AppColors.textMuted,
+                            style: TextStyle(
+                              color: context.col.textMuted,
                               fontSize: 11,
                             ),
                           ),
                           if (d.expiresAt != null) ...[
-                            const Text(
+                            Text(
                               ' \u00b7 ',
-                              style: TextStyle(color: AppColors.textMuted),
+                              style: TextStyle(color: context.col.textMuted),
                             ),
                             Icon(
                               expired
@@ -318,7 +318,7 @@ class _DilemmaCardState extends ConsumerState<_DilemmaCard> {
                               size: 12,
                               color: expired
                                   ? AppColors.error
-                                  : AppColors.textMuted,
+                                  : context.col.textMuted,
                             ),
                             const SizedBox(width: 2),
                             Text(
@@ -326,7 +326,7 @@ class _DilemmaCardState extends ConsumerState<_DilemmaCard> {
                               style: TextStyle(
                                 color: expired
                                     ? AppColors.error
-                                    : AppColors.textMuted,
+                                    : context.col.textMuted,
                                 fontSize: 11,
                               ),
                             ),
@@ -337,7 +337,7 @@ class _DilemmaCardState extends ConsumerState<_DilemmaCard> {
                   ),
                 ),
                 if (closed)
-                  _StatusBadge(label: 'CLOSED', color: AppColors.textMuted)
+                  _StatusBadge(label: 'CLOSED', color: context.col.textMuted)
                 else
                   _StatusBadge(label: 'LIVE', color: AppColors.success),
                 if (isAuthor) ...[
@@ -348,10 +348,10 @@ class _DilemmaCardState extends ConsumerState<_DilemmaCard> {
                       minWidth: 28,
                       minHeight: 28,
                     ),
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.more_vert_rounded,
                       size: 18,
-                      color: AppColors.textMuted,
+                      color: context.col.textMuted,
                     ),
                     onPressed: _showMenu,
                   ),
@@ -365,8 +365,8 @@ class _DilemmaCardState extends ConsumerState<_DilemmaCard> {
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
             child: Text(
               d.question,
-              style: const TextStyle(
-                color: AppColors.textPrimary,
+              style: TextStyle(
+                color: context.col.textPrimary,
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
                 height: 1.4,
@@ -402,16 +402,16 @@ class _DilemmaCardState extends ConsumerState<_DilemmaCard> {
                       height: 28,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: AppColors.surfaceElevated,
-                        border: Border.all(color: AppColors.border),
+                        color: context.col.surfaceElevated,
+                        border: Border.all(color: context.col.border),
                       ),
                       alignment: Alignment.center,
-                      child: const Text(
+                      child: Text(
                         'VS',
                         style: TextStyle(
                           fontSize: 8,
                           fontWeight: FontWeight.w900,
-                          color: AppColors.textSecondary,
+                          color: context.col.textSecondary,
                           letterSpacing: 0.5,
                         ),
                       ),
@@ -438,24 +438,24 @@ class _DilemmaCardState extends ConsumerState<_DilemmaCard> {
 
           // Footer
           Container(
-            decoration: const BoxDecoration(
-              border: Border(top: BorderSide(color: AppColors.border)),
+            decoration: BoxDecoration(
+              border: Border(top: BorderSide(color: context.col.border)),
             ),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             child: Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.how_to_vote_outlined,
                   size: 14,
-                  color: AppColors.textMuted,
+                  color: context.col.textMuted,
                 ),
                 const SizedBox(width: 5),
                 Text(
                   d.totalVotes == 0
                       ? 'Be the first to vote!'
                       : '${d.totalVotes} vote${d.totalVotes == 1 ? '' : 's'}',
-                  style: const TextStyle(
-                    color: AppColors.textMuted,
+                  style: TextStyle(
+                    color: context.col.textMuted,
                     fontSize: 12,
                   ),
                 ),
@@ -548,12 +548,12 @@ class _VoteCard extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: isMyVote ? color : AppColors.border,
+            color: isMyVote ? color : context.col.border,
             width: isMyVote ? 2 : 1,
           ),
           color: isMyVote
               ? color.withValues(alpha: 0.08)
-              : AppColors.surfaceElevated,
+              : context.col.surfaceElevated,
         ),
         clipBehavior: Clip.antiAlias,
         child: Column(
@@ -664,8 +664,8 @@ class _VoteCard extends StatelessWidget {
                 children: [
                   Text(
                     option.name,
-                    style: const TextStyle(
-                      color: AppColors.textPrimary,
+                    style: TextStyle(
+                      color: context.col.textPrimary,
                       fontWeight: FontWeight.w700,
                       fontSize: 13,
                     ),
@@ -687,8 +687,8 @@ class _VoteCard extends StatelessWidget {
                     const SizedBox(height: 1),
                     Text(
                       option.district!,
-                      style: const TextStyle(
-                        color: AppColors.textMuted,
+                      style: TextStyle(
+                        color: context.col.textMuted,
                         fontSize: 10,
                       ),
                       maxLines: 1,
@@ -706,7 +706,7 @@ class _VoteCard extends StatelessWidget {
                         curve: Curves.easeOut,
                         builder: (context, v, child) => LinearProgressIndicator(
                           value: v,
-                          backgroundColor: AppColors.border,
+                          backgroundColor: context.col.border,
                           valueColor: AlwaysStoppedAnimation(color),
                           minHeight: 5,
                         ),
@@ -716,7 +716,7 @@ class _VoteCard extends StatelessWidget {
                     Text(
                       '$votes vote${votes == 1 ? '' : 's'}',
                       style: TextStyle(
-                        color: isMyVote ? color : AppColors.textMuted,
+                        color: isMyVote ? color : context.col.textMuted,
                         fontSize: 10,
                         fontWeight: isMyVote
                             ? FontWeight.w600

@@ -34,12 +34,12 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         title: TextFormField(
           controller: _ctrl,
           autofocus: true,
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             hintText: 'Search spots, restaurants...',
             border: InputBorder.none,
             filled: false,
             contentPadding: EdgeInsets.symmetric(horizontal: 4),
-            prefixIcon: Icon(Icons.search, color: AppColors.textSecondary),
+            prefixIcon: Icon(Icons.search, color: context.col.textSecondary),
           ),
           onChanged: controller.search,
         ),

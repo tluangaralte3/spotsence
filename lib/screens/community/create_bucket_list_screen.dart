@@ -134,15 +134,15 @@ class _CreateBucketListScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: context.col.bg,
       appBar: AppBar(
-        backgroundColor: AppColors.bg,
-        title: const Text(
+        backgroundColor: context.col.bg,
+        title: Text(
           'New Bucket List',
-          style: TextStyle(color: AppColors.textPrimary),
+          style: TextStyle(color: context.col.textPrimary),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.close_rounded, color: AppColors.textSecondary),
+          icon: Icon(Icons.close_rounded, color: context.col.textSecondary),
           onPressed: () => context.pop(),
         ),
         actions: [
@@ -152,18 +152,18 @@ class _CreateBucketListScreenState
               onPressed: _saving ? null : _save,
               style: FilledButton.styleFrom(
                 backgroundColor: AppColors.primary,
-                foregroundColor: AppColors.bg,
+                foregroundColor: context.col.bg,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
               child: _saving
-                  ? const SizedBox(
+                  ? SizedBox(
                       height: 16,
                       width: 16,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: AppColors.bg,
+                        color: context.col.bg,
                       ),
                     )
                   : const Text('Create'),
@@ -271,24 +271,24 @@ class _CreateBucketListScreenState
                       child: Container(
                         height: 120,
                         decoration: BoxDecoration(
-                          color: AppColors.surfaceElevated,
+                          color: context.col.surfaceElevated,
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: AppColors.border),
+                          border: Border.all(color: context.col.border),
                         ),
-                        child: const Center(
+                        child: Center(
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
                                 Icons.add_photo_alternate_outlined,
-                                color: AppColors.textMuted,
+                                color: context.col.textMuted,
                                 size: 32,
                               ),
                               SizedBox(height: 8),
                               Text(
                                 'Tap to pick a banner photo',
                                 style: TextStyle(
-                                  color: AppColors.textMuted,
+                                  color: context.col.textMuted,
                                   fontSize: 13,
                                 ),
                               ),
@@ -347,12 +347,12 @@ class _CreateBucketListScreenState
                           decoration: BoxDecoration(
                             color: selected
                                 ? AppColors.primary.withValues(alpha: 0.15)
-                                : AppColors.surfaceElevated,
+                                : context.col.surfaceElevated,
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
                               color: selected
                                   ? AppColors.primary
-                                  : AppColors.border,
+                                  : context.col.border,
                               width: selected ? 1.5 : 1,
                             ),
                           ),
@@ -361,7 +361,7 @@ class _CreateBucketListScreenState
                             style: TextStyle(
                               color: selected
                                   ? AppColors.primary
-                                  : AppColors.textSecondary,
+                                  : context.col.textSecondary,
                               fontSize: 12,
                               fontWeight: selected
                                   ? FontWeight.w600
@@ -417,7 +417,7 @@ class _CreateBucketListScreenState
               child: SliderTheme(
                 data: SliderTheme.of(context).copyWith(
                   activeTrackColor: AppColors.primary,
-                  inactiveTrackColor: AppColors.border,
+                  inactiveTrackColor: context.col.border,
                   thumbColor: AppColors.primary,
                   overlayColor: AppColors.primary.withValues(alpha: 0.12),
                 ),
@@ -442,11 +442,11 @@ class _CreateBucketListScreenState
                   // XP reward
                   Row(
                     children: [
-                      const Expanded(
+                      Expanded(
                         child: Text(
                           'XP Reward on Completion',
                           style: TextStyle(
-                            color: AppColors.textSecondary,
+                            color: context.col.textSecondary,
                             fontSize: 13,
                           ),
                         ),
@@ -474,7 +474,7 @@ class _CreateBucketListScreenState
                   SliderTheme(
                     data: SliderTheme.of(context).copyWith(
                       activeTrackColor: AppColors.accent,
-                      inactiveTrackColor: AppColors.border,
+                      inactiveTrackColor: context.col.border,
                       thumbColor: AppColors.accent,
                       overlayColor: AppColors.accent.withValues(alpha: 0.12),
                     ),
@@ -520,8 +520,8 @@ class _Section extends StatelessWidget {
       children: [
         Text(
           title,
-          style: const TextStyle(
-            color: AppColors.textPrimary,
+          style: TextStyle(
+            color: context.col.textPrimary,
             fontSize: 14,
             fontWeight: FontWeight.w600,
           ),
@@ -551,13 +551,13 @@ class _AppField extends StatelessWidget {
     return TextFormField(
       controller: controller,
       maxLines: maxLines,
-      style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
+      style: TextStyle(color: context.col.textPrimary, fontSize: 14),
       validator: validator,
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 14),
+        hintStyle: TextStyle(color: context.col.textMuted, fontSize: 14),
         filled: true,
-        fillColor: AppColors.surfaceElevated,
+        fillColor: context.col.surfaceElevated,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 14,
           vertical: 12,
@@ -607,10 +607,10 @@ class _ToggleChip extends StatelessWidget {
           decoration: BoxDecoration(
             color: selected
                 ? AppColors.primary.withValues(alpha: 0.12)
-                : AppColors.surfaceElevated,
+                : context.col.surfaceElevated,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: selected ? AppColors.primary : AppColors.border,
+              color: selected ? AppColors.primary : context.col.border,
               width: selected ? 1.5 : 1,
             ),
           ),
@@ -619,7 +619,7 @@ class _ToggleChip extends StatelessWidget {
               Text(
                 label,
                 style: TextStyle(
-                  color: selected ? AppColors.primary : AppColors.textSecondary,
+                  color: selected ? AppColors.primary : context.col.textSecondary,
                   fontWeight: FontWeight.w600,
                   fontSize: 13,
                 ),
@@ -627,8 +627,8 @@ class _ToggleChip extends StatelessWidget {
               const SizedBox(height: 2),
               Text(
                 subtitle,
-                style: const TextStyle(
-                  color: AppColors.textMuted,
+                style: TextStyle(
+                  color: context.col.textMuted,
                   fontSize: 11,
                 ),
                 textAlign: TextAlign.center,

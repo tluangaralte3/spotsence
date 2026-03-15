@@ -22,21 +22,21 @@ class CafeDetailScreen extends ConsumerWidget {
     final async = ref.watch(cafeDetailProvider(id));
 
     return async.when(
-      loading: () => const Scaffold(
-        backgroundColor: AppColors.bg,
+      loading: () => Scaffold(
+        backgroundColor: context.col.bg,
         body: Center(
           child: CircularProgressIndicator(color: AppColors.primary),
         ),
       ),
       error: (_, __) => Scaffold(
-        backgroundColor: AppColors.bg,
-        appBar: AppBar(backgroundColor: AppColors.bg),
+        backgroundColor: context.col.bg,
+        appBar: AppBar(backgroundColor: context.col.bg),
         body: const EmptyState(emoji: '😕', title: 'Could not load cafe'),
       ),
       data: (c) => c == null
           ? Scaffold(
-              backgroundColor: AppColors.bg,
-              appBar: AppBar(backgroundColor: AppColors.bg),
+              backgroundColor: context.col.bg,
+              appBar: AppBar(backgroundColor: context.col.bg),
               body: const EmptyState(emoji: '🔍', title: 'Cafe not found'),
             )
           : _CafeBody(cafe: c),
@@ -67,25 +67,25 @@ class _CafeBodyState extends ConsumerState<_CafeBody> {
     final images = c.images.isNotEmpty ? c.images : [c.heroImage];
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: context.col.bg,
       body: CustomScrollView(
         slivers: [
           // ── Hero image ─────────────────────────────────────────────────
           SliverAppBar(
             expandedHeight: 280,
             pinned: true,
-            backgroundColor: AppColors.bg,
+            backgroundColor: context.col.bg,
             leading: GestureDetector(
               onTap: () => context.pop(),
               child: Container(
                 margin: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.surface.withOpacity(0.9),
+                  color: context.col.surface.withOpacity(0.9),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.arrow_back_ios_new_rounded,
-                  color: AppColors.textPrimary,
+                  color: context.col.textPrimary,
                   size: 18,
                 ),
               ),
@@ -99,24 +99,24 @@ class _CafeBodyState extends ConsumerState<_CafeBody> {
                           imageUrl: images[_imageIndex],
                           fit: BoxFit.cover,
                           placeholder: (_, __) =>
-                              Container(color: AppColors.surfaceElevated),
+                              Container(color: context.col.surfaceElevated),
                           errorWidget: (_, __, ___) => Container(
-                            color: AppColors.surfaceElevated,
-                            child: const Center(
+                            color: context.col.surfaceElevated,
+                            child: Center(
                               child: Icon(
                                 Icons.broken_image_outlined,
-                                color: AppColors.textMuted,
+                                color: context.col.textMuted,
                                 size: 48,
                               ),
                             ),
                           ),
                         )
                       : Container(
-                          color: AppColors.surfaceElevated,
-                          child: const Center(
+                          color: context.col.surfaceElevated,
+                          child: Center(
                             child: Icon(
                               Icons.coffee,
-                              color: AppColors.textMuted,
+                              color: context.col.textMuted,
                               size: 64,
                             ),
                           ),
@@ -134,7 +134,7 @@ class _CafeBodyState extends ConsumerState<_CafeBody> {
                           end: Alignment.bottomCenter,
                           colors: [
                             Colors.transparent,
-                            AppColors.bg.withOpacity(0.8),
+                            context.col.bg.withOpacity(0.8),
                           ],
                         ),
                       ),
@@ -187,8 +187,8 @@ class _CafeBodyState extends ConsumerState<_CafeBody> {
                       Expanded(
                         child: Text(
                           c.name,
-                          style: const TextStyle(
-                            color: AppColors.textPrimary,
+                          style: TextStyle(
+                            color: context.col.textPrimary,
                             fontSize: 22,
                             fontWeight: FontWeight.w700,
                           ),
@@ -212,8 +212,8 @@ class _CafeBodyState extends ConsumerState<_CafeBody> {
                       Expanded(
                         child: Text(
                           c.location.isNotEmpty ? c.location : c.district,
-                          style: const TextStyle(
-                            color: AppColors.textSecondary,
+                          style: TextStyle(
+                            color: context.col.textSecondary,
                             fontSize: 13,
                           ),
                           maxLines: 2,
@@ -239,8 +239,8 @@ class _CafeBodyState extends ConsumerState<_CafeBody> {
                       if (c.district.isNotEmpty)
                         _Badge(
                           label: c.district,
-                          color: AppColors.textSecondary,
-                          bgColor: AppColors.surfaceElevated,
+                          color: context.col.textSecondary,
+                          bgColor: context.col.surfaceElevated,
                           hasBorder: true,
                         ),
                       for (final s in c.specialties.take(3))
@@ -258,9 +258,9 @@ class _CafeBodyState extends ConsumerState<_CafeBody> {
                   Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: AppColors.surface,
+                      color: context.col.surface,
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: AppColors.border),
+                      border: Border.all(color: context.col.border),
                     ),
                     child: Wrap(
                       spacing: 20,
@@ -293,10 +293,10 @@ class _CafeBodyState extends ConsumerState<_CafeBody> {
                   // Description
                   if (c.description.isNotEmpty) ...[
                     const SizedBox(height: 24),
-                    const Text(
+                    Text(
                       'About',
                       style: TextStyle(
-                        color: AppColors.textPrimary,
+                        color: context.col.textPrimary,
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
                       ),
@@ -308,8 +308,8 @@ class _CafeBodyState extends ConsumerState<_CafeBody> {
                       overflow: _showAllDesc
                           ? TextOverflow.visible
                           : TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: AppColors.textSecondary,
+                      style: TextStyle(
+                        color: context.col.textSecondary,
                         fontSize: 14,
                         height: 1.6,
                       ),
@@ -335,10 +335,10 @@ class _CafeBodyState extends ConsumerState<_CafeBody> {
                   // Gallery
                   if (images.length > 1) ...[
                     const SizedBox(height: 24),
-                    const Text(
+                    Text(
                       'Gallery',
                       style: TextStyle(
-                        color: AppColors.textPrimary,
+                        color: context.col.textPrimary,
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
                       ),
@@ -361,7 +361,7 @@ class _CafeBodyState extends ConsumerState<_CafeBody> {
                               fit: BoxFit.cover,
                               errorWidget: (_, __, ___) => Container(
                                 width: 90,
-                                color: AppColors.surfaceElevated,
+                                color: context.col.surfaceElevated,
                               ),
                             ),
                           ),
@@ -372,7 +372,7 @@ class _CafeBodyState extends ConsumerState<_CafeBody> {
 
                   // Reviews
                   const SizedBox(height: 32),
-                  const Divider(height: 1, color: AppColors.border),
+                  Divider(height: 1, color: context.col.border),
                   const SizedBox(height: 24),
                   _ReviewSection(cafeId: c.id),
                   const SizedBox(height: 40),
@@ -473,10 +473,10 @@ class _ReviewSectionState extends ConsumerState<_ReviewSection> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
+            Text(
               'Reviews',
               style: TextStyle(
-                color: AppColors.textPrimary,
+                color: context.col.textPrimary,
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
               ),
@@ -526,17 +526,17 @@ class _ReviewSectionState extends ConsumerState<_ReviewSection> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppColors.surface,
+              color: context.col.surface,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AppColors.border),
+              border: Border.all(color: context.col.border),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Your Rating',
                   style: TextStyle(
-                    color: AppColors.textSecondary,
+                    color: context.col.textSecondary,
                     fontSize: 13,
                   ),
                 ),
@@ -553,7 +553,7 @@ class _ReviewSectionState extends ConsumerState<_ReviewSection> {
                           size: 32,
                           color: star <= _myRating
                               ? AppColors.star
-                              : AppColors.border,
+                              : context.col.border,
                         ),
                       ),
                     );
@@ -563,25 +563,25 @@ class _ReviewSectionState extends ConsumerState<_ReviewSection> {
                 TextField(
                   controller: _commentCtrl,
                   maxLines: 3,
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
+                  style: TextStyle(
+                    color: context.col.textPrimary,
                     fontSize: 14,
                   ),
                   decoration: InputDecoration(
                     hintText: 'Share your experience…',
-                    hintStyle: const TextStyle(
-                      color: AppColors.textMuted,
+                    hintStyle: TextStyle(
+                      color: context.col.textMuted,
                       fontSize: 14,
                     ),
                     filled: true,
-                    fillColor: AppColors.surfaceElevated,
+                    fillColor: context.col.surfaceElevated,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: AppColors.border),
+                      borderSide: BorderSide(color: context.col.border),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: AppColors.border),
+                      borderSide: BorderSide(color: context.col.border),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -632,25 +632,25 @@ class _ReviewSectionState extends ConsumerState<_ReviewSection> {
               child: CircularProgressIndicator(color: AppColors.primary),
             ),
           ),
-          error: (_, __) => const Padding(
+          error: (_, __) => Padding(
             padding: EdgeInsets.all(8),
             child: Text(
               'Could not load reviews',
-              style: TextStyle(color: AppColors.textMuted),
+              style: TextStyle(color: context.col.textMuted),
             ),
           ),
           data: (reviews) => reviews.isEmpty
               ? Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: AppColors.surface,
+                    color: context.col.surface,
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: AppColors.border),
+                    border: Border.all(color: context.col.border),
                   ),
-                  child: const Center(
+                  child: Center(
                     child: Text(
                       'No reviews yet — be the first!',
-                      style: TextStyle(color: AppColors.textMuted),
+                      style: TextStyle(color: context.col.textMuted),
                     ),
                   ),
                 )
@@ -685,9 +685,9 @@ class _ReviewCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.col.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.col.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -696,15 +696,15 @@ class _ReviewCard extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 18,
-                backgroundColor: AppColors.surfaceElevated,
+                backgroundColor: context.col.surfaceElevated,
                 backgroundImage: userAvatar.isNotEmpty
                     ? NetworkImage(userAvatar)
                     : null,
                 child: userAvatar.isEmpty
                     ? Text(
                         userName.isNotEmpty ? userName[0].toUpperCase() : '?',
-                        style: const TextStyle(
-                          color: AppColors.textPrimary,
+                        style: TextStyle(
+                          color: context.col.textPrimary,
                           fontWeight: FontWeight.w700,
                           fontSize: 14,
                         ),
@@ -718,8 +718,8 @@ class _ReviewCard extends StatelessWidget {
                   children: [
                     Text(
                       userName,
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
+                      style: TextStyle(
+                        color: context.col.textPrimary,
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                       ),
@@ -732,7 +732,7 @@ class _ReviewCard extends StatelessWidget {
                           size: 13,
                           color: (i + 1) <= rating
                               ? AppColors.star
-                              : AppColors.border,
+                              : context.col.border,
                         ),
                       ),
                     ),
@@ -745,8 +745,8 @@ class _ReviewCard extends StatelessWidget {
             const SizedBox(height: 10),
             Text(
               comment,
-              style: const TextStyle(
-                color: AppColors.textSecondary,
+              style: TextStyle(
+                color: context.col.textSecondary,
                 fontSize: 13,
                 height: 1.5,
               ),
@@ -808,7 +808,7 @@ class _Badge extends StatelessWidget {
     decoration: BoxDecoration(
       color: bgColor,
       borderRadius: BorderRadius.circular(20),
-      border: hasBorder ? Border.all(color: AppColors.border) : null,
+      border: hasBorder ? Border.all(color: context.col.border) : null,
     ),
     child: Text(
       label,
@@ -829,7 +829,7 @@ class _InfoDot extends StatelessWidget {
       const SizedBox(width: 5),
       Text(
         label,
-        style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+        style: TextStyle(color: context.col.textSecondary, fontSize: 12),
       ),
     ],
   );

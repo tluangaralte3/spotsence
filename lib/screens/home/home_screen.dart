@@ -23,7 +23,7 @@ class HomeScreen extends ConsumerWidget {
           // ── App Bar ─────────────────────────────────────────────────────
           SliverAppBar(
             floating: true,
-            backgroundColor: AppColors.bg,
+            backgroundColor: context.col.bg,
             expandedHeight: 0,
             title: Row(
               children: [
@@ -48,10 +48,10 @@ class HomeScreen extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                const Text(
+                Text(
                   'SpotSence',
                   style: TextStyle(
-                    color: AppColors.textPrimary,
+                    color: context.col.textPrimary,
                     fontWeight: FontWeight.w800,
                     fontSize: 18,
                   ),
@@ -61,7 +61,7 @@ class HomeScreen extends ConsumerWidget {
             actions: [
               IconButton(
                 icon: const Icon(Icons.notifications_outlined),
-                color: AppColors.textSecondary,
+                color: context.col.textSecondary,
                 onPressed: () {},
               ),
             ],
@@ -151,22 +151,22 @@ class HomeScreen extends ConsumerWidget {
                         vertical: 13,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.surfaceElevated,
+                        color: context.col.surfaceElevated,
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppColors.border),
+                        border: Border.all(color: context.col.border),
                       ),
                       child: Row(
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.search,
-                            color: AppColors.textMuted,
+                            color: context.col.textMuted,
                             size: 20,
                           ),
                           const SizedBox(width: 10),
                           Text(
                             'Search spots, restaurants...',
                             style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(color: AppColors.textMuted),
+                                ?.copyWith(color: context.col.textMuted),
                           ),
                         ],
                       ),
@@ -205,9 +205,9 @@ class HomeScreen extends ConsumerWidget {
                         vertical: 8,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.surfaceElevated,
+                        color: context.col.surfaceElevated,
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: AppColors.border),
+                        border: Border.all(color: context.col.border),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -219,9 +219,9 @@ class HomeScreen extends ConsumerWidget {
                           const SizedBox(width: 6),
                           Text(
                             cat['label']!,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 13,
-                              color: AppColors.textSecondary,
+                              color: context.col.textSecondary,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -305,9 +305,9 @@ class _ListingCategoryGrid extends StatelessWidget {
           onTap: () => context.go('${AppRoutes.listings}?tab=${item.tab}'),
           child: Container(
             decoration: BoxDecoration(
-              color: AppColors.surface,
+              color: context.col.surface,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AppColors.border),
+              border: Border.all(color: context.col.border),
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -317,8 +317,8 @@ class _ListingCategoryGrid extends StatelessWidget {
                 Text(
                   item.label,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
+                  style: TextStyle(
+                    color: context.col.textSecondary,
                     fontSize: 10,
                     fontWeight: FontWeight.w500,
                     height: 1.3,
@@ -386,9 +386,9 @@ class _StatCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: context.col.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: context.col.border),
         ),
         child: Column(
           children: [
@@ -396,18 +396,18 @@ class _StatCard extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               value,
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.w800,
                 fontSize: 18,
-                color: AppColors.textPrimary,
+                color: context.col.textPrimary,
               ),
             ),
             const SizedBox(height: 2),
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 11,
-                color: AppColors.textSecondary,
+                color: context.col.textSecondary,
               ),
             ),
           ],
@@ -571,10 +571,10 @@ class _FeaturedSpotsSectionState extends ConsumerState<_FeaturedSpotsSection> {
                     decoration: BoxDecoration(
                       color: selected
                           ? AppColors.primary
-                          : AppColors.surfaceElevated,
+                          : context.col.surfaceElevated,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: selected ? AppColors.primary : AppColors.border,
+                        color: selected ? AppColors.primary : context.col.border,
                       ),
                     ),
                     child: Text(
@@ -584,7 +584,7 @@ class _FeaturedSpotsSectionState extends ConsumerState<_FeaturedSpotsSection> {
                         fontWeight: FontWeight.w500,
                         color: selected
                             ? Colors.white
-                            : AppColors.textSecondary,
+                            : context.col.textSecondary,
                       ),
                     ),
                   ),
@@ -671,7 +671,7 @@ class _FeaturedCard extends StatelessWidget {
       child: Container(
         width: 260,
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: context.col.surface,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
@@ -745,10 +745,10 @@ class _FeaturedCard extends StatelessWidget {
                               spot.name,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w700,
-                                color: AppColors.textPrimary,
+                                color: context.col.textPrimary,
                               ),
                             ),
                             const SizedBox(height: 2),
@@ -758,9 +758,9 @@ class _FeaturedCard extends StatelessWidget {
                                   : spot.category,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
-                                color: AppColors.textSecondary,
+                                color: context.col.textSecondary,
                               ),
                             ),
                           ],
@@ -778,10 +778,10 @@ class _FeaturedCard extends StatelessWidget {
                             const SizedBox(width: 2),
                             Text(
                               spot.averageRating.toStringAsFixed(1),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,
-                                color: AppColors.textPrimary,
+                                color: context.col.textPrimary,
                               ),
                             ),
                           ],
@@ -799,15 +799,15 @@ class _FeaturedCard extends StatelessWidget {
                         : 'Explore the beauty of ${spot.name} in Mizoram.',
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
-                      color: AppColors.textSecondary,
+                      color: context.col.textSecondary,
                       height: 1.4,
                     ),
                   ),
 
                   const SizedBox(height: 10),
-                  const Divider(height: 1, color: AppColors.border),
+                  Divider(height: 1, color: context.col.border),
                   const SizedBox(height: 10),
 
                   // Category + popularity
@@ -827,17 +827,17 @@ class _FeaturedCard extends StatelessWidget {
                           children: [
                             Text(
                               '${spot.popularity}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w800,
-                                color: AppColors.textPrimary,
+                                color: context.col.textPrimary,
                               ),
                             ),
-                            const Text(
+                            Text(
                               '/10',
                               style: TextStyle(
                                 fontSize: 12,
-                                color: AppColors.textSecondary,
+                                color: context.col.textSecondary,
                               ),
                             ),
                           ],
@@ -860,9 +860,9 @@ class _CardImagePlaceholder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: AppColors.surfaceElevated,
-      child: const Center(
-        child: Icon(Icons.image_outlined, size: 40, color: AppColors.textMuted),
+      color: context.col.surfaceElevated,
+      child: Center(
+        child: Icon(Icons.image_outlined, size: 40, color: context.col.textMuted),
       ),
     );
   }

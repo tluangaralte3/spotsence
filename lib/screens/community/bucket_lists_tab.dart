@@ -52,11 +52,11 @@ class _BucketListsTabState extends ConsumerState<BucketListsTab>
       children: [
         // ── Sub-tab bar ──────────────────────────────────────────────────
         Container(
-          color: AppColors.bg,
+          color: context.col.bg,
           child: TabBar(
             controller: _inner,
             labelColor: AppColors.primary,
-            unselectedLabelColor: AppColors.textSecondary,
+            unselectedLabelColor: context.col.textSecondary,
             indicatorColor: AppColors.primary,
             indicatorSize: TabBarIndicatorSize.label,
             tabs: const [
@@ -130,7 +130,7 @@ class _MyListsView extends ConsumerWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.surface,
+      backgroundColor: context.col.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -162,14 +162,14 @@ class _DiscoverView extends ConsumerWidget {
           children: [
             const Text('🌍', style: TextStyle(fontSize: 48)),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'No public bucket lists yet',
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 15),
+              style: TextStyle(color: context.col.textSecondary, fontSize: 15),
             ),
             const SizedBox(height: 6),
             Text(
               'Be the first to share one!',
-              style: TextStyle(color: AppColors.textMuted, fontSize: 13),
+              style: TextStyle(color: context.col.textMuted, fontSize: 13),
             ),
           ],
         ),
@@ -216,9 +216,9 @@ class _BucketListCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: context.col.surface,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: context.col.border),
         ),
         clipBehavior: Clip.antiAlias,
         child: Column(
@@ -235,8 +235,8 @@ class _BucketListCard extends StatelessWidget {
                   left: 12,
                   child: _Badge(
                     '${list.category.emoji}  ${list.displayCategory}',
-                    color: AppColors.surfaceElevated.withValues(alpha: 0.92),
-                    textColor: AppColors.textPrimary,
+                    color: context.col.surfaceElevated.withValues(alpha: 0.92),
+                    textColor: context.col.textPrimary,
                   ),
                 ),
 
@@ -248,10 +248,10 @@ class _BucketListCard extends StatelessWidget {
                     list.visibility == BucketVisibility.public
                         ? '🌐 Public'
                         : '🔒 Private',
-                    color: AppColors.surfaceElevated.withValues(alpha: 0.92),
+                    color: context.col.surfaceElevated.withValues(alpha: 0.92),
                     textColor: list.visibility == BucketVisibility.public
                         ? AppColors.primary
-                        : AppColors.textSecondary,
+                        : context.col.textSecondary,
                   ),
                 ),
 
@@ -264,11 +264,11 @@ class _BucketListCard extends StatelessWidget {
                     child: Container(
                       color: AppColors.primary.withValues(alpha: 0.85),
                       padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: const Text(
+                      child: Text(
                         '🎉  Adventure Complete!',
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: AppColors.bg,
+                          color: context.col.bg,
                           fontWeight: FontWeight.w700,
                           fontSize: 12,
                         ),
@@ -289,8 +289,8 @@ class _BucketListCard extends StatelessWidget {
                       Expanded(
                         child: Text(
                           list.title,
-                          style: const TextStyle(
-                            color: AppColors.textPrimary,
+                          style: TextStyle(
+                            color: context.col.textPrimary,
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
                           ),
@@ -325,8 +325,8 @@ class _BucketListCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       list.description,
-                      style: const TextStyle(
-                        color: AppColors.textSecondary,
+                      style: TextStyle(
+                        color: context.col.textSecondary,
                         fontSize: 12,
                       ),
                       maxLines: 2,
@@ -341,7 +341,7 @@ class _BucketListCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(4),
                     child: LinearProgressIndicator(
                       value: list.progress,
-                      backgroundColor: AppColors.border,
+                      backgroundColor: context.col.border,
                       valueColor: AlwaysStoppedAnimation<Color>(
                         list.isCompleted
                             ? AppColors.primary
@@ -356,22 +356,22 @@ class _BucketListCard extends StatelessWidget {
                     children: [
                       Text(
                         '${list.checkedCount}/${list.items.length} done · $pct%',
-                        style: const TextStyle(
-                          color: AppColors.textSecondary,
+                        style: TextStyle(
+                          color: context.col.textSecondary,
                           fontSize: 12,
                         ),
                       ),
                       const Spacer(),
-                      const Icon(
+                      Icon(
                         Icons.people_outline,
                         size: 13,
-                        color: AppColors.textMuted,
+                        color: context.col.textMuted,
                       ),
                       const SizedBox(width: 3),
                       Text(
                         '${list.approvedCount}/${list.maxMembers}',
-                        style: const TextStyle(
-                          color: AppColors.textSecondary,
+                        style: TextStyle(
+                          color: context.col.textSecondary,
                           fontSize: 12,
                         ),
                       ),
@@ -493,25 +493,25 @@ class _JoinByCodeSheetState extends ConsumerState<_JoinByCodeSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.border,
+                color: context.col.border,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
           ),
           const SizedBox(height: 20),
 
-          const Text(
+          Text(
             'Join by Code',
             style: TextStyle(
-              color: AppColors.textPrimary,
+              color: context.col.textPrimary,
               fontSize: 20,
               fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 6),
-          const Text(
+          Text(
             'Enter the 6-character join code shared by the bucket list host.',
-            style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+            style: TextStyle(color: context.col.textSecondary, fontSize: 13),
           ),
           const SizedBox(height: 20),
 
@@ -520,8 +520,8 @@ class _JoinByCodeSheetState extends ConsumerState<_JoinByCodeSheet> {
             controller: _ctrl,
             textCapitalization: TextCapitalization.characters,
             maxLength: 6,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
+            style: TextStyle(
+              color: context.col.textPrimary,
               fontSize: 22,
               fontWeight: FontWeight.w700,
               letterSpacing: 8,
@@ -530,13 +530,13 @@ class _JoinByCodeSheetState extends ConsumerState<_JoinByCodeSheet> {
             decoration: InputDecoration(
               counterText: '',
               hintText: 'ABC123',
-              hintStyle: const TextStyle(
-                color: AppColors.textMuted,
+              hintStyle: TextStyle(
+                color: context.col.textMuted,
                 letterSpacing: 8,
                 fontSize: 22,
               ),
               filled: true,
-              fillColor: AppColors.surfaceElevated,
+              fillColor: context.col.surfaceElevated,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
                 borderSide: BorderSide.none,
@@ -563,8 +563,8 @@ class _JoinByCodeSheetState extends ConsumerState<_JoinByCodeSheet> {
                 child: OutlinedButton(
                   onPressed: () => Navigator.of(context).pop(),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.textSecondary,
-                    side: const BorderSide(color: AppColors.border),
+                    foregroundColor: context.col.textSecondary,
+                    side: BorderSide(color: context.col.border),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -581,19 +581,19 @@ class _JoinByCodeSheetState extends ConsumerState<_JoinByCodeSheet> {
                       : (_found != null ? _join : _lookup),
                   style: FilledButton.styleFrom(
                     backgroundColor: AppColors.primary,
-                    foregroundColor: AppColors.bg,
+                    foregroundColor: context.col.bg,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                   child: _loading
-                      ? const SizedBox(
+                      ? SizedBox(
                           height: 18,
                           width: 18,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: AppColors.bg,
+                            color: context.col.bg,
                           ),
                         )
                       : Text(_found != null ? 'Send Request' : 'Look Up'),
@@ -616,7 +616,7 @@ class _FoundPreview extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.surfaceElevated,
+        color: context.col.surfaceElevated,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.primary.withValues(alpha: 0.4)),
       ),
@@ -633,8 +633,8 @@ class _FoundPreview extends StatelessWidget {
               children: [
                 Text(
                   list.title,
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
+                  style: TextStyle(
+                    color: context.col.textPrimary,
                     fontWeight: FontWeight.w700,
                     fontSize: 13,
                   ),
@@ -643,17 +643,14 @@ class _FoundPreview extends StatelessWidget {
                 ),
                 Text(
                   '${list.category.emoji} ${list.displayCategory} · by ${list.hostName}',
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
+                  style: TextStyle(
+                    color: context.col.textSecondary,
                     fontSize: 11,
                   ),
                 ),
                 Text(
                   '${list.approvedCount}/${list.maxMembers} members · ${list.items.length} stops',
-                  style: const TextStyle(
-                    color: AppColors.textMuted,
-                    fontSize: 11,
-                  ),
+                  style: TextStyle(color: context.col.textMuted, fontSize: 11),
                 ),
               ],
             ),
@@ -688,19 +685,19 @@ class _EmptyMyLists extends StatelessWidget {
         children: [
           const Text('📋', style: TextStyle(fontSize: 56)),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'No Bucket Lists Yet',
             style: TextStyle(
-              color: AppColors.textPrimary,
+              color: context.col.textPrimary,
               fontSize: 18,
               fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Create your ultimate Mizoram adventure list\nor join one from a friend\'s code!',
             textAlign: TextAlign.center,
-            style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+            style: TextStyle(color: context.col.textSecondary, fontSize: 13),
           ),
           const SizedBox(height: 28),
           FilledButton.icon(
@@ -709,7 +706,7 @@ class _EmptyMyLists extends StatelessWidget {
             label: const Text('Create Bucket List'),
             style: FilledButton.styleFrom(
               backgroundColor: AppColors.primary,
-              foregroundColor: AppColors.bg,
+              foregroundColor: context.col.bg,
               minimumSize: const Size(double.infinity, 48),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(14),
@@ -753,26 +750,26 @@ class _UnauthCta extends StatelessWidget {
         children: [
           const Text('🗺️', style: TextStyle(fontSize: 56)),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Plan adventures together!',
             style: TextStyle(
-              color: AppColors.textPrimary,
+              color: context.col.textPrimary,
               fontSize: 18,
               fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Sign in to create and share bucket lists with friends.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+            style: TextStyle(color: context.col.textSecondary, fontSize: 13),
           ),
           const SizedBox(height: 28),
           FilledButton(
             onPressed: onLogin,
             style: FilledButton.styleFrom(
               backgroundColor: AppColors.primary,
-              foregroundColor: AppColors.bg,
+              foregroundColor: context.col.bg,
               minimumSize: const Size(double.infinity, 48),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(14),
@@ -802,7 +799,7 @@ class _BannerImage extends StatelessWidget {
     final w = width ?? double.infinity;
 
     if (url.isEmpty) {
-      return _placeholder(w);
+      return _placeholder(context, w);
     }
 
     return CachedNetworkImage(
@@ -811,7 +808,7 @@ class _BannerImage extends StatelessWidget {
       width: w,
       fit: BoxFit.cover,
       placeholder: (ctx, _) => _shimmer(w),
-      errorWidget: (ctx, url2, _) => _placeholder(w),
+      errorWidget: (ctx, url2, _) => _placeholder(ctx, w),
       imageBuilder: (ctx, imageProvider) => Stack(
         fit: StackFit.passthrough,
         children: [
@@ -848,7 +845,7 @@ class _BannerImage extends StatelessWidget {
     return _AnimatedShimmer(height: height, width: w);
   }
 
-  Widget _placeholder(double w) {
+  Widget _placeholder(BuildContext context, double w) {
     return Container(
       height: height,
       width: w,
@@ -857,15 +854,15 @@ class _BannerImage extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppColors.surfaceElevated,
-            AppColors.border.withValues(alpha: 0.6),
+            context.col.surfaceElevated,
+            context.col.border.withValues(alpha: 0.6),
           ],
         ),
       ),
-      child: const Center(
+      child: Center(
         child: Icon(
           Icons.photo_camera_outlined,
-          color: AppColors.textMuted,
+          color: context.col.textMuted,
           size: 28,
         ),
       ),
@@ -918,10 +915,10 @@ class _AnimatedShimmerState extends State<_AnimatedShimmer>
           gradient: LinearGradient(
             begin: Alignment(_anim.value - 1, 0),
             end: Alignment(_anim.value + 1, 0),
-            colors: const [
-              AppColors.surfaceElevated,
-              AppColors.border,
-              AppColors.surfaceElevated,
+            colors: [
+              context.col.surfaceElevated,
+              context.col.border,
+              context.col.surfaceElevated,
             ],
           ),
         ),
@@ -969,7 +966,7 @@ void showJoinCodeSheet(BuildContext context, String userId) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
-    backgroundColor: AppColors.surface,
+    backgroundColor: context.col.surface,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
     ),

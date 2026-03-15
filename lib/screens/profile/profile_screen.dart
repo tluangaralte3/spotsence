@@ -8,6 +8,7 @@ import '../../controllers/auth_controller.dart';
 import '../../controllers/spots_controller.dart';
 import '../../core/router/app_router.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/theme_controller.dart';
 import '../../models/gamification_models.dart';
 import '../../models/spot_model.dart';
 import '../../models/user_model.dart';
@@ -44,10 +45,10 @@ class _UnauthenticatedView extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
+              Icon(
                 Icons.person_off_rounded,
                 size: 72,
-                color: AppColors.textSecondary,
+                color: context.col.textSecondary,
               ),
               const SizedBox(height: 20),
               Text(
@@ -58,7 +59,7 @@ class _UnauthenticatedView extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 'Track your XP, badges, and saved spots',
-                style: const TextStyle(color: AppColors.textSecondary),
+                style: TextStyle(color: context.col.textSecondary),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
@@ -114,6 +115,23 @@ class _AuthenticatedProfileState extends ConsumerState<_AuthenticatedProfile>
             expandedHeight: 320,
             pinned: true,
             actions: [
+              Consumer(
+                builder: (context, ref, _) {
+                  final isDark =
+                      ref.watch(themeControllerProvider) == ThemeMode.dark;
+                  return IconButton(
+                    icon: Icon(
+                      isDark
+                          ? Icons.light_mode_outlined
+                          : Icons.dark_mode_outlined,
+                    ),
+                    tooltip: isDark ? 'Switch to Light' : 'Switch to Dark',
+                    onPressed: () => ref
+                        .read(themeControllerProvider.notifier)
+                        .toggleDarkLight(),
+                  );
+                },
+              ),
               IconButton(
                 icon: const Icon(Icons.edit_outlined),
                 tooltip: 'Edit Profile',
@@ -141,9 +159,9 @@ class _AuthenticatedProfileState extends ConsumerState<_AuthenticatedProfile>
                   Tab(text: 'Activity'),
                 ],
                 labelColor: AppColors.primary,
-                unselectedLabelColor: AppColors.textSecondary,
+                unselectedLabelColor: context.col.textSecondary,
                 indicatorColor: AppColors.primary,
-                dividerColor: AppColors.border,
+                dividerColor: context.col.border,
               ),
             ),
           ),
@@ -165,7 +183,7 @@ class _AuthenticatedProfileState extends ConsumerState<_AuthenticatedProfile>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.surfaceElevated,
+      backgroundColor: context.col.surfaceElevated,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -177,7 +195,7 @@ class _AuthenticatedProfileState extends ConsumerState<_AuthenticatedProfile>
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surfaceElevated,
+        backgroundColor: context.col.surfaceElevated,
         title: const Text('Sign Out'),
         content: const Text('Are you sure you want to sign out?'),
         actions: [
@@ -208,11 +226,11 @@ class _ProfileHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0xFF1A1025), AppColors.bg],
+          colors: [Color(0xFF1A1025), context.col.bg],
         ),
       ),
       child: Padding(
@@ -234,7 +252,7 @@ class _ProfileHeader extends StatelessWidget {
                   ),
                   child: CircleAvatar(
                     radius: 44,
-                    backgroundColor: AppColors.surface,
+                    backgroundColor: context.col.surface,
                     backgroundImage: user.photoURL != null
                         ? CachedNetworkImageProvider(user.photoURL!)
                         : null,
@@ -277,8 +295,8 @@ class _ProfileHeader extends StatelessWidget {
               const SizedBox(height: 6),
               Text(
                 user.bio!,
-                style: const TextStyle(
-                  color: AppColors.textSecondary,
+                style: TextStyle(
+                  color: context.col.textSecondary,
                   fontSize: 13,
                 ),
                 textAlign: TextAlign.center,
@@ -393,7 +411,7 @@ class _StatsTab extends StatelessWidget {
               const SizedBox(width: 6),
               Text(
                 user.location!,
-                style: const TextStyle(color: AppColors.textSecondary),
+                style: TextStyle(color: context.col.textSecondary),
               ),
             ],
           ),
@@ -418,9 +436,9 @@ class _StatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surfaceElevated,
+        color: context.col.surfaceElevated,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.col.border),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -437,10 +455,7 @@ class _StatCard extends StatelessWidget {
           ),
           Text(
             label,
-            style: const TextStyle(
-              fontSize: 10,
-              color: AppColors.textSecondary,
-            ),
+            style: TextStyle(fontSize: 10, color: context.col.textSecondary),
             textAlign: TextAlign.center,
           ),
         ],
@@ -468,9 +483,9 @@ class _LevelProgressCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surfaceElevated,
+        color: context.col.surfaceElevated,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.col.border),
       ),
       child: Column(
         children: [
@@ -490,8 +505,8 @@ class _LevelProgressCard extends StatelessWidget {
                   ),
                   Text(
                     user.levelTitle,
-                    style: const TextStyle(
-                      color: AppColors.textSecondary,
+                    style: TextStyle(
+                      color: context.col.textSecondary,
                       fontSize: 12,
                     ),
                   ),
@@ -503,16 +518,16 @@ class _LevelProgressCard extends StatelessWidget {
                   children: [
                     Text(
                       'Level ${nextLevel.level}',
-                      style: const TextStyle(
-                        color: AppColors.textSecondary,
+                      style: TextStyle(
+                        color: context.col.textSecondary,
                         fontWeight: FontWeight.w600,
                         fontSize: 16,
                       ),
                     ),
                     Text(
                       nextLevel.title,
-                      style: const TextStyle(
-                        color: AppColors.textSecondary,
+                      style: TextStyle(
+                        color: context.col.textSecondary,
                         fontSize: 12,
                       ),
                     ),
@@ -532,7 +547,7 @@ class _LevelProgressCard extends StatelessWidget {
           LinearPercentIndicator(
             percent: progress.clamp(0.0, 1.0),
             lineHeight: 12,
-            backgroundColor: AppColors.surface,
+            backgroundColor: context.col.surface,
             progressColor: AppColors.primary,
             barRadius: const Radius.circular(6),
             padding: EdgeInsets.zero,
@@ -543,16 +558,16 @@ class _LevelProgressCard extends StatelessWidget {
             children: [
               Text(
                 '${user.points} XP',
-                style: const TextStyle(
-                  color: AppColors.textSecondary,
+                style: TextStyle(
+                  color: context.col.textSecondary,
                   fontSize: 11,
                 ),
               ),
               if (nextLevel != null)
                 Text(
                   '${nextLevel.minPoints - user.points} XP to Level ${nextLevel.level}',
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
+                  style: TextStyle(
+                    color: context.col.textSecondary,
                     fontSize: 11,
                   ),
                 ),
@@ -584,9 +599,9 @@ class _BadgesTab extends ConsumerWidget {
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Contribute and explore to earn badges!',
-              style: TextStyle(color: AppColors.textSecondary),
+              style: TextStyle(color: context.col.textSecondary),
             ),
           ],
         ),
@@ -633,9 +648,9 @@ class _SavedTab extends ConsumerWidget {
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Bookmark spots to see them here',
-              style: TextStyle(color: AppColors.textSecondary),
+              style: TextStyle(color: context.col.textSecondary),
             ),
             const SizedBox(height: 24),
             ElevatedButton(
@@ -791,12 +806,12 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
             child: ElevatedButton(
               onPressed: _loading ? null : _save,
               child: _loading
-                  ? const SizedBox(
+                  ? SizedBox(
                       height: 20,
                       width: 20,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: AppColors.bg,
+                        color: context.col.bg,
                       ),
                     )
                   : const Text('Save Changes'),
@@ -836,7 +851,7 @@ class _TabBarDelegate extends SliverPersistentHeaderDelegate {
     BuildContext context,
     double shrinkOffset,
     bool overlapsContent,
-  ) => Container(color: AppColors.bg, child: tabBar);
+  ) => Container(color: context.col.bg, child: tabBar);
 
   @override
   double get maxExtent => tabBar.preferredSize.height;

@@ -294,12 +294,12 @@ class _CommunityMapState extends ConsumerState<CommunityMap> {
                           decoration: BoxDecoration(
                             color: selected
                                 ? AppColors.primary
-                                : AppColors.surface.withOpacity(0.92),
+                                : context.col.surface.withOpacity(0.92),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
                               color: selected
                                   ? AppColors.primary
-                                  : AppColors.border,
+                                  : context.col.border,
                             ),
                           ),
                           child: Text(
@@ -307,7 +307,7 @@ class _CommunityMapState extends ConsumerState<CommunityMap> {
                             style: TextStyle(
                               color: selected
                                   ? Colors.black
-                                  : AppColors.textPrimary,
+                                  : context.col.textPrimary,
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                             ),
@@ -602,9 +602,9 @@ class _ZoomControls extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface.withValues(alpha: 0.95),
+        color: context.col.surface.withValues(alpha: 0.95),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.col.border),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.3),
@@ -617,7 +617,7 @@ class _ZoomControls extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           _ZoomBtn(icon: Icons.add, onTap: () => _zoom(1)),
-          Container(height: 1, color: AppColors.border),
+          Container(height: 1, color: context.col.border),
           _ZoomBtn(icon: Icons.remove, onTap: () => _zoom(-1)),
         ],
       ),
@@ -637,7 +637,7 @@ class _ZoomBtn extends StatelessWidget {
       child: SizedBox(
         width: 40,
         height: 40,
-        child: Icon(icon, color: AppColors.textPrimary, size: 20),
+        child: Icon(icon, color: context.col.textPrimary, size: 20),
       ),
     );
   }
@@ -655,7 +655,7 @@ class _MapPlaceholder extends StatelessWidget {
     return SizedBox.expand(
       child: Container(
         color: const Color(0xFF0A0E1A),
-        child: const Center(
+        child: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -663,7 +663,7 @@ class _MapPlaceholder extends StatelessWidget {
               SizedBox(height: 16),
               Text(
                 'Loading map…',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+                style: TextStyle(color: context.col.textSecondary, fontSize: 14),
               ),
             ],
           ),
@@ -693,9 +693,9 @@ class _SearchBar extends StatelessWidget {
     return Container(
       height: 44,
       decoration: BoxDecoration(
-        color: AppColors.surface.withOpacity(0.96),
+        color: context.col.surface.withOpacity(0.96),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.col.border),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.3),
@@ -706,22 +706,22 @@ class _SearchBar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Padding(
+          Padding(
             padding: EdgeInsets.symmetric(horizontal: 12),
-            child: Icon(Icons.search, color: AppColors.textSecondary, size: 18),
+            child: Icon(Icons.search, color: context.col.textSecondary, size: 18),
           ),
           Expanded(
             child: TextField(
               controller: controller,
               onChanged: onChanged,
-              style: const TextStyle(
-                color: AppColors.textPrimary,
+              style: TextStyle(
+                color: context.col.textPrimary,
                 fontSize: 14,
               ),
               cursorColor: AppColors.primary,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 hintText: 'Search restaurants & cafes…',
-                hintStyle: TextStyle(color: AppColors.textMuted, fontSize: 14),
+                hintStyle: TextStyle(color: context.col.textMuted, fontSize: 14),
                 border: InputBorder.none,
                 isDense: true,
                 contentPadding: EdgeInsets.zero,
@@ -731,21 +731,21 @@ class _SearchBar extends StatelessWidget {
           if (controller.text.isNotEmpty)
             GestureDetector(
               onTap: onClear,
-              child: const Padding(
+              child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 12),
                 child: Icon(
                   Icons.close,
-                  color: AppColors.textSecondary,
+                  color: context.col.textSecondary,
                   size: 18,
                 ),
               ),
             )
           else
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(horizontal: 12),
               child: Icon(
                 Icons.map_outlined,
-                color: AppColors.textSecondary,
+                color: context.col.textSecondary,
                 size: 18,
               ),
             ),

@@ -31,17 +31,70 @@ abstract class AppColors {
   static const star = Color(0xFFFFB300);
   static const gold = Color(0xFFFFB300);
 
+  // ── Medal / podium colours ─────────────────────────────────────────────
+  static const silverMedal = Color(0xFFC0C0C0);
+  static const bronzeMedal = Color(0xFFCD7F32);
+
+  // ── Category accent ────────────────────────────────────────────────────
+  static const categoryPurple = Color(0xFF9C27B0);
+
   // ── Badge rarity ──────────────────────────────────────────────────────
   static const rarityCommon = Color(0xFF9E9E9E);
   static const rarityRare = Color(0xFF42A5F5);
   static const rarityEpic = Color(0xFFAB47BC);
   static const rarityLegendary = Color(0xFFFFB300);
 
-  // ── Light theme overrides ──────────────────────────────────────────────
+  // ── Light theme equivalents ────────────────────────────────────────────
   static const bgLight = Color(0xFFF4F7FF);
   static const surfaceLight = Color(0xFFFFFFFF);
+  static const surfaceElevatedLight = Color(0xFFF0F4FF);
+  static const borderLight = Color(0xFFE0E8F4);
   static const textPrimaryLight = Color(0xFF0A0E1A);
   static const textSecondaryLight = Color(0xFF4A5568);
+  static const textMutedLight = Color(0xFF9AA3B2);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Semantic colour accessor — use via context.col.bg etc.
+// Resolves to the correct dark/light value automatically.
+// ─────────────────────────────────────────────────────────────────────────────
+
+class AppColorScheme {
+  final bool isDark;
+  const AppColorScheme(this.isDark);
+
+  Color get bg => isDark ? AppColors.bg : AppColors.bgLight;
+  Color get surface => isDark ? AppColors.surface : AppColors.surfaceLight;
+  Color get surfaceElevated =>
+      isDark ? AppColors.surfaceElevated : AppColors.surfaceElevatedLight;
+  Color get border => isDark ? AppColors.border : AppColors.borderLight;
+  Color get textPrimary =>
+      isDark ? AppColors.textPrimary : AppColors.textPrimaryLight;
+  Color get textSecondary =>
+      isDark ? AppColors.textSecondary : AppColors.textSecondaryLight;
+  Color get textMuted =>
+      isDark ? AppColors.textMuted : AppColors.textMutedLight;
+
+  // Brand colours are theme-invariant
+  Color get primary => AppColors.primary;
+  Color get primaryDim => AppColors.primaryDim;
+  Color get secondary => AppColors.secondary;
+  Color get gold => AppColors.gold;
+  Color get success => AppColors.success;
+  Color get error => AppColors.error;
+  Color get warning => AppColors.warning;
+  Color get info => AppColors.info;
+}
+
+extension AppColorsContext on BuildContext {
+  /// Semantic colours that adapt to the current theme.
+  /// Usage: `context.col.bg`, `context.col.textSecondary`, etc.
+  AppColorScheme get col {
+    final brightness = Theme.of(this).brightness;
+    return AppColorScheme(brightness == Brightness.dark);
+  }
+
+  bool get isDark => Theme.of(this).brightness == Brightness.dark;
 }
 
 abstract class AppTheme {
@@ -70,6 +123,7 @@ abstract class AppTheme {
             primary: AppColors.primary,
             secondary: AppColors.secondary,
             surface: AppColors.surface,
+            surfaceContainerHigh: AppColors.surfaceElevated,
             error: AppColors.error,
             onPrimary: AppColors.bg,
             onSecondary: Colors.white,
@@ -79,6 +133,7 @@ abstract class AppTheme {
             primary: AppColors.primary,
             secondary: AppColors.secondary,
             surface: AppColors.surfaceLight,
+            surfaceContainerHigh: AppColors.surfaceElevatedLight,
             error: AppColors.error,
             onPrimary: AppColors.bg,
             onSurface: AppColors.textPrimaryLight,

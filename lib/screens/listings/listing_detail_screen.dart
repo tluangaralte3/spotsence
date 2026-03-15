@@ -72,8 +72,8 @@ class _LoadingScaffold extends StatelessWidget {
   const _LoadingScaffold();
   @override
   Widget build(BuildContext context) => Scaffold(
-    backgroundColor: AppColors.bg,
-    appBar: AppBar(backgroundColor: AppColors.bg),
+    backgroundColor: context.col.bg,
+    appBar: AppBar(backgroundColor: context.col.bg),
     body: const Center(
       child: CircularProgressIndicator(color: AppColors.primary),
     ),
@@ -85,8 +85,8 @@ class _ErrorScaffold extends StatelessWidget {
   const _ErrorScaffold({required this.error});
   @override
   Widget build(BuildContext context) => Scaffold(
-    backgroundColor: AppColors.bg,
-    appBar: AppBar(backgroundColor: AppColors.bg),
+    backgroundColor: context.col.bg,
+    appBar: AppBar(backgroundColor: context.col.bg),
     body: Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -95,7 +95,7 @@ class _ErrorScaffold extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             error,
-            style: const TextStyle(color: AppColors.textSecondary),
+            style: TextStyle(color: context.col.textSecondary),
             textAlign: TextAlign.center,
           ),
         ],
@@ -133,39 +133,39 @@ class _DetailScaffold extends StatelessWidget {
     final heroUrl = images.isNotEmpty ? images.first : '';
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: context.col.bg,
       body: CustomScrollView(
         slivers: [
           // ── Hero image + back button ────────────────────────────────────
           SliverAppBar(
             expandedHeight: 260,
             pinned: true,
-            backgroundColor: AppColors.bg,
+            backgroundColor: context.col.bg,
             leading: GestureDetector(
               onTap: () => context.pop(),
               child: Container(
                 margin: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.surface.withValues(alpha: 0.9),
+                  color: context.col.surface.withValues(alpha: 0.9),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.arrow_back_ios_new_rounded,
-                  color: AppColors.textPrimary,
+                  color: context.col.textPrimary,
                   size: 18,
                 ),
               ),
             ),
             flexibleSpace: FlexibleSpaceBar(
               background: heroUrl.isEmpty
-                  ? Container(color: AppColors.surfaceElevated)
+                  ? Container(color: context.col.surfaceElevated)
                   : CachedNetworkImage(
                       imageUrl: heroUrl,
                       fit: BoxFit.cover,
                       placeholder: (_, __) =>
-                          Container(color: AppColors.surfaceElevated),
+                          Container(color: context.col.surfaceElevated),
                       errorWidget: (_, __, ___) =>
-                          Container(color: AppColors.surfaceElevated),
+                          Container(color: context.col.surfaceElevated),
                     ),
             ),
           ),
@@ -184,8 +184,8 @@ class _DetailScaffold extends StatelessWidget {
                       Expanded(
                         child: Text(
                           title,
-                          style: const TextStyle(
-                            color: AppColors.textPrimary,
+                          style: TextStyle(
+                            color: context.col.textPrimary,
                             fontSize: 22,
                             fontWeight: FontWeight.w700,
                           ),
@@ -208,8 +208,8 @@ class _DetailScaffold extends StatelessWidget {
                       Expanded(
                         child: Text(
                           location,
-                          style: const TextStyle(
-                            color: AppColors.textSecondary,
+                          style: TextStyle(
+                            color: context.col.textSecondary,
                             fontSize: 13,
                           ),
                         ),
@@ -229,10 +229,10 @@ class _DetailScaffold extends StatelessWidget {
                   // Description
                   if (description.isNotEmpty) ...[
                     const SizedBox(height: 20),
-                    const Text(
+                    Text(
                       'About',
                       style: TextStyle(
-                        color: AppColors.textPrimary,
+                        color: context.col.textPrimary,
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),
@@ -240,8 +240,8 @@ class _DetailScaffold extends StatelessWidget {
                     const SizedBox(height: 8),
                     Text(
                       description,
-                      style: const TextStyle(
-                        color: AppColors.textSecondary,
+                      style: TextStyle(
+                        color: context.col.textSecondary,
                         fontSize: 14,
                         height: 1.6,
                       ),
@@ -257,10 +257,10 @@ class _DetailScaffold extends StatelessWidget {
                   // Image gallery strip
                   if (images.length > 1) ...[
                     const SizedBox(height: 20),
-                    const Text(
+                    Text(
                       'Gallery',
                       style: TextStyle(
-                        color: AppColors.textPrimary,
+                        color: context.col.textPrimary,
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),
@@ -318,7 +318,7 @@ class _Divider extends StatelessWidget {
   const _Divider();
   @override
   Widget build(BuildContext context) =>
-      const Divider(color: AppColors.border, height: 1);
+      Divider(color: context.col.border, height: 1);
 }
 
 class _InfoRow extends StatelessWidget {
@@ -343,13 +343,13 @@ class _InfoRow extends StatelessWidget {
         const SizedBox(width: 10),
         Text(
           label,
-          style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+          style: TextStyle(color: context.col.textSecondary, fontSize: 13),
         ),
         const Spacer(),
         Text(
           value,
           style: TextStyle(
-            color: valueColor ?? AppColors.textPrimary,
+            color: valueColor ?? context.col.textPrimary,
             fontSize: 13,
             fontWeight: FontWeight.w600,
           ),
@@ -387,9 +387,9 @@ class _ImageGallery extends StatelessWidget {
           height: 90,
           fit: BoxFit.cover,
           placeholder: (_, __) =>
-              Container(color: AppColors.surfaceElevated, width: 90),
+              Container(color: context.col.surfaceElevated, width: 90),
           errorWidget: (_, __, ___) =>
-              Container(color: AppColors.surfaceElevated, width: 90),
+              Container(color: context.col.surfaceElevated, width: 90),
         ),
       ),
     ),
@@ -416,7 +416,7 @@ class _PrimaryButton extends StatelessWidget {
       onPressed: onTap,
       style: ElevatedButton.styleFrom(
         backgroundColor: color ?? AppColors.primary,
-        foregroundColor: AppColors.bg,
+        foregroundColor: context.col.bg,
         padding: const EdgeInsets.symmetric(vertical: 14),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
@@ -525,8 +525,8 @@ class _HotelDetail extends StatelessWidget {
         if (h.hasParking)
           _badgeChip(
             '🅿️ Parking',
-            AppColors.surfaceElevated,
-            AppColors.textSecondary,
+            context.col.surfaceElevated,
+            context.col.textSecondary,
           ),
         if (h.hasPool)
           _badgeChip(
@@ -692,7 +692,7 @@ class _HomestayDetail extends StatelessWidget {
 // Adventure detail
 // ─────────────────────────────────────────────────────────────────────────────
 
-Color _diffColor(String d) {
+Color _diffColor(BuildContext context, String d) {
   switch (d.toLowerCase()) {
     case 'easy':
       return AppColors.success;
@@ -701,9 +701,9 @@ Color _diffColor(String d) {
     case 'challenging':
       return AppColors.error;
     case 'extreme':
-      return const Color(0xFF9C27B0);
+      return AppColors.categoryPurple;
     default:
-      return AppColors.textSecondary;
+      return context.col.textSecondary;
   }
 }
 
@@ -714,7 +714,7 @@ class _AdventureDetail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final a = adventure;
-    final dc = _diffColor(a.difficulty);
+    final dc = _diffColor(context, a.difficulty);
     return _DetailScaffold(
       images: a.images,
       title: a.name,
@@ -796,8 +796,8 @@ class _ShoppingDetail extends StatelessWidget {
         if (s.hasParking)
           _badgeChip(
             '🅿️ Parking',
-            AppColors.surfaceElevated,
-            AppColors.textSecondary,
+            context.col.surfaceElevated,
+            context.col.textSecondary,
           ),
         if (s.acceptsCards)
           _badgeChip(
@@ -875,8 +875,8 @@ class _EventDetail extends StatelessWidget {
         if (e.category.isNotEmpty)
           _badgeChip(
             e.category,
-            AppColors.surfaceElevated,
-            AppColors.textSecondary,
+            context.col.surfaceElevated,
+            context.col.textSecondary,
           ),
       ],
       infoRows: [
@@ -956,18 +956,18 @@ class _ChipWidget extends StatelessWidget {
     decoration: BoxDecoration(
       color: accent
           ? AppColors.primary.withValues(alpha: 0.12)
-          : AppColors.surfaceElevated,
+          : context.col.surfaceElevated,
       borderRadius: BorderRadius.circular(20),
       border: Border.all(
         color: accent
             ? AppColors.primary.withValues(alpha: 0.3)
-            : AppColors.border,
+            : context.col.border,
       ),
     ),
     child: Text(
       label,
       style: TextStyle(
-        color: accent ? AppColors.primary : AppColors.textSecondary,
+        color: accent ? AppColors.primary : context.col.textSecondary,
         fontSize: 12,
         fontWeight: accent ? FontWeight.w600 : FontWeight.normal,
       ),

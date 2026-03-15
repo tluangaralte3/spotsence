@@ -80,12 +80,12 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                 ),
               ),
               child: _loading
-                  ? const SizedBox(
+                  ? SizedBox(
                       height: 16,
                       width: 16,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: AppColors.bg,
+                        color: context.col.bg,
                       ),
                     )
                   : const Text('Post'),
@@ -117,10 +117,10 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                     decoration: BoxDecoration(
                       color: selected
                           ? AppColors.primary.withOpacity(0.15)
-                          : AppColors.surfaceElevated,
+                          : context.col.surfaceElevated,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: selected ? AppColors.primary : AppColors.border,
+                        color: selected ? AppColors.primary : context.col.border,
                       ),
                     ),
                     child: Text(
@@ -132,7 +132,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                             : FontWeight.w500,
                         color: selected
                             ? AppColors.primary
-                            : AppColors.textSecondary,
+                            : context.col.textSecondary,
                       ),
                     ),
                   ),

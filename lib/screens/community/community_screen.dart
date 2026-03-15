@@ -39,7 +39,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen>
         bottom: TabBar(
           controller: _tabs,
           labelColor: AppColors.primary,
-          unselectedLabelColor: AppColors.textSecondary,
+          unselectedLabelColor: context.col.textSecondary,
           indicatorColor: AppColors.primary,
           indicatorSize: TabBarIndicatorSize.label,
           tabs: const [
@@ -78,7 +78,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen>
                       context.go(AppRoutes.login);
                     }
                   },
-                  backgroundColor: AppColors.surfaceElevated,
+                  backgroundColor: context.col.surfaceElevated,
                   foregroundColor: AppColors.primary,
                   child: const Icon(Icons.link_rounded),
                 ),
@@ -93,7 +93,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen>
                     }
                   },
                   backgroundColor: AppColors.primary,
-                  foregroundColor: AppColors.bg,
+                  foregroundColor: context.col.bg,
                   child: const Icon(Icons.add_rounded),
                 ),
               ],
@@ -111,7 +111,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen>
               }
             },
             backgroundColor: AppColors.primary,
-            foregroundColor: AppColors.bg,
+            foregroundColor: context.col.bg,
             child: const Icon(Icons.add),
           );
         },

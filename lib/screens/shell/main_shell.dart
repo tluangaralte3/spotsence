@@ -32,8 +32,8 @@ class _MainShellState extends ConsumerState<MainShell> {
     return Scaffold(
       body: XpToastOverlay(child: widget.child),
       bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          border: Border(top: BorderSide(color: AppColors.border, width: 1)),
+        decoration: BoxDecoration(
+          border: Border(top: BorderSide(color: context.col.border, width: 1)),
         ),
         child: BottomNavigationBar(
           currentIndex: index,

@@ -41,11 +41,11 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
                 ],
               ),
               background: Container(
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [Color(0xFF1A1025), AppColors.bg],
+                    colors: [Color(0xFF1A1025), context.col.bg],
                   ),
                 ),
               ),
@@ -71,7 +71,7 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
                     const SizedBox(height: 12),
                     Text(
                       err.toString(),
-                      style: const TextStyle(color: AppColors.textSecondary),
+                      style: TextStyle(color: context.col.textSecondary),
                     ),
                     const SizedBox(height: 16),
                     ElevatedButton(
@@ -104,11 +104,11 @@ class _LeaderboardContent extends ConsumerWidget {
     final rankingsAsync = ref.watch(placeRankingsProvider);
 
     if (entries.isEmpty) {
-      return const SliverFillRemaining(
+      return SliverFillRemaining(
         child: Center(
           child: Text(
             'No leaderboard data yet 🏜️',
-            style: TextStyle(color: AppColors.textSecondary),
+            style: TextStyle(color: context.col.textSecondary),
           ),
         ),
       );
@@ -137,7 +137,7 @@ class _LeaderboardContent extends ConsumerWidget {
               Text(
                 'Place Rankings',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: AppColors.textPrimary,
+                  color: context.col.textPrimary,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -211,7 +211,7 @@ class _LeaderboardContent extends ConsumerWidget {
               Text(
                 'Explorer Rankings',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: AppColors.textPrimary,
+                  color: context.col.textPrimary,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -258,9 +258,9 @@ class _PlaceCategoryRanking extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.col.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.col.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -283,8 +283,8 @@ class _PlaceCategoryRanking extends StatelessWidget {
                 const SizedBox(width: 10),
                 Text(
                   label,
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
+                  style: TextStyle(
+                    color: context.col.textPrimary,
                     fontWeight: FontWeight.w700,
                     fontSize: 14,
                   ),
@@ -301,15 +301,15 @@ class _PlaceCategoryRanking extends StatelessWidget {
               ],
             ),
           ),
-          const Divider(color: AppColors.border, height: 1),
+          Divider(color: context.col.border, height: 1),
           // Entries
           if (entries.isEmpty)
-            const Padding(
+            Padding(
               padding: EdgeInsets.all(16),
               child: Center(
                 child: Text(
                   'No ratings yet',
-                  style: TextStyle(color: AppColors.textMuted, fontSize: 12),
+                  style: TextStyle(color: context.col.textMuted, fontSize: 12),
                 ),
               ),
             )
@@ -319,8 +319,8 @@ class _PlaceCategoryRanking extends StatelessWidget {
               final place = e.value;
               final medalColor = switch (rank) {
                 1 => AppColors.gold,
-                2 => const Color(0xFFC0C0C0),
-                _ => const Color(0xFFCD7F32),
+                2 => AppColors.silverMedal,
+                _ => AppColors.bronzeMedal,
               };
               final medal = switch (rank) {
                 1 => '🥇',
@@ -368,7 +368,7 @@ class _PlaceRankTile extends StatelessWidget {
       decoration: BoxDecoration(
         border: isLast
             ? null
-            : const Border(bottom: BorderSide(color: AppColors.border)),
+            : Border(bottom: BorderSide(color: context.col.border)),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -401,8 +401,8 @@ class _PlaceRankTile extends StatelessWidget {
                 children: [
                   Text(
                     place.name,
-                    style: const TextStyle(
-                      color: AppColors.textPrimary,
+                    style: TextStyle(
+                      color: context.col.textPrimary,
                       fontWeight: FontWeight.w600,
                       fontSize: 13,
                     ),
@@ -412,8 +412,8 @@ class _PlaceRankTile extends StatelessWidget {
                   if (place.ratingsCount > 0)
                     Text(
                       '${place.ratingsCount} review${place.ratingsCount != 1 ? 's' : ''}',
-                      style: const TextStyle(
-                        color: AppColors.textMuted,
+                      style: TextStyle(
+                        color: context.col.textMuted,
                         fontSize: 11,
                       ),
                     ),
@@ -493,7 +493,7 @@ class _PodiumWidget extends StatelessWidget {
           ],
         ),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.col.border),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -502,7 +502,7 @@ class _PodiumWidget extends StatelessWidget {
           _PodiumItem(
             entry: second,
             medal: '🥈',
-            medalColor: const Color(0xFFC0C0C0),
+            medalColor: AppColors.silverMedal,
             height: 100,
             isMe: second.userId == currentUserId,
           ).animate().slideY(begin: 0.3, delay: 100.ms),
@@ -517,7 +517,7 @@ class _PodiumWidget extends StatelessWidget {
           _PodiumItem(
             entry: third,
             medal: '🥉',
-            medalColor: const Color(0xFFCD7F32),
+            medalColor: AppColors.bronzeMedal,
             height: 80,
             isMe: third.userId == currentUserId,
           ).animate().slideY(begin: 0.3, delay: 200.ms),
@@ -590,7 +590,7 @@ class _PodiumItem extends StatelessWidget {
             style: TextStyle(
               fontSize: large ? 13 : 11,
               fontWeight: large ? FontWeight.w700 : FontWeight.w600,
-              color: isMe ? AppColors.primary : AppColors.textPrimary,
+              color: isMe ? AppColors.primary : context.col.textPrimary,
             ),
           ),
         ),
@@ -674,10 +674,7 @@ class _MyRankCard extends StatelessWidget {
           const SizedBox(width: 12),
           Text(
             '${myEntry.points} pts',
-            style: const TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 13,
-            ),
+            style: TextStyle(color: context.col.textSecondary, fontSize: 13),
           ),
         ],
       ),
@@ -698,16 +695,16 @@ class _LeaderboardTile extends StatelessWidget {
     required this.index,
   });
 
-  Color get _rankColor {
+  Color _rankColor(BuildContext context) {
     switch (entry.rank) {
       case 1:
         return AppColors.gold;
       case 2:
-        return const Color(0xFFC0C0C0);
+        return AppColors.silverMedal;
       case 3:
-        return const Color(0xFFCD7F32);
+        return AppColors.bronzeMedal;
       default:
-        return AppColors.textSecondary;
+        return context.col.textSecondary;
     }
   }
 
@@ -719,7 +716,7 @@ class _LeaderboardTile extends StatelessWidget {
           decoration: BoxDecoration(
             color: isMe
                 ? AppColors.primary.withValues(alpha: 0.08)
-                : AppColors.surfaceElevated,
+                : context.col.surfaceElevated,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
               color: isMe
@@ -737,7 +734,7 @@ class _LeaderboardTile extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w800,
-                    color: _rankColor,
+                    color: _rankColor(context),
                   ),
                 ),
               ),
@@ -745,7 +742,7 @@ class _LeaderboardTile extends StatelessWidget {
               // Avatar
               CircleAvatar(
                 radius: 22,
-                backgroundColor: AppColors.surface,
+                backgroundColor: context.col.surface,
                 backgroundImage: entry.userPhoto != null
                     ? CachedNetworkImageProvider(entry.userPhoto!)
                     : null,
@@ -773,7 +770,9 @@ class _LeaderboardTile extends StatelessWidget {
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
-                        color: isMe ? AppColors.primary : AppColors.textPrimary,
+                        color: isMe
+                            ? AppColors.primary
+                            : context.col.textPrimary,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -786,9 +785,9 @@ class _LeaderboardTile extends StatelessWidget {
                           const SizedBox(width: 6),
                           Text(
                             '🏅 ${entry.badgesCount}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 11,
-                              color: AppColors.textSecondary,
+                              color: context.col.textSecondary,
                             ),
                           ),
                         ],
@@ -808,15 +807,15 @@ class _LeaderboardTile extends StatelessWidget {
                       fontSize: 16,
                       fontWeight: FontWeight.w800,
                       color: entry.rank <= 3
-                          ? _rankColor
-                          : AppColors.textPrimary,
+                          ? _rankColor(context)
+                          : context.col.textPrimary,
                     ),
                   ),
-                  const Text(
+                  Text(
                     'pts',
                     style: TextStyle(
                       fontSize: 10,
-                      color: AppColors.textSecondary,
+                      color: context.col.textSecondary,
                     ),
                   ),
                 ],

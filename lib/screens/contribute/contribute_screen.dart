@@ -122,15 +122,15 @@ class _ContributeScreenState extends ConsumerState<ContributeScreen> {
           context: context,
           barrierDismissible: false,
           builder: (_) => AlertDialog(
-            backgroundColor: AppColors.surfaceElevated,
+            backgroundColor: context.col.surfaceElevated,
             title: const Text('🎉 Spot Submitted!'),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
+                Text(
                   'Your contribution is under review. '
                   'You\'ll earn +100 XP when it\'s approved!',
-                  style: TextStyle(color: AppColors.textSecondary),
+                  style: TextStyle(color: context.col.textSecondary),
                 ),
                 const SizedBox(height: 12),
                 Container(
@@ -248,12 +248,12 @@ class _ContributeScreenState extends ConsumerState<ContributeScreen> {
                     ? (_step == _steps.length - 1 ? _submit : _next)
                     : null,
                 child: _submitting
-                    ? const SizedBox(
+                    ? SizedBox(
                         height: 20,
                         width: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: AppColors.bg,
+                          color: context.col.bg,
                         ),
                       )
                     : Text(_step == _steps.length - 1 ? 'Submit Spot' : 'Next'),
@@ -288,7 +288,7 @@ class _StepIndicator extends StatelessWidget {
                 height: 2,
                 color: stepIndex < current
                     ? AppColors.primary
-                    : AppColors.border,
+                    : context.col.border,
               ),
             );
           }
@@ -304,11 +304,11 @@ class _StepIndicator extends StatelessWidget {
                 height: 28,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: done || active ? AppColors.primary : AppColors.surface,
+                  color: done || active ? AppColors.primary : context.col.surface,
                   border: Border.all(
                     color: done || active
                         ? AppColors.primary
-                        : AppColors.border,
+                        : context.col.border,
                   ),
                 ),
                 alignment: Alignment.center,
@@ -325,7 +325,7 @@ class _StepIndicator extends StatelessWidget {
                           fontWeight: FontWeight.w700,
                           color: active
                               ? Colors.white
-                              : AppColors.textSecondary,
+                              : context.col.textSecondary,
                         ),
                       ),
               ),
@@ -334,7 +334,7 @@ class _StepIndicator extends StatelessWidget {
                 steps[stepIndex],
                 style: TextStyle(
                   fontSize: 9,
-                  color: active ? AppColors.primary : AppColors.textSecondary,
+                  color: active ? AppColors.primary : context.col.textSecondary,
                   fontWeight: active ? FontWeight.w700 : FontWeight.normal,
                 ),
               ),
@@ -378,9 +378,9 @@ class _DetailsStepState extends State<_DetailsStep> {
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
-        const Text(
+        Text(
           'Tell us about this spot',
-          style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+          style: TextStyle(color: context.col.textSecondary, fontSize: 14),
         ),
         const SizedBox(height: 20),
 
@@ -415,10 +415,10 @@ class _DetailsStepState extends State<_DetailsStep> {
                 decoration: BoxDecoration(
                   color: selected
                       ? AppColors.primary.withOpacity(0.15)
-                      : AppColors.surfaceElevated,
+                      : context.col.surfaceElevated,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: selected ? AppColors.primary : AppColors.border,
+                    color: selected ? AppColors.primary : context.col.border,
                   ),
                 ),
                 child: Text(
@@ -428,7 +428,7 @@ class _DetailsStepState extends State<_DetailsStep> {
                     fontWeight: selected ? FontWeight.w700 : FontWeight.normal,
                     color: selected
                         ? AppColors.primary
-                        : AppColors.textSecondary,
+                        : context.col.textSecondary,
                   ),
                 ),
               ),
@@ -472,9 +472,9 @@ class _LocationStep extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
-        const Text(
+        Text(
           'Where is this spot?',
-          style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+          style: TextStyle(color: context.col.textSecondary, fontSize: 14),
         ),
         const SizedBox(height: 20),
 
@@ -526,10 +526,10 @@ class _LocationStep extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 12),
-        const Text(
+        Text(
           '💡 Tip: You can find coordinates in Google Maps by long-pressing a location.',
           style: TextStyle(
-            color: AppColors.textSecondary,
+            color: context.col.textSecondary,
             fontSize: 12,
             height: 1.5,
           ),
@@ -559,9 +559,9 @@ class _PhotosStep extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Add some photos (optional, max 5)',
-            style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+            style: TextStyle(color: context.col.textSecondary, fontSize: 14),
           ),
           const SizedBox(height: 20),
 
@@ -613,14 +613,14 @@ class _PhotosStep extends StatelessWidget {
                     width: 100,
                     height: 100,
                     decoration: BoxDecoration(
-                      color: AppColors.surfaceElevated,
+                      color: context.col.surfaceElevated,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: AppColors.border,
+                        color: context.col.border,
                         style: BorderStyle.solid,
                       ),
                     ),
-                    child: const Column(
+                    child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
@@ -632,7 +632,7 @@ class _PhotosStep extends StatelessWidget {
                         Text(
                           'Add Photo',
                           style: TextStyle(
-                            color: AppColors.textSecondary,
+                            color: context.col.textSecondary,
                             fontSize: 11,
                           ),
                         ),
@@ -689,17 +689,17 @@ class _ReviewStep extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
-        const Text(
+        Text(
           'Review your submission',
-          style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+          style: TextStyle(color: context.col.textSecondary, fontSize: 14),
         ),
         const SizedBox(height: 20),
 
         Container(
           decoration: BoxDecoration(
-            color: AppColors.surfaceElevated,
+            color: context.col.surfaceElevated,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.border),
+            border: Border.all(color: context.col.border),
           ),
           child: Column(
             children: rows.asMap().entries.map((e) {
@@ -712,8 +712,8 @@ class _ReviewStep extends StatelessWidget {
                 decoration: BoxDecoration(
                   border: isLast
                       ? null
-                      : const Border(
-                          bottom: BorderSide(color: AppColors.border),
+                      : Border(
+                          bottom: BorderSide(color: context.col.border),
                         ),
                 ),
                 child: Row(
@@ -723,8 +723,8 @@ class _ReviewStep extends StatelessWidget {
                       width: 90,
                       child: Text(
                         e.value['label']!,
-                        style: const TextStyle(
-                          color: AppColors.textSecondary,
+                        style: TextStyle(
+                          color: context.col.textSecondary,
                           fontSize: 12,
                         ),
                       ),
@@ -732,8 +732,8 @@ class _ReviewStep extends StatelessWidget {
                     Expanded(
                       child: Text(
                         e.value['value']!,
-                        style: const TextStyle(
-                          color: AppColors.textPrimary,
+                        style: TextStyle(
+                          color: context.col.textPrimary,
                           fontWeight: FontWeight.w600,
                           fontSize: 13,
                         ),

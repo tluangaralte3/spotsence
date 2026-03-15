@@ -59,8 +59,8 @@ class XpProgressBar extends StatelessWidget {
                 const SizedBox(width: 8),
                 Text(
                   '$currentXp / $maxXp XP',
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
+                  style: TextStyle(
+                    color: context.col.textSecondary,
                     fontSize: 11,
                   ),
                 ),
@@ -80,7 +80,7 @@ class XpProgressBar extends StatelessWidget {
         LinearPercentIndicator(
           percent: progress,
           lineHeight: 8,
-          backgroundColor: AppColors.surface,
+          backgroundColor: context.col.surface,
           linearGradient: const LinearGradient(
             colors: [AppColors.primary, AppColors.secondary],
           ),
@@ -208,7 +208,7 @@ class BadgeCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surfaceElevated,
+        color: context.col.surfaceElevated,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: color.withOpacity(0.4)),
         boxShadow: [
@@ -241,7 +241,7 @@ class BadgeCard extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             badge?.rarity ?? '',
-            style: const TextStyle(color: AppColors.textSecondary, fontSize: 9),
+            style: TextStyle(color: context.col.textSecondary, fontSize: 9),
           ),
         ],
       ),
@@ -276,7 +276,7 @@ class AchievementCard extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 20),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surfaceElevated,
+        color: context.col.surfaceElevated,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: color.withOpacity(0.6), width: 2),
         boxShadow: [
@@ -330,8 +330,8 @@ class AchievementCard extends StatelessWidget {
                 ),
                 Text(
                   badge.description,
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
+                  style: TextStyle(
+                    color: context.col.textSecondary,
                     fontSize: 12,
                   ),
                   maxLines: 2,
@@ -349,10 +349,10 @@ class AchievementCard extends StatelessWidget {
 
           if (onDismiss != null)
             IconButton(
-              icon: const Icon(
+              icon: Icon(
                 Icons.close,
                 size: 18,
-                color: AppColors.textSecondary,
+                color: context.col.textSecondary,
               ),
               onPressed: onDismiss,
             ),
@@ -390,8 +390,8 @@ class RankBadge extends StatelessWidget {
     if (rank > 3) {
       return Text(
         '#$rank',
-        style: const TextStyle(
-          color: AppColors.textSecondary,
+        style: TextStyle(
+          color: context.col.textSecondary,
           fontWeight: FontWeight.w700,
           fontSize: 14,
         ),
@@ -447,7 +447,7 @@ class MiniStatChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = color ?? AppColors.textSecondary;
+    final c = color ?? context.col.textSecondary;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
