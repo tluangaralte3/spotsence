@@ -1,8 +1,10 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:image/image.dart' as img;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
@@ -106,6 +108,7 @@ void showPlaceDetailSheet(BuildContext context, MapPlace place) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
+    useRootNavigator: true,
     backgroundColor: Colors.transparent,
     builder: (_) => _PlaceDetailSheet.fromMapPlace(place),
   );
@@ -116,6 +119,7 @@ void showSpotDetailSheet(BuildContext context, SpotModel spot) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
+    useRootNavigator: true,
     backgroundColor: Colors.transparent,
     builder: (_) => _PlaceDetailSheet.fromSpot(spot),
   );
@@ -320,14 +324,25 @@ class _PlaceDetailSheetState extends ConsumerState<_PlaceDetailSheet> {
     });
 
     try {
-      final file = File(picked.path);
-      final ext = picked.path.split('.').last;
+      final rawPath = picked.path;
+
+      // ── Compress to JPEG using pure-Dart (works on simulator + device) ────
+      final compressedBytes = await _compressImage(rawPath);
+
+      if (compressedBytes == null || compressedBytes.isEmpty) {
+        throw Exception('Image compression failed — please try again.');
+      }
+
       final ts = DateTime.now().millisecondsSinceEpoch;
+      // Always store as .jpg after compression
       final storagePath =
-          'community_photos/${widget.collection}/${widget.id}/${user.id}_$ts.$ext';
+          'community_photos/${widget.collection}/${widget.id}/${user.id}_$ts.jpg';
 
       final storageRef = FirebaseStorage.instance.ref(storagePath);
-      final uploadTask = storageRef.putFile(file);
+
+      // Explicit content-type is required on iOS to avoid error -1017
+      final metadata = SettableMetadata(contentType: 'image/jpeg');
+      final uploadTask = storageRef.putData(compressedBytes, metadata);
 
       // Track progress
       uploadTask.snapshotEvents.listen((snap) {
@@ -372,6 +387,29 @@ class _PlaceDetailSheetState extends ConsumerState<_PlaceDetailSheet> {
           _isUploadingPhoto = false;
           _uploadProgress = 0;
         });
+    }
+  }
+
+  // ── image compression (pure Dart — works on simulator & device) ────────────
+
+  static Future<Uint8List?> _compressImage(String path) async {
+    try {
+      final bytes = await File(path).readAsBytes();
+      final decoded = img.decodeImage(bytes);
+      if (decoded == null) return null;
+
+      // Resize so the longer edge is at most 1080 px
+      final resized = decoded.width > decoded.height
+          ? (decoded.width > 1080
+                ? img.copyResize(decoded, width: 1080)
+                : decoded)
+          : (decoded.height > 1080
+                ? img.copyResize(decoded, height: 1080)
+                : decoded);
+
+      return Uint8List.fromList(img.encodeJpg(resized, quality: 72));
+    } catch (_) {
+      return null;
     }
   }
 

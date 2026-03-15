@@ -71,6 +71,7 @@ dependencies:
   # Image Handling
   image_picker: ^1.1.2
   image_cropper: ^11.0.0
+  image: ^4.3.0
 
   # Maps & Location
   flutter_map: ^8.2.2

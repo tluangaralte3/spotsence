@@ -66,6 +66,51 @@ class CommunityService extends BaseApiService {
     });
   }
 
+  Future<ApiResult<void>> deletePost(String postId) async {
+    return safeCall(() async {
+      final response = await dio.delete('/api/community/posts/$postId');
+      return unwrap(response, (_) => null);
+    });
+  }
+
+  Future<ApiResult<CommunityPost>> updatePost({
+    required String postId,
+    required String content,
+    required String type,
+  }) async {
+    return safeCall(() async {
+      final response = await dio.put(
+        '/api/community/posts/$postId',
+        data: {'content': content, 'type': type},
+      );
+      return unwrap(
+        response,
+        (json) => CommunityPost.fromJson(json as Map<String, dynamic>),
+      );
+    });
+  }
+
+  /// Fetch posts by a specific user.
+  Future<ApiResult<List<CommunityPost>>> getMyPosts({
+    required String userId,
+    int page = 1,
+    int pageSize = 50,
+  }) async {
+    return safeCall(() async {
+      final response = await dio.get(
+        '/api/community/posts',
+        queryParameters: {'page': page, 'pageSize': pageSize, 'userId': userId},
+      );
+      return unwrap(response, (json) {
+        final list = json as List;
+        return list
+            .map((e) => CommunityPost.fromJson(e as Map<String, dynamic>))
+            .where((p) => p.userId == userId)
+            .toList();
+      });
+    });
+  }
+
   Future<ApiResult<void>> addComment(String postId, String comment) async {
     return safeCall(() async {
       final response = await dio.post(

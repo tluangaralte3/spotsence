@@ -110,6 +110,52 @@ class PostsController extends Notifier<PostsState> {
       err: (msg) => msg,
     );
   }
+
+  /// Optimistically removes the post, then calls DELETE. Restores on error.
+  Future<String?> deletePost(String postId) async {
+    final idx = state.posts.indexWhere((p) => p.id == postId);
+    if (idx < 0) return null;
+    final removed = state.posts[idx];
+    state = state.copyWith(
+      posts: List<CommunityPost>.from(state.posts)..removeAt(idx),
+    );
+    final result = await _service.deletePost(postId);
+    return result.when(
+      ok: (_) => null,
+      err: (msg) {
+        // Restore
+        final restored = List<CommunityPost>.from(state.posts)
+          ..insert(idx, removed);
+        state = state.copyWith(posts: restored);
+        return msg;
+      },
+    );
+  }
+
+  /// Updates content/type of an existing post optimistically.
+  Future<String?> updatePost({
+    required String postId,
+    required String content,
+    required String type,
+  }) async {
+    final result = await _service.updatePost(
+      postId: postId,
+      content: content,
+      type: type,
+    );
+    return result.when(
+      ok: (updated) {
+        final idx = state.posts.indexWhere((p) => p.id == postId);
+        if (idx >= 0) {
+          final newPosts = List<CommunityPost>.from(state.posts)
+            ..[idx] = updated;
+          state = state.copyWith(posts: newPosts);
+        }
+        return null;
+      },
+      err: (msg) => msg,
+    );
+  }
 }
 
 final postsControllerProvider = NotifierProvider<PostsController, PostsState>(

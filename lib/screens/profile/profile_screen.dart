@@ -5,10 +5,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import '../../controllers/auth_controller.dart';
+import '../../controllers/community_controller.dart';
 import '../../controllers/spots_controller.dart';
 import '../../core/router/app_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/theme_controller.dart';
+import '../../models/community_models.dart';
 import '../../models/gamification_models.dart';
 import '../../models/spot_model.dart';
 import '../../models/user_model.dart';
@@ -93,7 +95,7 @@ class _AuthenticatedProfileState extends ConsumerState<_AuthenticatedProfile>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
   }
 
   @override
@@ -153,6 +155,7 @@ class _AuthenticatedProfileState extends ConsumerState<_AuthenticatedProfile>
               TabBar(
                 controller: _tabController,
                 tabs: const [
+                  Tab(text: 'My Posts'),
                   Tab(text: 'Stats'),
                   Tab(text: 'Badges'),
                   Tab(text: 'Saved'),
@@ -169,6 +172,7 @@ class _AuthenticatedProfileState extends ConsumerState<_AuthenticatedProfile>
         body: TabBarView(
           controller: _tabController,
           children: [
+            _MyPostsTab(userId: user.id),
             _StatsTab(user: user),
             _BadgesTab(user: user),
             _SavedTab(bookmarks: bookmarksList),
@@ -673,7 +677,431 @@ class _SavedTab extends ConsumerWidget {
   }
 }
 
-// ─── Edit Profile Sheet ───────────────────────────────────────────────────────
+// ─── My Posts Tab ─────────────────────────────────────────────────────────────
+
+class _MyPostsTab extends ConsumerWidget {
+  final String userId;
+  const _MyPostsTab({required this.userId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final postsState = ref.watch(postsControllerProvider);
+    final myPosts = postsState.posts.where((p) => p.userId == userId).toList();
+
+    if (postsState.isLoading && myPosts.isEmpty) {
+      return const Center(
+        child: CircularProgressIndicator(color: AppColors.primary),
+      );
+    }
+
+    if (myPosts.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('✍️', style: TextStyle(fontSize: 52)),
+              const SizedBox(height: 12),
+              Text(
+                'No posts yet',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Your community posts will appear here.',
+                style: TextStyle(color: context.col.textSecondary),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+      itemCount: myPosts.length,
+      itemBuilder: (context, i) {
+        final post = myPosts[i];
+        return _MyPostCard(post: post, userId: userId)
+            .animate(delay: Duration(milliseconds: i * 50))
+            .fadeIn()
+            .slideY(begin: 0.04);
+      },
+    );
+  }
+}
+
+class _MyPostCard extends ConsumerWidget {
+  final CommunityPost post;
+  final String userId;
+  const _MyPostCard({required this.post, required this.userId});
+
+  static const _typeEmoji = {
+    'post': '📝',
+    'tip': '💡',
+    'question': '❓',
+    'review': '⭐',
+  };
+
+  static const _typeLabel = {
+    'post': 'Post',
+    'tip': 'Tip',
+    'question': 'Question',
+    'review': 'Review',
+  };
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: context.col.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: context.col.border),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Type badge + actions row
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '${_typeEmoji[post.type] ?? '📝'} ${_typeLabel[post.type] ?? post.type}',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                if (post.spotName != null && post.spotName!.isNotEmpty)
+                  Expanded(
+                    child: Text(
+                      '@ ${post.spotName}',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: context.col.textSecondary,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  )
+                else
+                  const Spacer(),
+                InkWell(
+                  borderRadius: BorderRadius.circular(8),
+                  onTap: () => _showEditSheet(context, ref),
+                  child: Padding(
+                    padding: const EdgeInsets.all(6),
+                    child: Icon(
+                      Icons.edit_outlined,
+                      size: 18,
+                      color: context.col.textSecondary,
+                    ),
+                  ),
+                ),
+                InkWell(
+                  borderRadius: BorderRadius.circular(8),
+                  onTap: () => _confirmDelete(context, ref),
+                  child: Padding(
+                    padding: const EdgeInsets.all(6),
+                    child: Icon(
+                      Icons.delete_outline_rounded,
+                      size: 18,
+                      color: AppColors.error,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+
+            // Content
+            Text(
+              post.content,
+              style: TextStyle(
+                color: context.col.textPrimary,
+                fontSize: 14,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 10),
+
+            // Footer
+            Row(
+              children: [
+                Icon(
+                  Icons.favorite_rounded,
+                  size: 14,
+                  color: context.col.textMuted,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  '${post.likeCount}',
+                  style: TextStyle(fontSize: 12, color: context.col.textMuted),
+                ),
+                const SizedBox(width: 12),
+                Icon(
+                  Icons.chat_bubble_outline_rounded,
+                  size: 14,
+                  color: context.col.textMuted,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  '${post.commentCount}',
+                  style: TextStyle(fontSize: 12, color: context.col.textMuted),
+                ),
+                const Spacer(),
+                Text(
+                  _formatDate(post.createdAt),
+                  style: TextStyle(fontSize: 11, color: context.col.textMuted),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatDate(String raw) {
+    try {
+      final dt = DateTime.parse(raw).toLocal();
+      final now = DateTime.now();
+      final diff = now.difference(dt);
+      if (diff.inDays == 0) return 'Today';
+      if (diff.inDays == 1) return 'Yesterday';
+      if (diff.inDays < 7) return '${diff.inDays}d ago';
+      return '${dt.day}/${dt.month}/${dt.year}';
+    } catch (_) {
+      return raw;
+    }
+  }
+
+  void _confirmDelete(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        title: const Text('Delete Post'),
+        content: const Text(
+          'This will permanently delete your post. Continue?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.error,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final err = await ref
+                  .read(postsControllerProvider.notifier)
+                  .deletePost(post.id);
+              if (err != null && context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(err),
+                    backgroundColor: AppColors.error,
+                  ),
+                );
+              }
+            },
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditSheet(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => _EditPostSheet(post: post, ref: ref),
+    );
+  }
+}
+
+class _EditPostSheet extends StatefulWidget {
+  final CommunityPost post;
+  final WidgetRef ref;
+  const _EditPostSheet({required this.post, required this.ref});
+
+  @override
+  State<_EditPostSheet> createState() => _EditPostSheetState();
+}
+
+class _EditPostSheetState extends State<_EditPostSheet> {
+  late final TextEditingController _contentCtrl;
+  late String _type;
+  bool _loading = false;
+
+  static const _types = [
+    {'id': 'post', 'label': '📝 Post'},
+    {'id': 'tip', 'label': '💡 Tip'},
+    {'id': 'question', 'label': '❓ Question'},
+    {'id': 'review', 'label': '⭐ Review'},
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _contentCtrl = TextEditingController(text: widget.post.content);
+    _type = widget.post.type;
+  }
+
+  @override
+  void dispose() {
+    _contentCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    if (_contentCtrl.text.trim().isEmpty) return;
+    setState(() => _loading = true);
+    final err = await widget.ref
+        .read(postsControllerProvider.notifier)
+        .updatePost(
+          postId: widget.post.id,
+          content: _contentCtrl.text.trim(),
+          type: _type,
+        );
+    if (mounted) {
+      setState(() => _loading = false);
+      if (err == null) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Post updated ✓'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(err), backgroundColor: AppColors.error),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+        left: 20,
+        right: 20,
+        top: 20,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text('Edit Post', style: Theme.of(context).textTheme.titleLarge),
+              const Spacer(),
+              IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _types.map((t) {
+              final selected = _type == t['id'];
+              return GestureDetector(
+                onTap: () => setState(() => _type = t['id']!),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: selected
+                        ? AppColors.primary.withValues(alpha: 0.15)
+                        : context.col.surfaceElevated,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: selected ? AppColors.primary : context.col.border,
+                    ),
+                  ),
+                  child: Text(
+                    t['label']!,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                      color: selected
+                          ? AppColors.primary
+                          : context.col.textSecondary,
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _contentCtrl,
+            maxLines: 6,
+            onChanged: (_) => setState(() {}),
+            decoration: const InputDecoration(
+              hintText: 'What\'s on your mind?',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.all(Radius.circular(12)),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: (_loading || _contentCtrl.text.trim().isEmpty)
+                  ? null
+                  : _save,
+              child: _loading
+                  ? const SizedBox(
+                      height: 18,
+                      width: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Save Changes'),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+      ),
+    );
+  }
+}
 
 // ─── Activity Tab ─────────────────────────────────────────────────────────────
 

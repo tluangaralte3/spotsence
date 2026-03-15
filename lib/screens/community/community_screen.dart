@@ -99,21 +99,8 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen>
               ],
             );
           }
-          // Default tab: create post
-          return FloatingActionButton(
-            heroTag: 'create_post',
-            onPressed: () {
-              final user = ref.read(currentUserProvider);
-              if (user == null) {
-                context.go(AppRoutes.login);
-              } else {
-                context.push(AppRoutes.createPost);
-              }
-            },
-            backgroundColor: AppColors.primary,
-            foregroundColor: context.col.bg,
-            child: const Icon(Icons.add),
-          );
+          // Feed (0) and Dilemmas (2): no FAB
+          return const SizedBox.shrink();
         },
       ),
     );
