@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../controllers/auth_controller.dart';
+import '../../core/router/app_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/listing_models.dart';
 import '../../services/firestore_restaurants_service.dart';
@@ -376,11 +377,16 @@ class _RestaurantBodyState extends ConsumerState<_RestaurantBody> {
                     ),
                   ],
 
-                  // ── Reviews Section ─────────────────────────────────────
+                  // ── Reviews Section ────────────────────────────────────
                   const SizedBox(height: 32),
                   const _Divider(),
                   const SizedBox(height: 24),
-                  _ReviewSection(restaurantId: r.id),
+                  _ReviewSection(
+                    restaurantId: r.id,
+                    entityName: r.name,
+                    averageRating: r.rating,
+                    totalRatings: r.ratingsCount,
+                  ),
                   const SizedBox(height: 40),
                 ],
               ),
@@ -398,7 +404,15 @@ class _RestaurantBodyState extends ConsumerState<_RestaurantBody> {
 
 class _ReviewSection extends ConsumerStatefulWidget {
   final String restaurantId;
-  const _ReviewSection({required this.restaurantId});
+  final String entityName;
+  final double averageRating;
+  final int totalRatings;
+  const _ReviewSection({
+    required this.restaurantId,
+    required this.entityName,
+    required this.averageRating,
+    required this.totalRatings,
+  });
 
   @override
   ConsumerState<_ReviewSection> createState() => _ReviewSectionState();
@@ -634,7 +648,7 @@ class _ReviewSectionState extends ConsumerState<_ReviewSection> {
 
         const SizedBox(height: 16),
 
-        // Reviews list
+        // Reviews list (latest 5)
         reviewsAsync.when(
           loading: () => const Center(
             child: Padding(
@@ -649,28 +663,83 @@ class _ReviewSectionState extends ConsumerState<_ReviewSection> {
               style: TextStyle(color: context.col.textMuted),
             ),
           ),
-          data: (reviews) => reviews.isEmpty
-              ? Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: context.col.surface,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: context.col.border),
-                  ),
-                  child: Center(
-                    child: Text(
-                      'No reviews yet — be the first!',
-                      style: TextStyle(color: context.col.textMuted),
+          data: (allReviews) {
+            final reviews = allReviews.take(5).toList();
+            return reviews.isEmpty
+                ? Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: context.col.surface,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: context.col.border),
                     ),
-                  ),
-                )
-              : ListView.separated(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: reviews.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 10),
-                  itemBuilder: (_, i) => _ReviewCard(review: reviews[i]),
-                ),
+                    child: Center(
+                      child: Text(
+                        'No reviews yet — be the first!',
+                        style: TextStyle(color: context.col.textMuted),
+                      ),
+                    ),
+                  )
+                : Column(
+                    children: [
+                      ListView.separated(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: reviews.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 10),
+                        itemBuilder: (_, i) => _ReviewCard(review: reviews[i]),
+                      ),
+                      const SizedBox(height: 14),
+                      GestureDetector(
+                        onTap: () => context.push(
+                          AppRoutes.allReviewsPath(
+                            collection: 'restaurants',
+                            id: widget.restaurantId,
+                            name: widget.entityName,
+                            avg: widget.averageRating,
+                            total: widget.totalRatings,
+                          ),
+                        ),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 13),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: AppColors.primary.withValues(alpha: 0.3),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.rate_review_outlined,
+                                size: 16,
+                                color: AppColors.primary,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'View All Reviews',
+                                style: TextStyle(
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 13,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Icon(
+                                Icons.arrow_forward_rounded,
+                                size: 14,
+                                color: AppColors.primary,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+          },
         ),
       ],
     );

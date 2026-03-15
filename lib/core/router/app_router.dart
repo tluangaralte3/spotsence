@@ -26,6 +26,7 @@ import '../../screens/community/create_bucket_list_screen.dart';
 import '../../screens/community/edit_bucket_list_screen.dart';
 import '../../screens/community/add_bucket_item_screen.dart';
 import '../../screens/events/event_detail_screen.dart';
+import '../../screens/listings/all_reviews_screen.dart';
 
 // Named route paths
 abstract class AppRoutes {
@@ -52,6 +53,16 @@ abstract class AppRoutes {
   static const bucketListDetail = '/community/bucket-lists/:id';
   static const editBucketList = '/community/bucket-lists/:id/edit';
   static const addBucketItem = '/community/bucket-lists/:listId/add-item';
+
+  static const allReviews = '/reviews/:collection/:id';
+  static String allReviewsPath({
+    required String collection,
+    required String id,
+    required String name,
+    required double avg,
+    required int total,
+  }) =>
+      '/reviews/$collection/$id?name=${Uri.encodeComponent(name)}&avg=$avg&total=$total';
 
   static String spotDetailPath(String id) => '/spots/$id';
   static String eventDetailPath(String id) => '/events/$id';
@@ -225,6 +236,30 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.editProfile,
         pageBuilder: (_, state) => _slide(state, const EditProfileScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.allReviews,
+        pageBuilder: (_, state) {
+          final collection = state.pathParameters['collection']!;
+          final id = state.pathParameters['id']!;
+          final name = Uri.decodeComponent(
+            state.uri.queryParameters['name'] ?? '',
+          );
+          final avg =
+              double.tryParse(state.uri.queryParameters['avg'] ?? '') ?? 0.0;
+          final total =
+              int.tryParse(state.uri.queryParameters['total'] ?? '') ?? 0;
+          return _slide(
+            state,
+            AllReviewsScreen(
+              collection: collection,
+              entityId: id,
+              entityName: name,
+              averageRating: avg,
+              totalRatings: total,
+            ),
+          );
+        },
       ),
     ],
   );

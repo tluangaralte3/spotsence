@@ -2,8 +2,10 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:go_router/go_router.dart';
 import '../../controllers/auth_controller.dart';
 import '../../controllers/spots_controller.dart';
+import '../../core/router/app_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/spot_model.dart';
 import '../../widgets/shared_widgets.dart';
@@ -293,7 +295,12 @@ class _SpotDetailBodyState extends ConsumerState<_SpotDetailBody> {
 
                   // ── Reviews ────────────────────────────────────────
                   const SizedBox(height: 28),
-                  _ReviewSection(spotId: spot.id),
+                  _ReviewSection(
+                    spotId: spot.id,
+                    entityName: spot.name,
+                    averageRating: spot.averageRating,
+                    totalRatings: spot.ratingsCount,
+                  ),
 
                   const SizedBox(height: 40),
                 ],
@@ -344,14 +351,22 @@ final _spotReviewsProvider = StreamProvider.autoDispose
           .doc(spotId)
           .collection('reviews')
           .orderBy('timestamp', descending: true)
-          .limit(30)
+          .limit(5)
           .snapshots()
           .map((s) => s.docs.map((d) => {'id': d.id, ...d.data()}).toList()),
     );
 
 class _ReviewSection extends ConsumerStatefulWidget {
   final String spotId;
-  const _ReviewSection({required this.spotId});
+  final String entityName;
+  final double averageRating;
+  final int totalRatings;
+  const _ReviewSection({
+    required this.spotId,
+    required this.entityName,
+    required this.averageRating,
+    required this.totalRatings,
+  });
 
   @override
   ConsumerState<_ReviewSection> createState() => _ReviewSectionState();
@@ -601,7 +616,7 @@ class _ReviewSectionState extends ConsumerState<_ReviewSection> {
 
         const SizedBox(height: 16),
 
-        // Reviews list
+        // Reviews list (latest 5)
         reviewsAsync.when(
           loading: () => const Center(
             child: Padding(
@@ -631,12 +646,65 @@ class _ReviewSectionState extends ConsumerState<_ReviewSection> {
                     ),
                   ),
                 )
-              : ListView.separated(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: reviews.length,
-                  separatorBuilder: (context, _) => const SizedBox(height: 10),
-                  itemBuilder: (context, i) => _ReviewCard(review: reviews[i]),
+              : Column(
+                  children: [
+                    ListView.separated(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: reviews.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 10),
+                      itemBuilder: (_, i) => _ReviewCard(review: reviews[i]),
+                    ),
+                    const SizedBox(height: 14),
+                    // View All button
+                    GestureDetector(
+                      onTap: () => context.push(
+                        AppRoutes.allReviewsPath(
+                          collection: 'spots',
+                          id: widget.spotId,
+                          name: widget.entityName,
+                          avg: widget.averageRating,
+                          total: widget.totalRatings,
+                        ),
+                      ),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: AppColors.primary.withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.rate_review_outlined,
+                              size: 16,
+                              color: AppColors.primary,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'View All Reviews',
+                              style: TextStyle(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Icon(
+                              Icons.arrow_forward_rounded,
+                              size: 14,
+                              color: AppColors.primary,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
         ),
       ],
@@ -800,10 +868,7 @@ class _InfoPill extends StatelessWidget {
               label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 12,
-                color: context.col.textSecondary,
-              ),
+              style: TextStyle(fontSize: 12, color: context.col.textSecondary),
             ),
           ),
         ],
