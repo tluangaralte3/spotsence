@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 
 import '../../controllers/event_controller.dart';
 import '../../controllers/listings_controller.dart';
+import '../../core/providers/district_provider.dart';
 import '../../core/router/app_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/event_model.dart';
@@ -59,14 +60,7 @@ class _ListingsScreenState extends ConsumerState<ListingsScreen>
             pinned: false,
             elevation: 0,
             automaticallyImplyLeading: false,
-            title: Text(
-              'Explore Mizoram',
-              style: TextStyle(
-                color: context.col.textPrimary,
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
+            title: _ExploreTitle(),
             actions: [
               IconButton(
                 onPressed: () => context.push(AppRoutes.search),
@@ -123,6 +117,371 @@ class _ListingsScreenState extends ConsumerState<ListingsScreen>
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Animated "Explore <District>" title — tappable district filter
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _ExploreTitle extends ConsumerStatefulWidget {
+  const _ExploreTitle();
+
+  @override
+  ConsumerState<_ExploreTitle> createState() => _ExploreTitleState();
+}
+
+class _ExploreTitleState extends ConsumerState<_ExploreTitle>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _fade;
+  String _displayed = 'Mizoram';
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+    _fade = CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut);
+    _ctrl.value = 1.0;
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _animateTo(String newName) async {
+    if (newName == _displayed) return;
+    await _ctrl.reverse();
+    if (mounted) setState(() => _displayed = newName);
+    await _ctrl.forward();
+  }
+
+  void _showDistrictPicker() {
+    showModalBottomSheet(
+      context: context,
+      useRootNavigator: true,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => _DistrictPickerSheet(
+        currentFilter: ref.read(selectedDistrictProvider),
+        nearestDistrict: ref.read(districtProvider).district,
+        onSelected: (d) {
+          ref.read(selectedDistrictProvider.notifier).select(d);
+        },
+        onClear: () {
+          ref.read(selectedDistrictProvider.notifier).clear();
+        },
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final detectedState = ref.watch(districtProvider);
+    final activeFilter = ref.watch(selectedDistrictProvider);
+
+    if (!detectedState.loading && detectedState.district != _displayed) {
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _animateTo(detectedState.district),
+      );
+    }
+
+    return GestureDetector(
+      onTap: _showDistrictPicker,
+      behavior: HitTestBehavior.opaque,
+      child: FadeTransition(
+        opacity: _fade,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Explore ',
+              style: TextStyle(
+                color: context.col.textPrimary,
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            Text(
+              activeFilter ?? _displayed,
+              style: TextStyle(
+                color: activeFilter != null
+                    ? AppColors.primary
+                    : AppColors.primary,
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            // Drop-down caret or active-filter indicator
+            const SizedBox(width: 4),
+            Container(
+              padding: const EdgeInsets.all(3),
+              decoration: BoxDecoration(
+                color: activeFilter != null
+                    ? AppColors.primary
+                    : AppColors.primary.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Icon(
+                activeFilter != null
+                    ? Icons.tune_rounded
+                    : Icons.keyboard_arrow_down_rounded,
+                size: 14,
+                color: activeFilter != null ? Colors.white : AppColors.primary,
+              ),
+            ),
+            if (detectedState.loading) ...[
+              const SizedBox(width: 6),
+              SizedBox(
+                width: 10,
+                height: 10,
+                child: CircularProgressIndicator(
+                  color: AppColors.primary,
+                  strokeWidth: 1.5,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// District picker bottom sheet
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _DistrictPickerSheet extends ConsumerWidget {
+  final String? currentFilter;
+  final String nearestDistrict;
+  final ValueChanged<String?> onSelected;
+  final VoidCallback onClear;
+
+  const _DistrictPickerSheet({
+    required this.currentFilter,
+    required this.nearestDistrict,
+    required this.onSelected,
+    required this.onClear,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Container(
+      decoration: BoxDecoration(
+        color: context.col.bg,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).padding.bottom + 16,
+        top: 8,
+        left: 20,
+        right: 20,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Handle
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 20),
+              decoration: BoxDecoration(
+                color: context.col.border,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+
+          // Header
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Filter by District',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Showing listings from the selected district',
+                      style: TextStyle(
+                        color: context.col.textSecondary,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (currentFilter != null)
+                TextButton.icon(
+                  onPressed: () {
+                    onClear();
+                    Navigator.pop(context);
+                  },
+                  icon: const Icon(Icons.clear_rounded, size: 16),
+                  label: const Text('Clear'),
+                  style: TextButton.styleFrom(foregroundColor: AppColors.error),
+                ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // "All Mizoram" chip
+          _DistrictChip(
+            label: '🗺️  All Mizoram',
+            subtitle: 'Show every district',
+            selected: currentFilter == null,
+            isNearest: false,
+            onTap: () {
+              onClear();
+              Navigator.pop(context);
+            },
+          ),
+          const SizedBox(height: 8),
+
+          Text(
+            'DISTRICTS',
+            style: TextStyle(
+              color: context.col.textMuted,
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.0,
+            ),
+          ),
+          const SizedBox(height: 8),
+
+          // District grid
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
+              childAspectRatio: 3.0,
+            ),
+            itemCount: kDistrictNames.length,
+            itemBuilder: (context, i) {
+              final name = kDistrictNames[i];
+              return _DistrictChip(
+                label: name,
+                subtitle: name == nearestDistrict ? 'Near you' : null,
+                selected: currentFilter == name,
+                isNearest: name == nearestDistrict,
+                onTap: () {
+                  onSelected(name);
+                  Navigator.pop(context);
+                },
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DistrictChip extends StatelessWidget {
+  final String label;
+  final String? subtitle;
+  final bool selected;
+  final bool isNearest;
+  final VoidCallback onTap;
+
+  const _DistrictChip({
+    required this.label,
+    required this.selected,
+    required this.isNearest,
+    required this.onTap,
+    this.subtitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: selected
+              ? AppColors.primary.withValues(alpha: 0.15)
+              : context.col.surfaceElevated,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: selected
+                ? AppColors.primary
+                : isNearest
+                ? AppColors.primary.withValues(alpha: 0.35)
+                : context.col.border,
+            width: selected ? 1.5 : 1.0,
+          ),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            if (selected)
+              const Padding(
+                padding: EdgeInsets.only(right: 6),
+                child: Icon(
+                  Icons.check_circle_rounded,
+                  size: 14,
+                  color: AppColors.primary,
+                ),
+              )
+            else if (isNearest)
+              const Padding(
+                padding: EdgeInsets.only(right: 6),
+                child: Icon(
+                  Icons.my_location_rounded,
+                  size: 13,
+                  color: AppColors.primary,
+                ),
+              ),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      color: selected
+                          ? AppColors.primary
+                          : context.col.textPrimary,
+                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                      fontSize: 13,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (subtitle != null)
+                    Text(
+                      subtitle!,
+                      style: TextStyle(
+                        color: isNearest
+                            ? AppColors.primary
+                            : context.col.textMuted,
+                        fontSize: 10,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+} // ─────────────────────────────────────────────────────────────────────────────
 // Shared helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -472,12 +831,22 @@ class _TouristSpotsTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(touristSpotsProvider);
     final notifier = ref.read(touristSpotsProvider.notifier);
+    final districtFilter = ref.watch(selectedDistrictProvider);
+    final items = districtFilter == null
+        ? state.items
+        : state.items
+              .where(
+                (s) => s.district.toLowerCase() == districtFilter.toLowerCase(),
+              )
+              .toList();
 
     return _ListingList<SpotModel>(
-      state: state,
+      state: state.copyWith(items: items),
       onRefresh: notifier.refresh,
       onLoadMore: notifier.loadMore,
-      emptyMessage: 'No tourist spots found.',
+      emptyMessage: districtFilter != null
+          ? 'No tourist spots in $districtFilter.'
+          : 'No tourist spots found.',
       itemBuilder: (context, spot) => _ListingCard(
         heroImageUrl: spot.heroImage,
         title: spot.name,
@@ -514,12 +883,22 @@ class _RestaurantsTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(restaurantsProvider);
     final notifier = ref.read(restaurantsProvider.notifier);
+    final districtFilter = ref.watch(selectedDistrictProvider);
+    final items = districtFilter == null
+        ? state.items
+        : state.items
+              .where(
+                (r) => r.district.toLowerCase() == districtFilter.toLowerCase(),
+              )
+              .toList();
 
     return _ListingList<RestaurantModel>(
-      state: state,
+      state: state.copyWith(items: items),
       onRefresh: notifier.refresh,
       onLoadMore: notifier.loadMore,
-      emptyMessage: 'No restaurants found.',
+      emptyMessage: districtFilter != null
+          ? 'No restaurants in $districtFilter.'
+          : 'No restaurants found.',
       itemBuilder: (context, r) => _ListingCard(
         heroImageUrl: r.heroImage,
         title: r.name,
@@ -553,12 +932,22 @@ class _HotelsTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(hotelsProvider);
     final notifier = ref.read(hotelsProvider.notifier);
+    final districtFilter = ref.watch(selectedDistrictProvider);
+    final items = districtFilter == null
+        ? state.items
+        : state.items
+              .where(
+                (h) => h.district.toLowerCase() == districtFilter.toLowerCase(),
+              )
+              .toList();
 
     return _ListingList<HotelModel>(
-      state: state,
+      state: state.copyWith(items: items),
       onRefresh: notifier.refresh,
       onLoadMore: notifier.loadMore,
-      emptyMessage: 'No hotels found.',
+      emptyMessage: districtFilter != null
+          ? 'No hotels in $districtFilter.'
+          : 'No hotels found.',
       itemBuilder: (context, h) => _ListingCard(
         heroImageUrl: h.heroImage,
         title: h.name,
@@ -591,12 +980,22 @@ class _CafesTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(cafesProvider);
     final notifier = ref.read(cafesProvider.notifier);
+    final districtFilter = ref.watch(selectedDistrictProvider);
+    final items = districtFilter == null
+        ? state.items
+        : state.items
+              .where(
+                (c) => c.district.toLowerCase() == districtFilter.toLowerCase(),
+              )
+              .toList();
 
     return _ListingList<CafeModel>(
-      state: state,
+      state: state.copyWith(items: items),
       onRefresh: notifier.refresh,
       onLoadMore: notifier.loadMore,
-      emptyMessage: 'No cafes found.',
+      emptyMessage: districtFilter != null
+          ? 'No cafes in $districtFilter.'
+          : 'No cafes found.',
       itemBuilder: (context, c) => _ListingCard(
         heroImageUrl: c.heroImage,
         title: c.name,
@@ -628,12 +1027,22 @@ class _HomestaysTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(homestaysProvider);
     final notifier = ref.read(homestaysProvider.notifier);
+    final districtFilter = ref.watch(selectedDistrictProvider);
+    final items = districtFilter == null
+        ? state.items
+        : state.items
+              .where(
+                (h) => h.district.toLowerCase() == districtFilter.toLowerCase(),
+              )
+              .toList();
 
     return _ListingList<HomestayModel>(
-      state: state,
+      state: state.copyWith(items: items),
       onRefresh: notifier.refresh,
       onLoadMore: notifier.loadMore,
-      emptyMessage: 'No homestays found.',
+      emptyMessage: districtFilter != null
+          ? 'No homestays in $districtFilter.'
+          : 'No homestays found.',
       itemBuilder: (context, h) => _ListingCard(
         heroImageUrl: h.heroImage,
         title: h.name,
@@ -687,12 +1096,22 @@ class _AdventureTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(adventureSpotsProvider);
     final notifier = ref.read(adventureSpotsProvider.notifier);
+    final districtFilter = ref.watch(selectedDistrictProvider);
+    final items = districtFilter == null
+        ? state.items
+        : state.items
+              .where(
+                (a) => a.district.toLowerCase() == districtFilter.toLowerCase(),
+              )
+              .toList();
 
     return _ListingList<AdventureSpotModel>(
-      state: state,
+      state: state.copyWith(items: items),
       onRefresh: notifier.refresh,
       onLoadMore: notifier.loadMore,
-      emptyMessage: 'No adventure spots found.',
+      emptyMessage: districtFilter != null
+          ? 'No adventure spots in $districtFilter.'
+          : 'No adventure spots found.',
       itemBuilder: (context, a) => _ListingCard(
         heroImageUrl: a.heroImage,
         title: a.name,
@@ -751,12 +1170,22 @@ class _ShoppingTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(shoppingAreasProvider);
     final notifier = ref.read(shoppingAreasProvider.notifier);
+    final districtFilter = ref.watch(selectedDistrictProvider);
+    final items = districtFilter == null
+        ? state.items
+        : state.items
+              .where(
+                (s) => s.district.toLowerCase() == districtFilter.toLowerCase(),
+              )
+              .toList();
 
     return _ListingList<ShoppingAreaModel>(
-      state: state,
+      state: state.copyWith(items: items),
       onRefresh: notifier.refresh,
       onLoadMore: notifier.loadMore,
-      emptyMessage: 'No shopping areas found.',
+      emptyMessage: districtFilter != null
+          ? 'No shopping areas in $districtFilter.'
+          : 'No shopping areas found.',
       itemBuilder: (context, s) => _ListingCard(
         heroImageUrl: s.heroImage,
         title: s.name,
