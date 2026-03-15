@@ -4,10 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../controllers/event_controller.dart';
 import '../../controllers/listings_controller.dart';
 import '../../core/router/app_router.dart';
 import '../../core/theme/app_theme.dart';
-import '../../models/listing_models.dart';
+import '../../models/event_model.dart';
+import '../../models/listing_models.dart' hide EventModel;
 import '../../models/spot_model.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -190,14 +192,11 @@ Widget _featureDot(BuildContext context, IconData icon, String label) => Row(
 
 class _HeroImage extends StatelessWidget {
   final String url;
-  final double height;
-  final double borderRadius;
 
-  const _HeroImage({
-    required this.url,
-    this.height = 160,
-    this.borderRadius = 12,
-  });
+  const _HeroImage({required this.url});
+
+  static const double height = 160;
+  static const double borderRadius = 12;
 
   @override
   Widget build(BuildContext context) {
@@ -802,22 +801,741 @@ Color _eventTypeColor(String type) {
   }
 }
 
-class _EventsTab extends ConsumerWidget {
+enum _EventViewMode { calendar, grid }
+
+class _EventsTab extends ConsumerStatefulWidget {
   const _EventsTab();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(eventsProvider);
-    final notifier = ref.read(eventsProvider.notifier);
+  ConsumerState<_EventsTab> createState() => _EventsTabState();
+}
 
-    return _ListingList<EventModel>(
-      state: state,
-      onRefresh: notifier.refresh,
-      onLoadMore: notifier.loadMore,
-      emptyMessage: 'No upcoming events found.',
-      itemBuilder: (context, e) => _EventCard(
-        event: e,
-        onTap: () => context.push(AppRoutes.listingDetailPath('events', e.id)),
+class _EventsTabState extends ConsumerState<_EventsTab> {
+  DateTime _focusedMonth = DateTime(DateTime.now().year, DateTime.now().month);
+  DateTime? _selectedDay;
+  _EventViewMode _viewMode = _EventViewMode.calendar;
+  bool _calendarVisible = true;
+
+  // ── helpers ────────────────────────────────────────────────────────────────
+
+  bool _isSameDay(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
+
+  Set<DateTime> _eventDays(List<EventModel> events) => {
+    for (final e in events)
+      if (e.date != null) DateTime(e.date!.year, e.date!.month, e.date!.day),
+  };
+
+  List<EventModel> _eventsForDay(List<EventModel> events, DateTime day) =>
+      events.where((e) => e.date != null && _isSameDay(e.date!, day)).toList();
+
+  void _prevMonth() => setState(
+    () => _focusedMonth = DateTime(_focusedMonth.year, _focusedMonth.month - 1),
+  );
+
+  void _nextMonth() => setState(
+    () => _focusedMonth = DateTime(_focusedMonth.year, _focusedMonth.month + 1),
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final state = ref.watch(eventControllerProvider);
+    final notifier = ref.read(eventControllerProvider.notifier);
+
+    if (state.isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(color: AppColors.primary),
+      );
+    }
+
+    if (state.error != null && state.items.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.wifi_off_rounded,
+              color: context.col.textMuted,
+              size: 48,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              state.error!,
+              style: TextStyle(color: context.col.textSecondary),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            TextButton.icon(
+              onPressed: notifier.refresh,
+              icon: const Icon(Icons.refresh, color: AppColors.primary),
+              label: const Text(
+                'Retry',
+                style: TextStyle(color: AppColors.primary),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final allEvents = state.items;
+    final eventDays = _eventDays(allEvents);
+    final displayEvents = _selectedDay != null
+        ? _eventsForDay(allEvents, _selectedDay!)
+        : allEvents;
+    final isGrid = _viewMode == _EventViewMode.grid;
+
+    return RefreshIndicator(
+      color: AppColors.primary,
+      backgroundColor: context.col.surface,
+      onRefresh: () async => notifier.refresh(),
+      child: CustomScrollView(
+        slivers: [
+          // ── Calendar (collapsible) ──────────────────────────────────────
+          SliverToBoxAdapter(
+            child: AnimatedCrossFade(
+              duration: const Duration(milliseconds: 280),
+              sizeCurve: Curves.easeInOut,
+              firstCurve: Curves.easeOut,
+              secondCurve: Curves.easeIn,
+              crossFadeState: _calendarVisible
+                  ? CrossFadeState.showFirst
+                  : CrossFadeState.showSecond,
+              firstChild: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+                child: _EventCalendar(
+                  focusedMonth: _focusedMonth,
+                  selectedDay: _selectedDay,
+                  eventDays: eventDays,
+                  onPrevMonth: _prevMonth,
+                  onNextMonth: _nextMonth,
+                  onDaySelected: (day) => setState(() {
+                    _selectedDay =
+                        (_selectedDay != null && _isSameDay(_selectedDay!, day))
+                        ? null
+                        : day;
+                  }),
+                ),
+              ),
+              secondChild: const SizedBox.shrink(),
+            ),
+          ),
+
+          // ── Section header with view toggle ───────────────────────────────
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+              child: Row(
+                children: [
+                  Text(
+                    _selectedDay != null
+                        ? DateFormat('MMMM d').format(_selectedDay!)
+                        : 'All Events',
+                    style: TextStyle(
+                      color: context.col.textPrimary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${displayEvents.length}',
+                      style: const TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  if (_selectedDay != null) ...[
+                    const SizedBox(width: 10),
+                    GestureDetector(
+                      onTap: () => setState(() => _selectedDay = null),
+                      child: const Text(
+                        'Show all',
+                        style: TextStyle(
+                          color: AppColors.primary,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                  const Spacer(),
+                  // ── Calendar toggle ───────────────────────────────────────
+                  GestureDetector(
+                    onTap: () =>
+                        setState(() => _calendarVisible = !_calendarVisible),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: _calendarVisible
+                            ? AppColors.primary.withValues(alpha: 0.12)
+                            : context.col.surfaceElevated,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: _calendarVisible
+                              ? AppColors.primary.withValues(alpha: 0.4)
+                              : context.col.border,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.calendar_month_rounded,
+                            size: 13,
+                            color: _calendarVisible
+                                ? AppColors.primary
+                                : context.col.textSecondary,
+                          ),
+                          const SizedBox(width: 4),
+                          AnimatedRotation(
+                            duration: const Duration(milliseconds: 280),
+                            turns: _calendarVisible ? 0 : 0.5,
+                            child: Icon(
+                              Icons.expand_less_rounded,
+                              size: 14,
+                              color: _calendarVisible
+                                  ? AppColors.primary
+                                  : context.col.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  // ── List / Grid toggle ────────────────────────────────────
+                  Container(
+                    decoration: BoxDecoration(
+                      color: context.col.surfaceElevated,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: context.col.border),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _ViewToggleBtn(
+                          icon: Icons.view_list_rounded,
+                          active: !isGrid,
+                          onTap: () => setState(
+                            () => _viewMode = _EventViewMode.calendar,
+                          ),
+                        ),
+                        _ViewToggleBtn(
+                          icon: Icons.grid_view_rounded,
+                          active: isGrid,
+                          onTap: () =>
+                              setState(() => _viewMode = _EventViewMode.grid),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // ── Empty state ───────────────────────────────────────────────────
+          if (displayEvents.isEmpty)
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(32),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text('📅', style: TextStyle(fontSize: 40)),
+                      const SizedBox(height: 12),
+                      Text(
+                        _selectedDay != null
+                            ? 'No events on this day'
+                            : 'No upcoming events found.',
+                        style: TextStyle(color: context.col.textSecondary),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            )
+          // ── List view ─────────────────────────────────────────────────────
+          else if (!isGrid)
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
+              sliver: SliverList.separated(
+                itemCount: displayEvents.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (context, i) => _EventCard(
+                  event: displayEvents[i],
+                  onTap: () => context.push(
+                    AppRoutes.eventDetailPath(displayEvents[i].id),
+                  ),
+                ),
+              ),
+            )
+          // ── Grid view (2 columns) ─────────────────────────────────────────
+          else
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
+              sliver: SliverGrid.builder(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  childAspectRatio: 0.72,
+                ),
+                itemCount: displayEvents.length,
+                itemBuilder: (context, i) => _EventGridCard(
+                  event: displayEvents[i],
+                  onTap: () => context.push(
+                    AppRoutes.eventDetailPath(displayEvents[i].id),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+// Small icon toggle button used in the view switcher
+class _ViewToggleBtn extends StatelessWidget {
+  final IconData icon;
+  final bool active;
+  final VoidCallback onTap;
+
+  const _ViewToggleBtn({
+    required this.icon,
+    required this.active,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(6),
+        decoration: BoxDecoration(
+          color: active ? AppColors.primary : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(
+          icon,
+          size: 16,
+          color: active ? Colors.white : context.col.textSecondary,
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Event calendar widget
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _EventCalendar extends StatelessWidget {
+  final DateTime focusedMonth;
+  final DateTime? selectedDay;
+  final Set<DateTime> eventDays;
+  final VoidCallback onPrevMonth;
+  final VoidCallback onNextMonth;
+  final ValueChanged<DateTime> onDaySelected;
+
+  const _EventCalendar({
+    required this.focusedMonth,
+    required this.selectedDay,
+    required this.eventDays,
+    required this.onPrevMonth,
+    required this.onNextMonth,
+    required this.onDaySelected,
+  });
+
+  bool _isSameDay(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
+
+  bool _hasEvent(int day) {
+    final d = DateTime(focusedMonth.year, focusedMonth.month, day);
+    return eventDays.contains(d);
+  }
+
+  bool _isSelected(int day) {
+    if (selectedDay == null) return false;
+    return _isSameDay(
+      selectedDay!,
+      DateTime(focusedMonth.year, focusedMonth.month, day),
+    );
+  }
+
+  bool _isToday(int day) => _isSameDay(
+    DateTime.now(),
+    DateTime(focusedMonth.year, focusedMonth.month, day),
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final firstDay = DateTime(focusedMonth.year, focusedMonth.month, 1);
+    final daysInMonth = DateTime(
+      focusedMonth.year,
+      focusedMonth.month + 1,
+      0,
+    ).day;
+    // weekday: Mon=1 … Sun=7; we want Sun=0 offset
+    final startOffset = (firstDay.weekday % 7); // Sun=0, Mon=1, ..., Sat=6
+
+    const weekLabels = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+
+    return Container(
+      decoration: BoxDecoration(
+        color: context.col.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: context.col.border),
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          // Month header
+          Row(
+            children: [
+              IconButton(
+                onPressed: onPrevMonth,
+                icon: Icon(
+                  Icons.chevron_left_rounded,
+                  color: context.col.textSecondary,
+                ),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                visualDensity: VisualDensity.compact,
+              ),
+              Expanded(
+                child: Text(
+                  DateFormat('MMMM yyyy').format(focusedMonth),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: context.col.textPrimary,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              IconButton(
+                onPressed: onNextMonth,
+                icon: Icon(
+                  Icons.chevron_right_rounded,
+                  color: context.col.textSecondary,
+                ),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                visualDensity: VisualDensity.compact,
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+
+          // Weekday labels
+          Row(
+            children: weekLabels
+                .map(
+                  (w) => Expanded(
+                    child: Text(
+                      w,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: context.col.textMuted,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                )
+                .toList(),
+          ),
+          const SizedBox(height: 6),
+
+          // Day grid
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 7,
+              childAspectRatio: 1,
+            ),
+            itemCount: startOffset + daysInMonth,
+            itemBuilder: (context, index) {
+              if (index < startOffset) return const SizedBox.shrink();
+              final day = index - startOffset + 1;
+              final selected = _isSelected(day);
+              final today = _isToday(day);
+              final hasEvent = _hasEvent(day);
+
+              return GestureDetector(
+                onTap: () => onDaySelected(
+                  DateTime(focusedMonth.year, focusedMonth.month, day),
+                ),
+                child: Container(
+                  margin: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    color: selected
+                        ? AppColors.primary
+                        : today
+                        ? AppColors.primary.withValues(alpha: 0.12)
+                        : Colors.transparent,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        '$day',
+                        style: TextStyle(
+                          color: selected
+                              ? Colors.white
+                              : today
+                              ? AppColors.primary
+                              : context.col.textPrimary,
+                          fontSize: 13,
+                          fontWeight: today || selected
+                              ? FontWeight.w700
+                              : FontWeight.w400,
+                        ),
+                      ),
+                      if (hasEvent)
+                        Container(
+                          width: 5,
+                          height: 5,
+                          margin: const EdgeInsets.only(top: 1),
+                          decoration: BoxDecoration(
+                            color: selected
+                                ? Colors.white.withValues(alpha: 0.8)
+                                : AppColors.primary,
+                            shape: BoxShape.circle,
+                          ),
+                        )
+                      else
+                        const SizedBox(height: 6),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+
+          // Legend
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 6,
+                height: 6,
+                decoration: const BoxDecoration(
+                  color: AppColors.primary,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'Has events · tap to filter',
+                style: TextStyle(color: context.col.textMuted, fontSize: 11),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EventGridCard extends StatelessWidget {
+  final EventModel event;
+  final VoidCallback? onTap;
+
+  const _EventGridCard({required this.event, this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final typeColor = _eventTypeColor(event.type);
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: context.col.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: context.col.border),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Hero image / coloured header
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(15),
+              ),
+              child: event.imageUrl.isNotEmpty
+                  ? CachedNetworkImage(
+                      imageUrl: event.imageUrl,
+                      height: 110,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      placeholder: (_, __) => Container(
+                        height: 110,
+                        color: typeColor.withValues(alpha: 0.18),
+                        child: Center(
+                          child: Text(
+                            EventModel.typeEmoji(event.type),
+                            style: const TextStyle(fontSize: 32),
+                          ),
+                        ),
+                      ),
+                      errorWidget: (_, __, ___) => Container(
+                        height: 110,
+                        color: typeColor.withValues(alpha: 0.18),
+                        child: Center(
+                          child: Text(
+                            EventModel.typeEmoji(event.type),
+                            style: const TextStyle(fontSize: 32),
+                          ),
+                        ),
+                      ),
+                    )
+                  : Container(
+                      height: 110,
+                      color: typeColor.withValues(alpha: 0.18),
+                      child: Center(
+                        child: Text(
+                          EventModel.typeEmoji(event.type),
+                          style: const TextStyle(fontSize: 32),
+                        ),
+                      ),
+                    ),
+            ),
+
+            // Date strip
+            if (event.date != null)
+              Container(
+                width: double.infinity,
+                color: typeColor.withValues(alpha: 0.10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                child: Text(
+                  DateFormat('MMM d · yyyy').format(event.date!),
+                  style: TextStyle(
+                    color: typeColor,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              ),
+
+            // Content
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Type badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: typeColor.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        event.type.toUpperCase(),
+                        style: TextStyle(
+                          color: typeColor,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    // Title
+                    Text(
+                      event.title,
+                      style: TextStyle(
+                        color: context.col.textPrimary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const Spacer(),
+                    // Location
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.location_on_outlined,
+                          size: 11,
+                          color: context.col.textMuted,
+                        ),
+                        const SizedBox(width: 3),
+                        Expanded(
+                          child: Text(
+                            event.location,
+                            style: TextStyle(
+                              color: context.col.textSecondary,
+                              fontSize: 10,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (event.attendees > 0) ...[
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.people_outline,
+                            size: 11,
+                            color: AppColors.primary,
+                          ),
+                          const SizedBox(width: 3),
+                          Text(
+                            '${event.attendees} going',
+                            style: const TextStyle(
+                              color: AppColors.primary,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

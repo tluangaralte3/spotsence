@@ -230,6 +230,7 @@ class _PlaceDetailSheetState extends ConsumerState<_PlaceDetailSheet> {
       return;
     }
 
+    if (!mounted) return;
     setState(() => _isSubmittingRating = true);
     try {
       final comment = _reviewCtrl.text.trim();
@@ -271,6 +272,7 @@ class _PlaceDetailSheetState extends ConsumerState<_PlaceDetailSheet> {
             );
       }
 
+      if (!mounted) return;
       setState(() {
         _submittedStar = _selectedStar;
         _selectedStar = 0;
@@ -287,7 +289,7 @@ class _PlaceDetailSheetState extends ConsumerState<_PlaceDetailSheet> {
     } catch (e) {
       _showSnack('Failed to submit: $e');
     } finally {
-      setState(() => _isSubmittingRating = false);
+      if (mounted) setState(() => _isSubmittingRating = false);
     }
   }
 
@@ -311,6 +313,7 @@ class _PlaceDetailSheetState extends ConsumerState<_PlaceDetailSheet> {
     // Ask for caption
     final caption = await _showCaptionDialog();
 
+    if (!mounted) return;
     setState(() {
       _isUploadingPhoto = true;
       _uploadProgress = 0;
@@ -328,6 +331,7 @@ class _PlaceDetailSheetState extends ConsumerState<_PlaceDetailSheet> {
 
       // Track progress
       uploadTask.snapshotEvents.listen((snap) {
+        if (!mounted) return;
         if (snap.totalBytes > 0) {
           setState(
             () => _uploadProgress = snap.bytesTransferred / snap.totalBytes,
@@ -363,10 +367,11 @@ class _PlaceDetailSheetState extends ConsumerState<_PlaceDetailSheet> {
     } catch (e) {
       _showSnack('Upload failed: $e');
     } finally {
-      setState(() {
-        _isUploadingPhoto = false;
-        _uploadProgress = 0;
-      });
+      if (mounted)
+        setState(() {
+          _isUploadingPhoto = false;
+          _uploadProgress = 0;
+        });
     }
   }
 
@@ -736,7 +741,10 @@ class _PlaceDetailSheetState extends ConsumerState<_PlaceDetailSheet> {
                   const SizedBox(height: 2),
                   Text(
                     'Your rating has been saved',
-                    style: TextStyle(color: context.col.textMuted, fontSize: 11),
+                    style: TextStyle(
+                      color: context.col.textMuted,
+                      fontSize: 11,
+                    ),
                   ),
                 ],
               ),
@@ -842,10 +850,7 @@ class _PlaceDetailSheetState extends ConsumerState<_PlaceDetailSheet> {
             // Optional review text
             TextField(
               controller: _reviewCtrl,
-              style: TextStyle(
-                color: context.col.textPrimary,
-                fontSize: 14,
-              ),
+              style: TextStyle(color: context.col.textPrimary, fontSize: 14),
               cursorColor: AppColors.primary,
               maxLines: 3,
               maxLength: 300,
@@ -1038,10 +1043,7 @@ class _PlaceDetailSheetState extends ConsumerState<_PlaceDetailSheet> {
                 photos.isEmpty
                     ? 'Be the first to share!'
                     : '${photos.length} photo${photos.length == 1 ? '' : 's'}',
-                style: TextStyle(
-                  color: context.col.textMuted,
-                  fontSize: 12,
-                ),
+                style: TextStyle(color: context.col.textMuted, fontSize: 12),
               ),
             ],
           ),

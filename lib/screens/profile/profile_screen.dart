@@ -654,7 +654,7 @@ class _SavedTab extends ConsumerWidget {
             ),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: () => context.go(AppRoutes.spots),
+              onPressed: () => context.go(AppRoutes.listings),
               child: const Text('Explore Spots'),
             ),
           ],

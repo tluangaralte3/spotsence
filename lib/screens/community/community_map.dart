@@ -663,7 +663,10 @@ class _MapPlaceholder extends StatelessWidget {
               SizedBox(height: 16),
               Text(
                 'Loading map…',
-                style: TextStyle(color: context.col.textSecondary, fontSize: 14),
+                style: TextStyle(
+                  color: context.col.textSecondary,
+                  fontSize: 14,
+                ),
               ),
             ],
           ),
@@ -708,20 +711,24 @@ class _SearchBar extends StatelessWidget {
         children: [
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 12),
-            child: Icon(Icons.search, color: context.col.textSecondary, size: 18),
+            child: Icon(
+              Icons.search,
+              color: context.col.textSecondary,
+              size: 18,
+            ),
           ),
           Expanded(
             child: TextField(
               controller: controller,
               onChanged: onChanged,
-              style: TextStyle(
-                color: context.col.textPrimary,
-                fontSize: 14,
-              ),
+              style: TextStyle(color: context.col.textPrimary, fontSize: 14),
               cursorColor: AppColors.primary,
               decoration: InputDecoration(
                 hintText: 'Search restaurants & cafes…',
-                hintStyle: TextStyle(color: context.col.textMuted, fontSize: 14),
+                hintStyle: TextStyle(
+                  color: context.col.textMuted,
+                  fontSize: 14,
+                ),
                 border: InputBorder.none,
                 isDense: true,
                 contentPadding: EdgeInsets.zero,

@@ -72,7 +72,6 @@ class _MainShellState extends ConsumerState<MainShell> {
 
   int _indexForLocation(String location) {
     if (location.startsWith(AppRoutes.listings)) return 1;
-    if (location.startsWith(AppRoutes.spots)) return 1;
     if (location.startsWith(AppRoutes.leaderboard)) return 2;
     if (location.startsWith(AppRoutes.community)) return 3;
     if (location.startsWith(AppRoutes.profile)) return 4;

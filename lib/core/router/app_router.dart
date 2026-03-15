@@ -6,7 +6,7 @@ import '../../screens/auth/login_screen.dart';
 import '../../screens/auth/register_screen.dart';
 import '../../screens/auth/forgot_password_screen.dart';
 import '../../screens/home/home_screen.dart';
-import '../../screens/spots/spots_list_screen.dart';
+import '../../screens/listings/listings_screen.dart';
 import '../../screens/spots/spot_detail_screen.dart';
 import '../../screens/search/search_screen.dart';
 import '../../screens/community/community_screen.dart';
@@ -17,7 +17,6 @@ import '../../screens/profile/profile_screen.dart';
 import '../../screens/profile/edit_profile_screen.dart';
 import '../../screens/shell/main_shell.dart';
 import '../../screens/onboarding/onboarding_screen.dart';
-import '../../screens/listings/listings_screen.dart';
 import '../../screens/listings/listing_detail_screen.dart';
 import '../../screens/listings/cafe_detail_screen.dart';
 import '../../screens/listings/hotel_detail_screen.dart';
@@ -26,6 +25,7 @@ import '../../screens/community/bucket_list_detail_screen.dart';
 import '../../screens/community/create_bucket_list_screen.dart';
 import '../../screens/community/edit_bucket_list_screen.dart';
 import '../../screens/community/add_bucket_item_screen.dart';
+import '../../screens/events/event_detail_screen.dart';
 
 // Named route paths
 abstract class AppRoutes {
@@ -46,12 +46,15 @@ abstract class AppRoutes {
   static const listings = '/listings';
   static const listingDetail = '/listings/:type/:id';
 
+  static const eventDetail = '/events/:id';
+
   static const createBucketList = '/community/bucket-lists/new';
   static const bucketListDetail = '/community/bucket-lists/:id';
   static const editBucketList = '/community/bucket-lists/:id/edit';
   static const addBucketItem = '/community/bucket-lists/:listId/add-item';
 
   static String spotDetailPath(String id) => '/spots/$id';
+  static String eventDetailPath(String id) => '/events/$id';
   static String listingDetailPath(String type, String id) =>
       '/listings/$type/$id';
   static String bucketListDetailPath(String id) =>
@@ -121,7 +124,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(path: AppRoutes.home, builder: (_, __) => const HomeScreen()),
           GoRoute(
             path: AppRoutes.spots,
-            builder: (_, __) => const SpotsListScreen(),
+            builder: (_, __) => const ListingsScreen(initialTab: 0),
             routes: [
               GoRoute(
                 path: ':id',
@@ -209,6 +212,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           state,
           AddBucketItemScreen(listId: state.pathParameters['listId']!),
         ),
+      ),
+      GoRoute(
+        path: AppRoutes.eventDetail,
+        pageBuilder: (_, state) =>
+            _slide(state, EventDetailScreen(id: state.pathParameters['id']!)),
       ),
       GoRoute(
         path: AppRoutes.contribute,

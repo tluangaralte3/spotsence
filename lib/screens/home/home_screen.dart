@@ -197,8 +197,7 @@ class HomeScreen extends ConsumerWidget {
                 itemBuilder: (context, i) {
                   final cat = AppConstants.categories[i];
                   return GestureDetector(
-                    onTap: () =>
-                        context.go('${AppRoutes.spots}?category=${cat['id']}'),
+                    onTap: () => context.go(AppRoutes.listings),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 14,
@@ -405,10 +404,7 @@ class _StatCard extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               label,
-              style: TextStyle(
-                fontSize: 11,
-                color: context.col.textSecondary,
-              ),
+              style: TextStyle(fontSize: 11, color: context.col.textSecondary),
             ),
           ],
         ),
@@ -524,7 +520,7 @@ class _FeaturedSpotsSectionState extends ConsumerState<_FeaturedSpotsSection> {
                   ),
                 ),
                 TextButton.icon(
-                  onPressed: () => context.go(AppRoutes.spots),
+                  onPressed: () => context.go(AppRoutes.listings),
                   icon: const Icon(
                     Icons.arrow_forward_rounded,
                     size: 16,
@@ -574,7 +570,9 @@ class _FeaturedSpotsSectionState extends ConsumerState<_FeaturedSpotsSection> {
                           : context.col.surfaceElevated,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: selected ? AppColors.primary : context.col.border,
+                        color: selected
+                            ? AppColors.primary
+                            : context.col.border,
                       ),
                     ),
                     child: Text(
@@ -862,7 +860,11 @@ class _CardImagePlaceholder extends StatelessWidget {
     return Container(
       color: context.col.surfaceElevated,
       child: Center(
-        child: Icon(Icons.image_outlined, size: 40, color: context.col.textMuted),
+        child: Icon(
+          Icons.image_outlined,
+          size: 40,
+          color: context.col.textMuted,
+        ),
       ),
     );
   }
