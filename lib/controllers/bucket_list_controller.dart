@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../controllers/gamification_controller.dart';
 import '../models/bucket_list_models.dart';
+import '../models/gamification_models.dart';
 import '../services/firestore_bucket_list_service.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -119,6 +121,13 @@ class BucketListController extends Notifier<BucketListState> {
       );
       final created = await _svc.create(model);
       state = state.copyWith(myLists: [created, ...state.myLists]);
+      // ── Gamification ────────────────────────────────────────────────
+      await ref
+          .read(gamificationControllerProvider.notifier)
+          .award(XpAction.createBucketList, relatedId: created.id);
+      await ref
+          .read(gamificationControllerProvider.notifier)
+          .incrementCounter('bucketListsCreated');
       return created;
     } catch (e, st) {
       debugPrint('BucketListController.create ERROR: $e');
@@ -188,6 +197,15 @@ class BucketListController extends Notifier<BucketListState> {
       // Refresh from Firestore
       final fresh = await _svc.getById(listId);
       if (fresh != null) _updateLocal(listId, (_) => fresh);
+      // ── Gamification ────────────────────────────────────────────────
+      if (newChecked) {
+        await ref
+            .read(gamificationControllerProvider.notifier)
+            .award(XpAction.completeBucketItem, relatedId: listId);
+        await ref
+            .read(gamificationControllerProvider.notifier)
+            .incrementCounter('bucketItemsCompleted');
+      }
     } catch (e) {
       state = state.copyWith(error: e.toString());
     }

@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import '../../controllers/auth_controller.dart';
 import '../../controllers/spots_controller.dart';
-import '../../core/constants/app_constants.dart';
 import '../../core/router/app_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/gamification_models.dart';
@@ -14,7 +13,6 @@ import '../../models/spot_model.dart';
 import '../../models/user_model.dart';
 import '../../widgets/gamification_widgets.dart';
 import '../../widgets/shared_widgets.dart';
-import '../../widgets/spot_cards.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -94,7 +92,7 @@ class _AuthenticatedProfileState extends ConsumerState<_AuthenticatedProfile>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
   }
 
   @override
@@ -140,6 +138,7 @@ class _AuthenticatedProfileState extends ConsumerState<_AuthenticatedProfile>
                   Tab(text: 'Stats'),
                   Tab(text: 'Badges'),
                   Tab(text: 'Saved'),
+                  Tab(text: 'Activity'),
                 ],
                 labelColor: AppColors.primary,
                 unselectedLabelColor: AppColors.textSecondary,
@@ -155,6 +154,7 @@ class _AuthenticatedProfileState extends ConsumerState<_AuthenticatedProfile>
             _StatsTab(user: user),
             _BadgesTab(user: user),
             _SavedTab(bookmarks: bookmarksList),
+            const _ActivityTab(),
           ],
         ),
       ),
@@ -294,6 +294,16 @@ class _ProfileHeader extends StatelessWidget {
               maxXp: user.points + user.xpToNextLevel,
               level: user.level,
             ),
+            if (user.loginStreak >= 2) ...[
+              const SizedBox(height: 10),
+              StreakBanner(
+                streak: user.loginStreak,
+                xpMultiplier: (1.0 + (user.loginStreak ~/ 5) * 0.10).clamp(
+                  1.0,
+                  2.0,
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -324,6 +334,19 @@ class _StatsTab extends StatelessWidget {
       {'icon': '🏅', 'label': 'Badges', 'value': '${user.badgesEarned.length}'},
       {'icon': '✨', 'label': 'Total XP', 'value': '${user.points}'},
       {'icon': '🎯', 'label': 'Level', 'value': '${user.level}'},
+      {'icon': '📷', 'label': 'Photos', 'value': '${user.photosCount}'},
+      {'icon': '🤔', 'label': 'Dilemmas', 'value': '${user.dilemmasCreated}'},
+      {
+        'icon': '✅',
+        'label': 'Bucket Items',
+        'value': '${user.bucketItemsCompleted}',
+      },
+      {'icon': '🔥', 'label': 'Streak', 'value': '${user.loginStreak} days'},
+      {
+        'icon': '🏆',
+        'label': 'Best Streak',
+        'value': '${user.longestStreak} days',
+      },
     ];
 
     return ListView(
@@ -636,6 +659,19 @@ class _SavedTab extends ConsumerWidget {
 }
 
 // ─── Edit Profile Sheet ───────────────────────────────────────────────────────
+
+// ─── Activity Tab ─────────────────────────────────────────────────────────────
+
+class _ActivityTab extends ConsumerWidget {
+  const _ActivityTab();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return const XpActivityFeed();
+  }
+}
+
+// ─── Edit Profile Sheet (original) ───────────────────────────────────────────
 
 class _EditProfileSheet extends ConsumerStatefulWidget {
   final UserModel user;

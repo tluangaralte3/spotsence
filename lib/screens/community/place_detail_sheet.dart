@@ -10,7 +10,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../controllers/auth_controller.dart';
+import '../../controllers/gamification_controller.dart';
 import '../../core/theme/app_theme.dart';
+import '../../models/gamification_models.dart';
 import '../../models/spot_model.dart';
 import '../../services/firestore_cafes_service.dart';
 import '../../services/firestore_restaurants_service.dart';
@@ -274,6 +276,13 @@ class _PlaceDetailSheetState extends ConsumerState<_PlaceDetailSheet> {
         _selectedStar = 0;
         _reviewCtrl.clear();
       });
+      // ── Gamification ──────────────────────────────────────────────────────
+      await ref
+          .read(gamificationControllerProvider.notifier)
+          .award(XpAction.writeReview, relatedId: widget.id);
+      await ref
+          .read(gamificationControllerProvider.notifier)
+          .incrementCounter('ratingsCount');
       _showSnack('Rating submitted! Thanks ✨');
     } catch (e) {
       _showSnack('Failed to submit: $e');
@@ -343,6 +352,13 @@ class _PlaceDetailSheetState extends ConsumerState<_PlaceDetailSheet> {
             'createdAt': FieldValue.serverTimestamp(),
           });
 
+      // ── Gamification ──────────────────────────────────────────────────────
+      await ref
+          .read(gamificationControllerProvider.notifier)
+          .award(XpAction.uploadPhoto, relatedId: widget.id);
+      await ref
+          .read(gamificationControllerProvider.notifier)
+          .incrementCounter('photosCount');
       _showSnack('Photo uploaded! 📸');
     } catch (e) {
       _showSnack('Upload failed: $e');

@@ -18,6 +18,14 @@ class UserModel {
   final List<String> badgesEarned;
   final int contributionsCount;
   final int ratingsCount;
+  final int photosCount;
+  final int dilemmasCreated;
+  final int dilemmasVoted;
+  final int bucketListsCreated;
+  final int bucketItemsCompleted;
+  final int loginStreak;
+  final int longestStreak;
+  final DateTime? lastLogin;
   final List<String> bookmarks;
   final String createdAt;
 
@@ -36,6 +44,14 @@ class UserModel {
     required this.badgesEarned,
     required this.contributionsCount,
     required this.ratingsCount,
+    this.photosCount = 0,
+    this.dilemmasCreated = 0,
+    this.dilemmasVoted = 0,
+    this.bucketListsCreated = 0,
+    this.bucketItemsCompleted = 0,
+    this.loginStreak = 0,
+    this.longestStreak = 0,
+    this.lastLogin,
     required this.bookmarks,
     required this.createdAt,
   });
@@ -114,6 +130,14 @@ class UserModel {
       badgesEarned: List<String>.from(json['badgesEarned'] as List? ?? []),
       contributionsCount: (json['contributionsCount'] as num?)?.toInt() ?? 0,
       ratingsCount: (json['ratingsCount'] as num?)?.toInt() ?? 0,
+      photosCount: (json['photosCount'] as num?)?.toInt() ?? 0,
+      dilemmasCreated: (json['dilemmasCreated'] as num?)?.toInt() ?? 0,
+      dilemmasVoted: (json['dilemmasVoted'] as num?)?.toInt() ?? 0,
+      bucketListsCreated: (json['bucketListsCreated'] as num?)?.toInt() ?? 0,
+      bucketItemsCompleted:
+          (json['bucketItemsCompleted'] as num?)?.toInt() ?? 0,
+      loginStreak: (json['loginStreak'] as num?)?.toInt() ?? 0,
+      longestStreak: (json['longestStreak'] as num?)?.toInt() ?? 0,
       bookmarks: List<String>.from(json['bookmarks'] as List? ?? []),
       createdAt: json['createdAt'] as String? ?? '',
     );
@@ -139,6 +163,16 @@ class UserModel {
       badgesEarned: List<String>.from(d['badgesEarned'] as List? ?? []),
       contributionsCount: (d['contributionsCount'] as num?)?.toInt() ?? 0,
       ratingsCount: (d['ratingsCount'] as num?)?.toInt() ?? 0,
+      photosCount: (d['photosCount'] as num?)?.toInt() ?? 0,
+      dilemmasCreated: (d['dilemmasCreated'] as num?)?.toInt() ?? 0,
+      dilemmasVoted: (d['dilemmasVoted'] as num?)?.toInt() ?? 0,
+      bucketListsCreated: (d['bucketListsCreated'] as num?)?.toInt() ?? 0,
+      bucketItemsCompleted: (d['bucketItemsCompleted'] as num?)?.toInt() ?? 0,
+      loginStreak: (d['loginStreak'] as num?)?.toInt() ?? 0,
+      longestStreak: (d['longestStreak'] as num?)?.toInt() ?? 0,
+      lastLogin: d['lastLogin'] is Timestamp
+          ? (d['lastLogin'] as Timestamp).toDate()
+          : null,
       bookmarks: List<String>.from(d['bookmarks'] as List? ?? []),
       createdAt: d['createdAt'] as String? ?? '',
     );
@@ -159,6 +193,14 @@ class UserModel {
     'badgesEarned': badgesEarned,
     'contributionsCount': contributionsCount,
     'ratingsCount': ratingsCount,
+    'photosCount': photosCount,
+    'dilemmasCreated': dilemmasCreated,
+    'dilemmasVoted': dilemmasVoted,
+    'bucketListsCreated': bucketListsCreated,
+    'bucketItemsCompleted': bucketItemsCompleted,
+    'loginStreak': loginStreak,
+    'longestStreak': longestStreak,
+    if (lastLogin != null) 'lastLogin': Timestamp.fromDate(lastLogin!),
     'bookmarks': bookmarks,
     'createdAt': createdAt,
   };
@@ -175,6 +217,14 @@ class UserModel {
     List<String>? badgesEarned,
     int? contributionsCount,
     int? ratingsCount,
+    int? photosCount,
+    int? dilemmasCreated,
+    int? dilemmasVoted,
+    int? bucketListsCreated,
+    int? bucketItemsCompleted,
+    int? loginStreak,
+    int? longestStreak,
+    DateTime? lastLogin,
     List<String>? bookmarks,
   }) {
     return UserModel(
@@ -192,6 +242,14 @@ class UserModel {
       badgesEarned: badgesEarned ?? this.badgesEarned,
       contributionsCount: contributionsCount ?? this.contributionsCount,
       ratingsCount: ratingsCount ?? this.ratingsCount,
+      photosCount: photosCount ?? this.photosCount,
+      dilemmasCreated: dilemmasCreated ?? this.dilemmasCreated,
+      dilemmasVoted: dilemmasVoted ?? this.dilemmasVoted,
+      bucketListsCreated: bucketListsCreated ?? this.bucketListsCreated,
+      bucketItemsCompleted: bucketItemsCompleted ?? this.bucketItemsCompleted,
+      loginStreak: loginStreak ?? this.loginStreak,
+      longestStreak: longestStreak ?? this.longestStreak,
+      lastLogin: lastLogin ?? this.lastLogin,
       bookmarks: bookmarks ?? this.bookmarks,
       createdAt: createdAt,
     );

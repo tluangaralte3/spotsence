@@ -20,6 +20,12 @@ service cloud.firestore {
       allow create: if isUser(userId);
       allow update: if isUser(userId);
       allow delete: if isUser(userId);
+
+      // XP activity log — user can read and create their own events
+      match /xpEvents/{eventId} {
+        allow read: if isUser(userId);
+        allow create: if isUser(userId);
+      }
     }
 
     // ── Listings (read-only for users, write via admin/functions) ───────────

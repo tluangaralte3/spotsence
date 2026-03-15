@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../controllers/gamification_controller.dart';
 import '../models/community_models.dart';
 import '../models/gamification_models.dart';
 import '../services/community_service.dart';
@@ -169,6 +170,13 @@ class DilemmasController extends Notifier<List<Dilemma>> {
 
     // Persist to Firestore (the stream will sync back)
     await _svc.vote(dilemmaId: dilemmaId, userId: uid, option: option);
+    // ── Gamification ─────────────────────────────────────────────────────
+    await ref
+        .read(gamificationControllerProvider.notifier)
+        .award(XpAction.voteDilemma, relatedId: dilemmaId);
+    await ref
+        .read(gamificationControllerProvider.notifier)
+        .incrementCounter('dilemmasVoted');
   }
 
   Future<String?> createDilemma({
@@ -180,7 +188,7 @@ class DilemmasController extends Notifier<List<Dilemma>> {
     String? authorPhoto,
     Duration? duration,
   }) async {
-    return _svc.createDilemma(
+    final error = await _svc.createDilemma(
       question: question,
       optionA: optionA,
       optionB: optionB,
@@ -189,6 +197,16 @@ class DilemmasController extends Notifier<List<Dilemma>> {
       authorPhoto: authorPhoto,
       duration: duration,
     );
+    if (error == null) {
+      // ── Gamification ────────────────────────────────────────────────
+      await ref
+          .read(gamificationControllerProvider.notifier)
+          .award(XpAction.createDilemma);
+      await ref
+          .read(gamificationControllerProvider.notifier)
+          .incrementCounter('dilemmasCreated');
+    }
+    return error;
   }
 
   Future<void> deleteDilemma(String dilemmaId) async {
