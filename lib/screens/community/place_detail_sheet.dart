@@ -584,144 +584,105 @@ class _PlaceDetailSheetState extends ConsumerState<_PlaceDetailSheet> {
   // ─── Header: hero image + place info ─────────────────────────────────────
 
   Widget _buildHeader() {
-    return Stack(
-      children: [
-        // Hero image
-        widget.imageUrl.isNotEmpty
-            ? CachedNetworkImage(
-                imageUrl: widget.imageUrl,
-                width: double.infinity,
-                height: 220,
-                fit: BoxFit.cover,
-                errorWidget: (e0, e1, e2) => _imageFallback(),
-                placeholder: (p0, p1) => _imageFallback(),
-              )
-            : _imageFallback(),
+    final isDark = context.col.isDark;
 
-        // Dark gradient overlay
-        Positioned(
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: 120,
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Colors.transparent, context.col.surface],
+    // ── Image ──────────────────────────────────────────────────────────────
+    final heroImage = widget.imageUrl.isNotEmpty
+        ? CachedNetworkImage(
+            imageUrl: widget.imageUrl,
+            width: double.infinity,
+            height: 220,
+            fit: BoxFit.cover,
+            errorWidget: (e0, e1, e2) => _imageFallback(),
+            placeholder: (p0, p1) => _imageFallback(),
+          )
+        : _imageFallback();
+
+    // ── Type badge ─────────────────────────────────────────────────────────
+    final typeBadge = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: _accentColor,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: _accentColor.withValues(alpha: 0.4),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(_emojiForType, style: const TextStyle(fontSize: 11)),
+          const SizedBox(width: 4),
+          Text(
+            widget.type[0].toUpperCase() + widget.type.substring(1),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.3,
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (isDark) {
+      // ── Dark: text overlaid on image with gradient fade ─────────────────
+      return Stack(
+        children: [
+          heroImage,
+          // gradient scrim
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: 130,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Colors.transparent, context.col.surface],
+                ),
               ),
             ),
           ),
-        ),
-
-        // Type badge (top-left)
-        Positioned(
-          top: 14,
-          left: 16,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color: _accentColor,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: _accentColor.withValues(alpha: 0.4),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(_emojiForType, style: const TextStyle(fontSize: 11)),
-                const SizedBox(width: 4),
-                Text(
-                  widget.type[0].toUpperCase() + widget.type.substring(1),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.3,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-
-        // Place name + location + rating (bottom overlay)
-        Positioned(
-          bottom: 16,
-          left: 16,
-          right: 16,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
+          // type badge
+          Positioned(top: 14, left: 16, child: typeBadge),
+          // name + rating
+          Positioned(bottom: 16, left: 16, right: 16, child: _buildPlaceInfo()),
+        ],
+      );
+    } else {
+      // ── Light: image on top, clean info bar below ───────────────────────
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Image with rounded top + type badge overlay
+          Stack(
             children: [
-              Text(
-                widget.name,
-                style: TextStyle(
-                  color: context.col.textPrimary,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.3,
+              ClipRRect(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(24),
                 ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+                child: heroImage,
               ),
-              const SizedBox(height: 6),
-              Row(
-                children: [
-                  // Star rating display
-                  _StarDisplay(rating: widget.rating),
-                  const SizedBox(width: 6),
-                  Text(
-                    widget.rating.toStringAsFixed(1),
-                    style: const TextStyle(
-                      color: AppColors.star,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  if (widget.ratingCount > 0) ...[
-                    const SizedBox(width: 4),
-                    Text(
-                      '(${widget.ratingCount})',
-                      style: TextStyle(
-                        color: context.col.textMuted,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                  if (widget.location.isNotEmpty) ...[
-                    const SizedBox(width: 10),
-                    Icon(
-                      Icons.location_on_outlined,
-                      size: 12,
-                      color: context.col.textMuted,
-                    ),
-                    const SizedBox(width: 2),
-                    Expanded(
-                      child: Text(
-                        widget.location,
-                        style: TextStyle(
-                          color: context.col.textMuted,
-                          fontSize: 12,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
+              Positioned(top: 14, left: 16, child: typeBadge),
             ],
           ),
-        ),
-      ],
-    );
+          // Info bar
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
+            color: context.col.surface,
+            child: _buildPlaceInfo(),
+          ),
+        ],
+      );
+    }
   }
 
   Widget _imageFallback() => Container(
@@ -732,6 +693,66 @@ class _PlaceDetailSheetState extends ConsumerState<_PlaceDetailSheet> {
       child: Text(_emojiForType, style: const TextStyle(fontSize: 48)),
     ),
   );
+
+  // ── name + rating + location row (reused in both light and dark layouts) ──
+  Widget _buildPlaceInfo() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          widget.name,
+          style: TextStyle(
+            color: context.col.textPrimary,
+            fontSize: 22,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.3,
+          ),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            _StarDisplay(rating: widget.rating),
+            const SizedBox(width: 6),
+            Text(
+              widget.rating.toStringAsFixed(1),
+              style: const TextStyle(
+                color: AppColors.star,
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            if (widget.ratingCount > 0) ...[
+              const SizedBox(width: 4),
+              Text(
+                '(${widget.ratingCount})',
+                style: TextStyle(color: context.col.textMuted, fontSize: 12),
+              ),
+            ],
+            if (widget.location.isNotEmpty) ...[
+              const SizedBox(width: 10),
+              Icon(
+                Icons.location_on_outlined,
+                size: 12,
+                color: context.col.textMuted,
+              ),
+              const SizedBox(width: 2),
+              Expanded(
+                child: Text(
+                  widget.location,
+                  style: TextStyle(color: context.col.textMuted, fontSize: 12),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ],
+    );
+  }
 
   // ─── Rate this place section ──────────────────────────────────────────────
 

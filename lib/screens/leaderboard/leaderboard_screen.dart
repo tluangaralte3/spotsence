@@ -27,6 +27,9 @@ class LeaderboardScreen extends ConsumerWidget {
             expandedHeight: 120,
             pinned: true,
             backgroundColor: context.col.bg,
+            foregroundColor: context.col.textPrimary,
+            surfaceTintColor: Colors.transparent,
+            elevation: 0,
             flexibleSpace: FlexibleSpaceBar(
               titlePadding: const EdgeInsets.only(left: 20, bottom: 16),
               title: Row(
@@ -42,17 +45,25 @@ class LeaderboardScreen extends ConsumerWidget {
                   ),
                 ],
               ),
-              background: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      AppColors.primary.withValues(alpha: 0.15),
-                      context.col.bg,
-                    ],
-                  ),
-                ),
+              background: Builder(
+                builder: (context) {
+                  final isDark = context.col.isDark;
+                  return Container(
+                    decoration: BoxDecoration(
+                      gradient: isDark
+                          ? LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                AppColors.primary.withValues(alpha: 0.15),
+                                context.col.bg,
+                              ],
+                            )
+                          : null,
+                      color: isDark ? null : context.col.bg,
+                    ),
+                  );
+                },
               ),
             ),
           ),
@@ -309,14 +320,17 @@ class _TopThreePodium extends StatelessWidget {
       margin: const EdgeInsets.fromLTRB(16, 16, 16, 4),
       padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 8),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.primary.withValues(alpha: 0.10),
-            AppColors.secondary.withValues(alpha: 0.06),
-          ],
-        ),
+        gradient: context.col.isDark
+            ? LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppColors.primary.withValues(alpha: 0.10),
+                  AppColors.secondary.withValues(alpha: 0.06),
+                ],
+              )
+            : null,
+        color: context.col.isDark ? null : context.col.surfaceElevated,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: context.col.border),
       ),

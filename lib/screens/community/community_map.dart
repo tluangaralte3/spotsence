@@ -239,8 +239,9 @@ class _CommunityMapState extends ConsumerState<CommunityMap> {
                 ),
                 children: [
                   TileLayer(
-                    urlTemplate:
-                        'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+                    urlTemplate: context.col.isDark
+                        ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+                        : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
                     subdomains: const ['a', 'b', 'c', 'd'],
                     userAgentPackageName: 'com.hillstech.spotmizoram',
                     retinaMode: MediaQuery.of(context).devicePixelRatio > 1,
@@ -654,7 +655,7 @@ class _MapPlaceholder extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox.expand(
       child: Container(
-        color: const Color(0xFF0A0E1A),
+        color: context.col.bg,
         child: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
