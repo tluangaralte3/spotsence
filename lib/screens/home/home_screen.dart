@@ -86,9 +86,29 @@ class HomeScreen extends ConsumerWidget {
                                 style: Theme.of(context).textTheme.titleLarge,
                               ),
                               const SizedBox(height: 2),
-                              Text(
-                                'Discover Mizoram\'s hidden gems',
-                                style: Theme.of(context).textTheme.bodyMedium,
+                              GestureDetector(
+                                onTap: () => _showStatePicker(context),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      'Discover Northeast India',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium
+                                          ?.copyWith(
+                                            color: AppColors.primary,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Icon(
+                                      Icons.keyboard_arrow_down_rounded,
+                                      size: 16,
+                                      color: AppColors.primary,
+                                    ),
+                                  ],
+                                ),
                               ),
                             ],
                           ),
@@ -172,7 +192,7 @@ class HomeScreen extends ConsumerWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 20),
 
                   // ── Category pills ────────────────────────────────────
                   Text(
@@ -272,6 +292,326 @@ class HomeScreen extends ConsumerWidget {
 
           const SliverToBoxAdapter(child: SizedBox(height: 32)),
         ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Northeast India state picker — opens from subtitle tap
+// ─────────────────────────────────────────────────────────────────────────────
+
+typedef _StateItem = ({String emoji, String name, String abbr, bool available});
+
+const _kNeStates = <_StateItem>[
+  (emoji: '🟢', name: 'Mizoram', abbr: 'MZ', available: true),
+  (emoji: '🏔️', name: 'Manipur', abbr: 'MN', available: false),
+  (emoji: '🌿', name: 'Meghalaya', abbr: 'ML', available: false),
+  (emoji: '🌄', name: 'Assam', abbr: 'AS', available: false),
+  (emoji: '🦏', name: 'Nagaland', abbr: 'NL', available: false),
+  (emoji: '🌺', name: 'Tripura', abbr: 'TR', available: false),
+  (emoji: '🏞️', name: 'Arunachal', abbr: 'AR', available: false),
+  (emoji: '🌸', name: 'Sikkim', abbr: 'SK', available: false),
+];
+
+void _showStatePicker(BuildContext context) {
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: Colors.transparent,
+    isScrollControlled: true,
+    useRootNavigator: true,
+    builder: (_) => const _StatePickerSheet(),
+  );
+}
+
+class _StatePickerSheet extends StatelessWidget {
+  const _StatePickerSheet();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: context.col.bg,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // ── Drag handle ────────────────────────────────────────────────
+          const SizedBox(height: 12),
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: context.col.border,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // ── Header ─────────────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Explore by State',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Northeast India',
+                        style: TextStyle(
+                          color: context.col.textSecondary,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Text(
+                    '8 States',
+                    style: TextStyle(
+                      color: AppColors.primary,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+          Divider(height: 1, color: context.col.border),
+          const SizedBox(height: 8),
+
+          // ── State list ─────────────────────────────────────────────────
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _kNeStates.length,
+            itemBuilder: (ctx, i) {
+              final s = _kNeStates[i];
+              return _StateListTile(
+                item: s,
+                onTap: s.available
+                    ? () => Navigator.pop(context)
+                    : () {
+                        // Capture navigator BEFORE popping to avoid
+                        // using a deactivated context after pop.
+                        final nav = Navigator.of(context, rootNavigator: true);
+                        Navigator.pop(context);
+                        Future.delayed(
+                          const Duration(milliseconds: 250),
+                          () => _showComingSoon(nav.context, s.name),
+                        );
+                      },
+              );
+            },
+          ),
+
+          SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
+        ],
+      ),
+    );
+  }
+
+  void _showComingSoon(BuildContext context, String stateName) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      useRootNavigator: true,
+      builder: (_) => Container(
+        decoration: BoxDecoration(
+          color: context.col.bg,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: EdgeInsets.fromLTRB(
+          24,
+          20,
+          24,
+          MediaQuery.of(context).padding.bottom + 28,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: context.col.border,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Center(
+                child: Text('🚀', style: TextStyle(fontSize: 30)),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              '$stateName — Coming Soon!',
+              style: TextStyle(
+                color: context.col.textPrimary,
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'We\'re working hard to bring SpotSence\nto $stateName. Stay tuned! 🎉',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: context.col.textSecondary,
+                fontSize: 14,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.black,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+                child: const Text(
+                  'Got it!',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _StateListTile extends StatelessWidget {
+  final _StateItem item;
+  final VoidCallback onTap;
+  const _StateListTile({required this.item, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final isActive = item.available;
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        child: Row(
+          children: [
+            // Abbr circle
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: isActive
+                    ? AppColors.primary.withValues(alpha: 0.12)
+                    : context.col.surfaceElevated,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isActive ? AppColors.primary : context.col.border,
+                  width: isActive ? 1.5 : 1,
+                ),
+              ),
+              child: Center(
+                child: Text(
+                  item.abbr,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: isActive
+                        ? AppColors.primary
+                        : context.col.textSecondary,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 14),
+            // Name + abbr
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.name,
+                    style: TextStyle(
+                      color: isActive
+                          ? AppColors.primary
+                          : context.col.textPrimary,
+                      fontSize: 15,
+                      fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    isActive ? 'Currently active' : 'Coming soon',
+                    style: TextStyle(
+                      color: isActive
+                          ? AppColors.primary.withValues(alpha: 0.7)
+                          : context.col.textMuted,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Right badge
+            if (isActive)
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Text(
+                  'Active',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              )
+            else
+              Icon(
+                Icons.lock_outline_rounded,
+                size: 18,
+                color: context.col.textMuted,
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -437,8 +777,6 @@ class _FeaturedSpotsSectionState extends ConsumerState<_FeaturedSpotsSection> {
 
   String _selectedCategory = 'all';
   final _scrollController = ScrollController();
-  bool _canScrollLeft = false;
-  bool _canScrollRight = true;
 
   @override
   void initState() {
@@ -453,22 +791,7 @@ class _FeaturedSpotsSectionState extends ConsumerState<_FeaturedSpotsSection> {
   }
 
   void _updateScrollButtons() {
-    final sc = _scrollController;
-    setState(() {
-      _canScrollLeft = sc.offset > 0;
-      _canScrollRight = sc.offset < sc.position.maxScrollExtent - 10;
-    });
-  }
-
-  void _scroll(double delta) {
-    _scrollController.animateTo(
-      (_scrollController.offset + delta).clamp(
-        0.0,
-        _scrollController.position.maxScrollExtent,
-      ),
-      duration: const Duration(milliseconds: 350),
-      curve: Curves.easeInOut,
-    );
+    setState(() {});
   }
 
   @override
@@ -553,8 +876,6 @@ class _FeaturedSpotsSectionState extends ConsumerState<_FeaturedSpotsSection> {
                     if (_selectedCategory != tab.id) {
                       setState(() {
                         _selectedCategory = tab.id;
-                        _canScrollLeft = false;
-                        _canScrollRight = true;
                       });
                     }
                   },
