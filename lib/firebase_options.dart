@@ -55,6 +55,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '195136676856',
     projectId: 'spotmizoram',
     storageBucket: 'spotmizoram.firebasestorage.app',
+    databaseURL:
+        'https://spotmizoram-default-rtdb.asia-southeast1.firebasedatabase.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
@@ -66,5 +68,7 @@ class DefaultFirebaseOptions {
     iosClientId:
         '195136676856-h59hc87309qfparsv735jcdoocndct4g.apps.googleusercontent.com',
     iosBundleId: 'com.hillstech.spotmizoram',
+    databaseURL:
+        'https://spotmizoram-default-rtdb.asia-southeast1.firebasedatabase.app',
   );
 }

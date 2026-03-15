@@ -1,0 +1,16 @@
+{
+  "rules": {
+    "leaderboard": {
+      "places": {
+        ".read": true,
+        "$category": {
+          "$placeId": {
+            ".write": true
+          }
+        }
+      }
+    },
+    ".read": false,
+    ".write": false
+  }
+}

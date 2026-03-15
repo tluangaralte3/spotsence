@@ -4,6 +4,7 @@ import '../models/community_models.dart';
 import '../models/gamification_models.dart';
 import '../services/community_service.dart';
 import '../services/firestore_dilemmas_service.dart';
+import '../services/firestore_leaderboard_service.dart';
 import '../services/firestore_place_rankings_service.dart';
 
 // ── Community Posts ───────────────────────────────────────────────────────────
@@ -220,12 +221,18 @@ final dilemmasControllerProvider =
 
 // ── Leaderboard ───────────────────────────────────────────────────────────────
 
-final leaderboardProvider = FutureProvider<List<LeaderboardEntry>>((ref) async {
-  final result = await ref
-      .read(communityServiceProvider)
-      .getLeaderboard(limit: 50);
-  return result.when(ok: (list) => list, err: (_) => []);
+/// Live stream of all ranked places from Firestore `place_leaderboard`,
+/// sorted by avgRating desc.
+final leaderboardStreamProvider = StreamProvider<List<PlaceLeaderboardEntry>>((
+  ref,
+) {
+  return ref.read(firestoreLeaderboardServiceProvider).watchAll();
 });
+
+/// One-shot future — used as fallback / initial load.
+final leaderboardFutureProvider = FutureProvider<List<PlaceLeaderboardEntry>>(
+  (ref) => ref.read(firestoreLeaderboardServiceProvider).getAll(),
+);
 
 // ── Place Rankings ────────────────────────────────────────────────────────────
 

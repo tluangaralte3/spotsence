@@ -172,10 +172,25 @@ service cloud.firestore {
     // ── Place Rankings (leaderboard aggregation) ─────────────────────────────
 
     match /place_rankings/{category} {
-      // Anyone can read the rankings
       allow read: if true;
-      // Only authenticated users can write (triggered client-side after review)
       allow write: if isAuth();
+    }
+
+    // ── Place Leaderboard (per-place aggregated rating for leaderboard screen)
+
+    match /place_leaderboard/{placeId} {
+      // Anyone can read — leaderboard is public
+      allow read: if true;
+      // Authenticated users write after submitting a review
+      allow write: if isAuth();
+    }
+
+    // ── Global Reviews (cross-collection review feed) ─────────────────────────
+
+    match /global_reviews/{reviewId} {
+      allow read: if true;
+      allow create: if isAuth();
+      allow update, delete: if isAuth() && request.auth.uid == resource.data.userId;
     }
 
     // ── Dilemmas (community voting posts) ────────────────────────────────────

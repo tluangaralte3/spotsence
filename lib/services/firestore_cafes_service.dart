@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/listing_models.dart';
 import 'firestore_place_rankings_service.dart';
+import 'global_reviews_service.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FirestoreCafesService
@@ -109,6 +110,18 @@ class FirestoreCafesService {
           heroImage: heroImg,
           newRating: (d['rating'] as num?)?.toDouble() ?? 0.0,
           newRatingsCount: (d['ratingsCount'] as num?)?.toInt() ?? 0,
+        );
+        // Record in global_reviews + update place_leaderboard
+        await GlobalReviewsService().recordReview(
+          placeId: cafeId,
+          placeName: d['name']?.toString() ?? '',
+          category: 'cafe',
+          heroImage: heroImg,
+          userId: userId,
+          userName: userName,
+          userAvatar: userAvatar,
+          rating: rating,
+          comment: comment,
         );
       }
     } catch (_) {}

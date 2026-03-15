@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/spot_model.dart';
 import 'firestore_place_rankings_service.dart';
+import 'global_reviews_service.dart';
 
 final firestoreSpotsServiceProvider = Provider<FirestoreSpotsService>((ref) {
   return FirestoreSpotsService(FirebaseFirestore.instance);
@@ -162,6 +163,18 @@ class FirestoreSpotsService {
           heroImage: heroImg,
           newRating: (d['averageRating'] as num?)?.toDouble() ?? 0.0,
           newRatingsCount: (d['ratingsCount'] as num?)?.toInt() ?? 0,
+        );
+        // Record in global_reviews + update place_leaderboard
+        await GlobalReviewsService().recordReview(
+          placeId: spotId,
+          placeName: d['name']?.toString() ?? '',
+          category: 'spot',
+          heroImage: heroImg,
+          userId: userId,
+          userName: userName,
+          userAvatar: userAvatar,
+          rating: rating,
+          comment: comment,
         );
       }
     } catch (_) {
