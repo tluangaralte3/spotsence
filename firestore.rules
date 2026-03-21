@@ -13,6 +13,10 @@ service cloud.firestore {
       return isAuth() && request.auth.uid == uid;
     }
 
+    function isSuperAdmin() {
+      return isAuth() && request.auth.token.superAdmin == true;
+    }
+
     // ── Users ───────────────────────────────────────────────────────────────
 
     match /users/{userId} {
@@ -204,6 +208,61 @@ service cloud.firestore {
       allow update: if isAuth();
       // Only the author can delete their own dilemma
       allow delete: if isAuth() && request.auth.uid == resource.data.authorId;
+    }
+
+    // ── Admin (app_admins collection) ────────────────────────────────────────
+
+    match /app_admins/{adminId} {
+      // Super admin can read/write their own doc; other admins can read their own
+      allow read: if isSuperAdmin() || isUser(adminId);
+      allow write: if isSuperAdmin();
+
+      // Activity log — super admin can read/write
+      match /activityLog/{logId} {
+        allow read, write: if isSuperAdmin();
+      }
+    }
+
+    // ── Analytics snapshot ───────────────────────────────────────────────────
+
+    match /app_analytics/{docId} {
+      allow read: if isSuperAdmin();
+      allow write: if isSuperAdmin();
+    }
+
+    // ── Tour packages ────────────────────────────────────────────────────────
+
+    match /tour_packages/{docId} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+
+      match /reviews/{reviewId} {
+        allow read: if true;
+        allow create: if isAuth();
+        allow update, delete: if isAuth() && request.auth.uid == resource.data.userId;
+      }
+    }
+
+    // ── Community posts ──────────────────────────────────────────────────────
+
+    match /community_posts/{docId} {
+      allow read: if true;
+      allow create: if isAuth();
+      allow update: if isAuth() && (request.auth.uid == resource.data.authorId || isSuperAdmin());
+      allow delete: if isAuth() && (request.auth.uid == resource.data.authorId || isSuperAdmin());
+    }
+
+    // ── Hotels ───────────────────────────────────────────────────────────────
+
+    match /hotels/{docId} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+
+      match /reviews/{reviewId} {
+        allow read: if true;
+        allow create: if isAuth();
+        allow update, delete: if isAuth() && request.auth.uid == resource.data.userId;
+      }
     }
   }
 }

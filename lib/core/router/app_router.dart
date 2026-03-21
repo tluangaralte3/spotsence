@@ -29,6 +29,9 @@ import '../../screens/events/event_detail_screen.dart';
 import '../../screens/listings/all_reviews_screen.dart';
 import '../../screens/packages/tour_venture_screen.dart';
 import '../../screens/packages/venture_detail_screen.dart';
+import '../../screens/admin/admin_shell.dart';
+import '../../screens/admin/listings/admin_add_listing_screen.dart';
+import '../../controllers/admin_controller.dart';
 
 // Named route paths
 abstract class AppRoutes {
@@ -60,6 +63,20 @@ abstract class AppRoutes {
   static const packageDetail = '/packages/:id';
   static String packageDetailPath(String id) => '/packages/$id';
 
+  // ── Super Admin ──────────────────────────────────────────────────────────
+  static const admin = '/admin';
+  static const adminListings = '/admin/listings';
+  static const adminUsers = '/admin/users';
+  static const adminAnalytics = '/admin/analytics';
+  static const adminVentures = '/admin/ventures';
+  static const adminModeration = '/admin/moderation';
+  static const adminAddListing = '/admin/listings/add/:collection';
+  static const adminEditListing = '/admin/listings/edit/:collection/:docId';
+  static String adminAddListingPath(String collection) =>
+      '/admin/listings/add/$collection';
+  static String adminEditListingPath(String collection, String docId) =>
+      '/admin/listings/edit/$collection/$docId';
+
   static const allReviews = '/reviews/:collection/:id';
   static String allReviewsPath({
     required String collection,
@@ -83,7 +100,10 @@ abstract class AppRoutes {
 }
 
 final appRouterProvider = Provider<GoRouter>((ref) {
+  // Watch both auth state AND the super admin claim so the router
+  // re-evaluates its redirect whenever either of them changes.
   final authState = ref.watch(authControllerProvider);
+  final isSuperAdminAsync = ref.watch(isSuperAdminProvider);
 
   return GoRouter(
     initialLocation: AppRoutes.home,
@@ -114,6 +134,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       if (!isAuthenticated && isProtected) return AppRoutes.login;
       // If authenticated and on auth screen → home
       if (isAuthenticated && isAuthRoute) return AppRoutes.home;
+
+      // ── Admin gate ───────────────────────────────────────────────────────
+      if (state.matchedLocation.startsWith('/admin')) {
+        // Must be signed in
+        if (!isAuthenticated) return AppRoutes.login;
+        // Claim still loading — let AdminShell show its own spinner
+        if (isSuperAdminAsync.isLoading) return null;
+        // Claim resolved — kick out non-admins
+        final isSuperAdmin = isSuperAdminAsync.asData?.value ?? false;
+        if (!isSuperAdmin) return AppRoutes.home;
+      }
+
       return null;
     },
     routes: [
@@ -212,6 +244,47 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
 
       // ── Modal routes (outside shell) ───────────────────────────────────
+      // ── Admin (outside shell — own navigation) ─────────────────────────
+      // Use pageBuilder with HeroControllerScope to prevent Hero tag conflicts
+      // when transitioning from MainShell (which also has a Scaffold + Heroes).
+      GoRoute(
+        path: AppRoutes.admin,
+        pageBuilder: (_, state) => CustomTransitionPage(
+          key: state.pageKey,
+          // Isolate Hero animations so they don't clash with MainShell heroes
+          child: HeroControllerScope(
+            controller: MaterialApp.createMaterialHeroController(),
+            child: const AdminShell(),
+          ),
+          transitionDuration: const Duration(milliseconds: 300),
+          transitionsBuilder: (_, animation, __, child) => FadeTransition(
+            opacity: CurvedAnimation(
+              parent: animation,
+              curve: Curves.easeInOut,
+            ),
+            child: child,
+          ),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.adminAddListing,
+        pageBuilder: (_, state) => _slide(
+          state,
+          AdminAddListingScreen(
+            collection: state.pathParameters['collection']!,
+          ),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.adminEditListing,
+        pageBuilder: (_, state) => _slide(
+          state,
+          AdminAddListingScreen(
+            collection: state.pathParameters['collection']!,
+            docId: state.pathParameters['docId'],
+          ),
+        ),
+      ),
       GoRoute(
         path: AppRoutes.createPost,
         pageBuilder: (_, state) =>

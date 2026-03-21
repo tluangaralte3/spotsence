@@ -354,6 +354,7 @@ class _DetailBody extends ConsumerWidget {
       // ── Bottom FAB: join (for non-members) ────────────────────────
       floatingActionButton: (!isHost && !isMember)
           ? FloatingActionButton.extended(
+              heroTag: 'bucket_list_join_fab',
               onPressed: () => _confirmJoin(context, ref),
               backgroundColor: AppColors.primary,
               foregroundColor: context.col.bg,
@@ -858,7 +859,10 @@ class _MembersRow extends StatelessWidget {
                             decoration: BoxDecoration(
                               color: AppColors.accent,
                               shape: BoxShape.circle,
-                              border: Border.all(color: context.col.bg, width: 1),
+                              border: Border.all(
+                                color: context.col.bg,
+                                width: 1,
+                              ),
                             ),
                             child: Icon(
                               Icons.star_rounded,
@@ -878,10 +882,7 @@ class _MembersRow extends StatelessWidget {
             backgroundColor: context.col.surfaceElevated,
             child: Text(
               '+${approved.length - 6}',
-              style: TextStyle(
-                color: context.col.textSecondary,
-                fontSize: 10,
-              ),
+              style: TextStyle(color: context.col.textSecondary, fontSize: 10),
             ),
           ),
         const SizedBox(width: 8),
@@ -959,16 +960,14 @@ class _BucketItemTile extends ConsumerWidget {
                     ? AppColors.primary
                     : context.col.surfaceElevated,
                 border: Border.all(
-                  color: item.isChecked ? AppColors.primary : context.col.border,
+                  color: item.isChecked
+                      ? AppColors.primary
+                      : context.col.border,
                   width: 2,
                 ),
               ),
               child: item.isChecked
-                  ? Icon(
-                      Icons.check_rounded,
-                      size: 16,
-                      color: context.col.bg,
-                    )
+                  ? Icon(Icons.check_rounded, size: 16, color: context.col.bg)
                   : null,
             ),
           ),
@@ -988,10 +987,7 @@ class _BucketItemTile extends ConsumerWidget {
             children: [
               Text(
                 '${item.category.emoji} ${item.displayCategory}',
-                style: TextStyle(
-                  color: context.col.textMuted,
-                  fontSize: 11,
-                ),
+                style: TextStyle(color: context.col.textMuted, fontSize: 11),
               ),
               if (item.isChecked && item.checkedByUserName != null)
                 Text(
@@ -1128,10 +1124,7 @@ class _CompletionBanner extends StatelessWidget {
           Text(
             'You\'ve conquered every stop on this bucket list!',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: context.col.textSecondary,
-              fontSize: 13,
-            ),
+            style: TextStyle(color: context.col.textSecondary, fontSize: 13),
           ),
           const SizedBox(height: 12),
           Container(

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import '../../controllers/auth_controller.dart';
+import '../../controllers/admin_controller.dart';
 import '../../controllers/spots_controller.dart';
 import '../../core/router/app_router.dart';
 import '../../core/theme/app_theme.dart';
@@ -119,6 +120,22 @@ class _AuthenticatedProfileState extends ConsumerState<_AuthenticatedProfile>
             surfaceTintColor: Colors.transparent,
             elevation: 0,
             actions: [
+              // ── Super Admin entry point ─────────────────────────────
+              if (user.isSuperAdminEmail)
+                Consumer(
+                  builder: (context, ref, _) {
+                    final isSuperAdmin =
+                        ref.watch(isSuperAdminProvider).asData?.value ??
+                        user.isSuperAdminEmail;
+                    if (!isSuperAdmin) return const SizedBox.shrink();
+                    return IconButton(
+                      icon: const Icon(Icons.admin_panel_settings_outlined),
+                      tooltip: 'Admin Panel',
+                      color: AppColors.primary,
+                      onPressed: () => context.go(AppRoutes.admin),
+                    );
+                  },
+                ),
               Consumer(
                 builder: (context, ref, _) {
                   final isDark =

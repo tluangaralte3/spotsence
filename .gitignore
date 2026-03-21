@@ -43,3 +43,9 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Admin scripts - keep service account key out of git
+scripts/node_modules/
+scripts/serviceAccount*.json
+scripts/service-account*.json
+*-adminsdk-*.json

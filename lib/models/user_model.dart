@@ -58,6 +58,12 @@ class UserModel {
 
   bool get isAdmin => role == 0;
 
+  /// Whether this user's email matches the seeded super admin account.
+  /// The authoritative check is the Firebase custom claim (`superAdmin: true`),
+  /// but this is a quick advisory flag that works without a token refresh.
+  static const _superAdminEmail = 'hillstechadmin@spotsence.com';
+  bool get isSuperAdminEmail => email.trim().toLowerCase() == _superAdminEmail;
+
   /// Level thresholds matching the web app constants/points.ts
   static const _levelThresholds = [
     (level: 1, points: 0, title: 'Explorer'),

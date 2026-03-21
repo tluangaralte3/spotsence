@@ -2,6 +2,19 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
+import '../services/admin_service.dart';
+
+// ── SignInResult ──────────────────────────────────────────────────────────────
+
+/// Returned by [AuthController.signIn].
+/// On success, [errorMessage] is null and [redirectRoute] tells the UI
+/// where to navigate ('/admin' for super admin, '/' for regular users).
+class SignInResult {
+  final String? errorMessage;
+  final String redirectRoute;
+  const SignInResult({this.errorMessage, this.redirectRoute = '/'});
+  bool get isSuccess => errorMessage == null;
+}
 
 // ── Auth State ────────────────────────────────────────────────────────────────
 
@@ -83,22 +96,31 @@ class AuthController extends AsyncNotifier<AuthState> {
 
   // ── Actions ──────────────────────────────────────────────────────────────
 
-  /// Returns null on success, or an error message string.
-  Future<String?> signIn(String email, String password) async {
+  /// Signs in the user.
+  /// Returns a [SignInResult] — check [SignInResult.errorMessage] for failure,
+  /// or [SignInResult.redirectRoute] to know where to navigate on success.
+  Future<SignInResult> signIn(String email, String password) async {
     state = const AsyncLoading();
     final result = await _authService.signInWithEmail(email, password);
     return result.when(
-      ok: (user) {
+      ok: (user) async {
         state = AsyncData(
           AuthState(status: AuthStatus.authenticated, user: user),
         );
-        return null;
+        // Check Firebase custom claim to decide where to land
+        final adminService = ref.read(adminServiceProvider);
+        final isSuperAdmin = await adminService.checkSuperAdminClaim();
+        if (isSuperAdmin) {
+          // Seed / update the admin Firestore document
+          await adminService.seedSuperAdmin();
+        }
+        return SignInResult(redirectRoute: isSuperAdmin ? '/admin' : '/');
       },
       err: (msg) {
         state = AsyncData(
           AuthState(status: AuthStatus.error, errorMessage: msg),
         );
-        return msg;
+        return SignInResult(errorMessage: msg);
       },
     );
   }

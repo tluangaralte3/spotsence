@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../controllers/auth_controller.dart';
 import '../../core/router/app_router.dart';
 import '../../core/theme/app_theme.dart';
+import '../../services/admin_service.dart';
 import '../../widgets/shared_widgets.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -20,6 +21,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _obscure = true;
   bool _loading = false;
 
+  bool get _isAdminEmail =>
+      _emailCtrl.text.trim().toLowerCase() == AdminService.seedEmail;
+
   @override
   void dispose() {
     _emailCtrl.dispose();
@@ -31,16 +35,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _loading = true);
 
-    final error = await ref
+    final result = await ref
         .read(authControllerProvider.notifier)
         .signIn(_emailCtrl.text, _passCtrl.text);
 
     if (mounted) {
       setState(() => _loading = false);
-      if (error != null) {
+      if (!result.isSuccess) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error), backgroundColor: AppColors.error),
+          SnackBar(
+            content: Text(result.errorMessage!),
+            backgroundColor: AppColors.error,
+          ),
         );
+      } else {
+        // Super admins land on /admin; everyone else on home
+        context.go(result.redirectRoute);
       }
     }
   }
@@ -75,9 +85,42 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 TextFormField(
                   controller: _emailCtrl,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(
+                  onChanged: (_) => setState(() {}),
+                  decoration: InputDecoration(
                     hintText: 'Email address',
-                    prefixIcon: Icon(Icons.email_outlined),
+                    prefixIcon: const Icon(Icons.email_outlined),
+                    suffixIcon: _isAdminEmail
+                        ? Tooltip(
+                            message: 'Admin account',
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 12,
+                              ),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary.withValues(
+                                    alpha: 0.15,
+                                  ),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: const Text(
+                                  'ADMIN',
+                                  style: TextStyle(
+                                    color: AppColors.primary,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 1,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          )
+                        : null,
                   ),
                   validator: (v) => v != null && v.contains('@')
                       ? null
