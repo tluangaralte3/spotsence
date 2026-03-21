@@ -115,6 +115,8 @@ dev_dependencies:
 
   # Testing
   mockito: ^5.4.4
+  fake_cloud_firestore: ^4.0.2+1
+  firebase_auth_mocks: ^0.15.1
   flutter_launcher_icons: ^0.14.4
 
 # For information on the generic Dart part of this file, see the
