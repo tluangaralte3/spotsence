@@ -281,6 +281,9 @@ class HomeScreen extends ConsumerWidget {
           // ── Featured Spots Section ────────────────────────────────────
           const SliverToBoxAdapter(child: _FeaturedSpotsSection()),
 
+          // ── Tour Packages Section ─────────────────────────────────────
+          const SliverToBoxAdapter(child: _TourVentureSection()),
+
           // ── Quick stats (if signed in) ──────────────────────────────────
           if (user != null)
             SliverToBoxAdapter(
@@ -1185,6 +1188,377 @@ class _CardImagePlaceholder extends StatelessWidget {
           Icons.image_outlined,
           size: 40,
           color: context.col.textMuted,
+        ),
+      ),
+    );
+  }
+}
+
+// ───────────────────────────────────────────────────────────────────────────────
+// Venture — static placeholder (connect to Firestore later)
+// ───────────────────────────────────────────────────────────────────────────────
+
+// Mock data — replace with Firestore stream when ready
+const _kMockPackages = [
+  (
+    emoji: '🦜',
+    category: 'Bird Watching',
+    title: 'Murlen Bird Watching Trail',
+    subtitle: 'Spot 300+ exotic species in Murlen NP',
+    duration: '2 Days',
+    price: '₹3,500',
+    difficulty: 'Easy',
+    difficultyColor: Color(0xFF22C55E),
+    season: 'Oct – Mar',
+    rating: 4.8,
+  ),
+  (
+    emoji: '🎣',
+    category: 'Fishing',
+    title: 'Tuivai River Angling',
+    subtitle: 'Fly fishing on pristine mountain rivers',
+    duration: '1 Day',
+    price: '₹1,800',
+    difficulty: 'Easy',
+    difficultyColor: Color(0xFF22C55E),
+    season: 'Nov – Apr',
+    rating: 4.6,
+  ),
+  (
+    emoji: '🌿',
+    category: 'Eco Tourism',
+    title: 'Phawngpui Eco Trek',
+    subtitle: 'Trek to the Blue Mountain peak',
+    duration: '3 Days',
+    price: '₹5,200',
+    difficulty: 'Moderate',
+    difficultyColor: Color(0xFFF59E0B),
+    season: 'Sep – May',
+    rating: 4.9,
+  ),
+  (
+    emoji: '🏕️',
+    category: 'Camping',
+    title: 'Tamdil Lake Camping',
+    subtitle: 'Stargazing & campfire at Mizoram\'s largest lake',
+    duration: '2 Days',
+    price: '₹2,400',
+    difficulty: 'Easy',
+    difficultyColor: Color(0xFF22C55E),
+    season: 'All Year',
+    rating: 4.7,
+  ),
+  (
+    emoji: '📸',
+    category: 'Photography',
+    title: 'Aizawl Sunrise Photo Walk',
+    subtitle: 'Capture the city of churches at golden hour',
+    duration: 'Half Day',
+    price: '₹800',
+    difficulty: 'Easy',
+    difficultyColor: Color(0xFF22C55E),
+    season: 'All Year',
+    rating: 4.5,
+  ),
+];
+
+class _TourVentureSection extends StatelessWidget {
+  const _TourVentureSection();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ── Header ────────────────────────────────────────────────────
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 28, 20, 6),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        '⚡ Venture',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [AppColors.secondary, AppColors.primary],
+                          ),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Text(
+                          'Exclusive',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Adventure & activity packages, only on SpotSence',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: context.col.textMuted,
+                    ),
+                  ),
+                ],
+              ),
+              TextButton(
+                onPressed: () => context.push(AppRoutes.tourPackages),
+                child: const Text(
+                  'See all',
+                  style: TextStyle(color: AppColors.primary),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 12),
+
+        // ── Horizontal card list ───────────────────────────────────────
+        SizedBox(
+          height: 272,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            itemCount: _kMockPackages.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 14),
+            itemBuilder: (ctx, i) =>
+                _PackagePlaceholderCard(data: _kMockPackages[i]),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _PackagePlaceholderCard extends StatelessWidget {
+  // ignore: library_private_types_in_public_api
+  final ({
+    String emoji,
+    String category,
+    String title,
+    String subtitle,
+    String duration,
+    String price,
+    String difficulty,
+    Color difficultyColor,
+    String season,
+    double rating,
+  })
+  data;
+
+  const _PackagePlaceholderCard({required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => context.push(AppRoutes.tourPackages),
+      child: Container(
+        width: 230,
+        decoration: BoxDecoration(
+          color: context.col.surface,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: context.col.border),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Emoji hero area ──────────────────────────────────────
+            Container(
+              height: 110,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.08),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(18),
+                ),
+              ),
+              child: Stack(
+                children: [
+                  Center(
+                    child: Text(
+                      data.emoji,
+                      style: const TextStyle(fontSize: 52),
+                    ),
+                  ),
+                  // Category badge
+                  Positioned(
+                    top: 10,
+                    left: 10,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        data.category,
+                        style: const TextStyle(
+                          color: Colors.black,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Duration badge
+                  Positioned(
+                    top: 10,
+                    right: 10,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.black54,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        data.duration,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // ── Content ──────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    data.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: context.col.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    data.subtitle,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: context.col.textSecondary,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  // Rating + season
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.star_rounded,
+                        size: 13,
+                        color: Color(0xFFFBBF24),
+                      ),
+                      const SizedBox(width: 3),
+                      Text(
+                        data.rating.toStringAsFixed(1),
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: context.col.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          '📅 ${data.season}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: context.col.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  // Price + difficulty
+                  Row(
+                    children: [
+                      Text(
+                        data.price,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                      Text(
+                        ' /person',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: context.col.textMuted,
+                        ),
+                      ),
+                      const Spacer(),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 7,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: data.difficultyColor.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          data.difficulty,
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: data.difficultyColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );

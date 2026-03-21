@@ -27,6 +27,8 @@ import '../../screens/community/edit_bucket_list_screen.dart';
 import '../../screens/community/add_bucket_item_screen.dart';
 import '../../screens/events/event_detail_screen.dart';
 import '../../screens/listings/all_reviews_screen.dart';
+import '../../screens/packages/tour_venture_screen.dart';
+import '../../screens/packages/venture_detail_screen.dart';
 
 // Named route paths
 abstract class AppRoutes {
@@ -53,6 +55,10 @@ abstract class AppRoutes {
   static const bucketListDetail = '/community/bucket-lists/:id';
   static const editBucketList = '/community/bucket-lists/:id/edit';
   static const addBucketItem = '/community/bucket-lists/:listId/add-item';
+
+  static const tourPackages = '/packages';
+  static const packageDetail = '/packages/:id';
+  static String packageDetailPath(String id) => '/packages/$id';
 
   static const allReviews = '/reviews/:collection/:id';
   static String allReviewsPath({
@@ -176,6 +182,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: AppRoutes.search,
             builder: (_, __) => const SearchScreen(),
+          ),
+          GoRoute(
+            path: AppRoutes.tourPackages,
+            builder: (_, __) => const TourPackagesScreen(),
+            routes: [
+              GoRoute(
+                path: ':id',
+                pageBuilder: (_, state) => _fade(
+                  state,
+                  VentureDetailScreen(packageId: state.pathParameters['id']!),
+                ),
+              ),
+            ],
           ),
           GoRoute(
             path: AppRoutes.community,
