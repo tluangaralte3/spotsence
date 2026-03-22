@@ -1569,8 +1569,8 @@ class _BookingSheetState extends ConsumerState<_BookingSheet> {
     setState(() => _submitting = true);
 
     try {
-      await widget.service.submitBookingRequest(
-        packageId: widget.package.id,
+      await widget.service.submitRegistration(
+        ventureId: widget.package.id,
         userId: widget.userId,
         userName: widget.userName,
         userPhone: _phoneCtrl.text.trim(),

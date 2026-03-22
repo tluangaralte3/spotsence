@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../controllers/admin_controller.dart';
 
@@ -246,8 +247,14 @@ class _AdminListingsScreenState extends ConsumerState<AdminListingsScreen>
             )
           : FloatingActionButton.extended(
               heroTag: 'admin_listings_fab',
-              onPressed: () =>
-                  context.push('/admin/listings/add/${activeTab.collection}'),
+              onPressed: () {
+                if (activeTab == ListingTab.adventure ||
+                    activeTab == ListingTab.ventures) {
+                  context.push(AppRoutes.adminAddVenturePath());
+                } else {
+                  context.push('/admin/listings/add/${activeTab.collection}');
+                }
+              },
               backgroundColor: AppColors.primary,
               icon: const Icon(Icons.add, color: Colors.black),
               label: Text(
@@ -561,8 +568,13 @@ class _ListRow extends ConsumerWidget {
                 size: 20,
               ),
               tooltip: 'Edit',
-              onPressed: () =>
-                  context.push('/admin/listings/edit/$collection/$docId'),
+              onPressed: () {
+                if (collection == 'adventureSpots') {
+                  context.push(AppRoutes.adminEditVenturePath(docId));
+                } else {
+                  context.push('/admin/listings/edit/$collection/$docId');
+                }
+              },
             ),
             IconButton(
               icon: const Icon(
@@ -696,8 +708,13 @@ class _GridCard extends ConsumerWidget {
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                   tooltip: 'Edit',
-                  onPressed: () =>
-                      context.push('/admin/listings/edit/$collection/$docId'),
+                  onPressed: () {
+                    if (collection == 'adventureSpots') {
+                      context.push(AppRoutes.adminEditVenturePath(docId));
+                    } else {
+                      context.push('/admin/listings/edit/$collection/$docId');
+                    }
+                  },
                 ),
                 const SizedBox(width: 6),
                 IconButton(

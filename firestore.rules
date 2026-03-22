@@ -243,6 +243,19 @@ service cloud.firestore {
       }
     }
 
+    // ── Ventures (adventure packages created via admin form) ─────────────────
+
+    match /ventures/{docId} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+
+      match /reviews/{reviewId} {
+        allow read: if true;
+        allow create: if isAuth();
+        allow update, delete: if isAuth() && request.auth.uid == resource.data.userId;
+      }
+    }
+
     // ── Community posts ──────────────────────────────────────────────────────
 
     match /community_posts/{docId} {

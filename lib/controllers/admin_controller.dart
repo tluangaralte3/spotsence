@@ -131,7 +131,7 @@ enum ListingTab {
     ListingTab.adventure => 'adventureSpots',
     ListingTab.shopping => 'shoppingAreas',
     ListingTab.events => 'events',
-    ListingTab.ventures => 'tour_packages',
+    ListingTab.ventures => 'ventures',
   };
 }
 

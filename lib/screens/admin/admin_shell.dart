@@ -215,7 +215,7 @@ class _WideLayout extends ConsumerWidget {
         ),
         VerticalDivider(color: col.border, width: 1),
         Expanded(
-          child: IndexedStack(index: index, children: screens),
+          child: _ScreenStack(index: index, screens: screens),
         ),
       ],
     );
@@ -280,7 +280,7 @@ class _NarrowLayout extends ConsumerWidget {
           ),
         ),
         Expanded(
-          child: IndexedStack(index: index, children: screens),
+          child: _ScreenStack(index: index, screens: screens),
         ),
         // Bottom nav — 5 main tabs; Settings accessible via header icon
         Container(
@@ -311,6 +311,35 @@ class _NarrowLayout extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Screen stack — only the active screen is visible and in the semantics tree.
+// Using Visibility(maintainState: false) instead of IndexedStack avoids the
+// '!semantics.parentDataDirty' assertion that fires when multiple Scaffolds
+// are simultaneously mounted in the same semantics tree.
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _ScreenStack extends StatelessWidget {
+  final int index;
+  final List<Widget> screens;
+  const _ScreenStack({required this.index, required this.screens});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox.expand(
+      child: Stack(
+        children: [
+          for (int i = 0; i < screens.length; i++)
+            Visibility(
+              visible: i == index,
+              maintainState: false,
+              child: screens[i],
+            ),
+        ],
+      ),
     );
   }
 }

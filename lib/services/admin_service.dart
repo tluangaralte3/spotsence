@@ -310,5 +310,5 @@ class AdminService {
       watchCollection('events', limit: limit);
 
   Stream<QuerySnapshot> watchVentures({int limit = 100}) =>
-      watchCollection('tour_packages', limit: limit);
+      watchCollection('ventures', limit: limit);
 }

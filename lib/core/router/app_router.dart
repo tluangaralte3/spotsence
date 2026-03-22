@@ -31,6 +31,7 @@ import '../../screens/packages/tour_venture_screen.dart';
 import '../../screens/packages/venture_detail_screen.dart';
 import '../../screens/admin/admin_shell.dart';
 import '../../screens/admin/listings/admin_add_listing_screen.dart';
+import '../../screens/admin/listings/admin_venture_form_screen.dart';
 import '../../controllers/admin_controller.dart';
 
 // Named route paths
@@ -72,10 +73,15 @@ abstract class AppRoutes {
   static const adminModeration = '/admin/moderation';
   static const adminAddListing = '/admin/listings/add/:collection';
   static const adminEditListing = '/admin/listings/edit/:collection/:docId';
+  static const adminAddVenture = '/admin/ventures/add';
+  static const adminEditVenture = '/admin/ventures/edit/:docId';
   static String adminAddListingPath(String collection) =>
       '/admin/listings/add/$collection';
   static String adminEditListingPath(String collection, String docId) =>
       '/admin/listings/edit/$collection/$docId';
+  static String adminAddVenturePath() => '/admin/ventures/add';
+  static String adminEditVenturePath(String docId) =>
+      '/admin/ventures/edit/$docId';
 
   static const allReviews = '/reviews/:collection/:id';
   static String allReviewsPath({
@@ -265,25 +271,39 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             child: child,
           ),
         ),
-      ),
-      GoRoute(
-        path: AppRoutes.adminAddListing,
-        pageBuilder: (_, state) => _slide(
-          state,
-          AdminAddListingScreen(
-            collection: state.pathParameters['collection']!,
+        routes: [
+          GoRoute(
+            path: 'listings/add/:collection',
+            pageBuilder: (_, state) => _slide(
+              state,
+              AdminAddListingScreen(
+                collection: state.pathParameters['collection']!,
+              ),
+            ),
           ),
-        ),
-      ),
-      GoRoute(
-        path: AppRoutes.adminEditListing,
-        pageBuilder: (_, state) => _slide(
-          state,
-          AdminAddListingScreen(
-            collection: state.pathParameters['collection']!,
-            docId: state.pathParameters['docId'],
+          GoRoute(
+            path: 'listings/edit/:collection/:docId',
+            pageBuilder: (_, state) => _slide(
+              state,
+              AdminAddListingScreen(
+                collection: state.pathParameters['collection']!,
+                docId: state.pathParameters['docId'],
+              ),
+            ),
           ),
-        ),
+          GoRoute(
+            path: 'ventures/add',
+            pageBuilder: (_, state) =>
+                _slide(state, const AdminVentureFormScreen()),
+          ),
+          GoRoute(
+            path: 'ventures/edit/:docId',
+            pageBuilder: (_, state) => _slide(
+              state,
+              AdminVentureFormScreen(docId: state.pathParameters['docId']),
+            ),
+          ),
+        ],
       ),
       GoRoute(
         path: AppRoutes.createPost,
