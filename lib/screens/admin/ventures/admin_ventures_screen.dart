@@ -18,13 +18,6 @@ class AdminVenturesScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: col.bg,
-      appBar: AppBar(
-        backgroundColor: col.surface,
-        title: Text(
-          'Dare & Venture',
-          style: TextStyle(color: col.textPrimary, fontWeight: FontWeight.w700),
-        ),
-      ),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'admin_ventures_fab',
         onPressed: () => Navigator.of(context).push(

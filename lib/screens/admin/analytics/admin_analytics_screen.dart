@@ -17,58 +17,77 @@ class AdminAnalyticsScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: col.bg,
-      appBar: AppBar(
-        backgroundColor: col.surface,
-        title: Text(
-          'Analytics',
-          style: TextStyle(color: col.textPrimary, fontWeight: FontWeight.w700),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh, color: AppColors.primary),
-            tooltip: 'Refresh',
-            onPressed: () {
-              ref.invalidate(analyticsSnapshotProvider);
-              ref.invalidate(collectionCountsProvider);
-            },
+      body: Column(
+        children: [
+          Material(
+            color: col.surface,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              child: Row(
+                children: [
+                  Text(
+                    'Analytics',
+                    style: TextStyle(
+                      color: col.textPrimary,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.refresh, color: AppColors.primary),
+                    tooltip: 'Refresh',
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    onPressed: () {
+                      ref.invalidate(analyticsSnapshotProvider);
+                      ref.invalidate(collectionCountsProvider);
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Divider(height: 1, color: col.border),
+          Expanded(
+            child: RefreshIndicator(
+              color: AppColors.primary,
+              onRefresh: () async {
+                ref.invalidate(analyticsSnapshotProvider);
+                ref.invalidate(collectionCountsProvider);
+              },
+              child: ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  snapshot.when(
+                    loading: () => const _LoadingCard(),
+                    error: (e, _) => _ErrorCard(message: e.toString()),
+                    data: (snap) => _LiveStatsSection(snap: snap),
+                  ),
+                  const SizedBox(height: 24),
+                  const _SectionHeader('📦 Content Breakdown'),
+                  const SizedBox(height: 12),
+                  counts.when(
+                    loading: () => const _LoadingCard(),
+                    error: (e, _) => _ErrorCard(message: e.toString()),
+                    data: (c) => _ContentBarChart(counts: c),
+                  ),
+                  const SizedBox(height: 24),
+                  const _SectionHeader('ℹ️ Analytics Note'),
+                  const SizedBox(height: 8),
+                  const _NoteCard(),
+                ],
+              ),
+            ),
           ),
         ],
-      ),
-      body: RefreshIndicator(
-        color: AppColors.primary,
-        onRefresh: () async {
-          ref.invalidate(analyticsSnapshotProvider);
-          ref.invalidate(collectionCountsProvider);
-        },
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            snapshot.when(
-              loading: () => const _LoadingCard(),
-              error: (e, _) => _ErrorCard(message: e.toString()),
-              data: (snap) => _LiveStatsSection(snap: snap),
-            ),
-            const SizedBox(height: 24),
-            const _SectionHeader('📦 Content Breakdown'),
-            const SizedBox(height: 12),
-            counts.when(
-              loading: () => const _LoadingCard(),
-              error: (e, _) => _ErrorCard(message: e.toString()),
-              data: (c) => _ContentBarChart(counts: c),
-            ),
-            const SizedBox(height: 24),
-            const _SectionHeader('ℹ️ Analytics Note'),
-            const SizedBox(height: 8),
-            const _NoteCard(),
-          ],
-        ),
       ),
     );
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Live Stats
+// Live stats
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _LiveStatsSection extends StatelessWidget {

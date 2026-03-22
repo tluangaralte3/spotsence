@@ -56,26 +56,37 @@ class _AdminModerationScreenState extends ConsumerState<AdminModerationScreen>
 
     return Scaffold(
       backgroundColor: col.bg,
-      appBar: AppBar(
-        backgroundColor: col.surface,
-        title: Text(
-          'Moderation',
-          style: TextStyle(color: col.textPrimary, fontWeight: FontWeight.w700),
-        ),
-        bottom: TabBar(
-          controller: _tabs,
-          labelColor: AppColors.primary,
-          unselectedLabelColor: col.textSecondary,
-          indicatorColor: AppColors.primary,
-          tabs: const [
-            Tab(text: 'Flagged Reviews'),
-            Tab(text: 'Recent Posts'),
-          ],
-        ),
-      ),
-      body: TabBarView(
-        controller: _tabs,
-        children: [_FlaggedReviewsTab(), _RecentPostsTab()],
+      body: Column(
+        children: [
+          Material(
+            color: col.surface,
+            child: TabBar(
+              controller: _tabs,
+              labelColor: AppColors.primary,
+              unselectedLabelColor: col.textSecondary,
+              indicatorColor: AppColors.primary,
+              dividerColor: col.border,
+              labelStyle: const TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+              ),
+              unselectedLabelStyle: const TextStyle(
+                fontWeight: FontWeight.w500,
+                fontSize: 13,
+              ),
+              tabs: const [
+                Tab(text: 'Flagged Reviews'),
+                Tab(text: 'Recent Posts'),
+              ],
+            ),
+          ),
+          Expanded(
+            child: TabBarView(
+              controller: _tabs,
+              children: [_FlaggedReviewsTab(), _RecentPostsTab()],
+            ),
+          ),
+        ],
       ),
     );
   }

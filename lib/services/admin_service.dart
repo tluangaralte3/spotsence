@@ -292,7 +292,7 @@ class AdminService {
       watchCollection('restaurants', limit: limit);
 
   Stream<QuerySnapshot> watchHotels({int limit = 100}) =>
-      watchCollection('hotels', limit: limit);
+      watchCollection('accommodations', limit: limit);
 
   Stream<QuerySnapshot> watchCafes({int limit = 100}) =>
       watchCollection('cafes', limit: limit);

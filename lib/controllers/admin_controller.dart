@@ -68,8 +68,10 @@ final adminRestaurantsProvider = StreamProvider<QuerySnapshot>(
   (ref) => ref.read(adminServiceProvider).watchRestaurants(),
 );
 
-final adminHotelsProvider = StreamProvider<QuerySnapshot>(
-  (ref) => ref.read(adminServiceProvider).watchHotels(),
+final adminAccommodationsProvider = StreamProvider<QuerySnapshot>(
+  (ref) => ref
+      .read(adminServiceProvider)
+      .watchHotels(), // streams 'accommodations' collection
 );
 
 final adminCafesProvider = StreamProvider<QuerySnapshot>(
@@ -103,9 +105,8 @@ final adminVenturesProvider = StreamProvider<QuerySnapshot>(
 enum ListingTab {
   spots,
   restaurants,
-  hotels,
+  accommodations,
   cafes,
-  homestays,
   adventure,
   shopping,
   events,
@@ -114,9 +115,8 @@ enum ListingTab {
   String get label => switch (this) {
     ListingTab.spots => 'Spots',
     ListingTab.restaurants => 'Restaurants',
-    ListingTab.hotels => 'Hotels',
+    ListingTab.accommodations => 'Accommodations',
     ListingTab.cafes => 'Cafes',
-    ListingTab.homestays => 'Homestays',
     ListingTab.adventure => 'Adventure',
     ListingTab.shopping => 'Shopping',
     ListingTab.events => 'Events',
@@ -126,9 +126,8 @@ enum ListingTab {
   String get collection => switch (this) {
     ListingTab.spots => 'spots',
     ListingTab.restaurants => 'restaurants',
-    ListingTab.hotels => 'hotels',
+    ListingTab.accommodations => 'accommodations',
     ListingTab.cafes => 'cafes',
-    ListingTab.homestays => 'homestays',
     ListingTab.adventure => 'adventureSpots',
     ListingTab.shopping => 'shoppingAreas',
     ListingTab.events => 'events',

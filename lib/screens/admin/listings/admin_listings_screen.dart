@@ -50,15 +50,26 @@ class _AdminListingsScreenState extends ConsumerState<AdminListingsScreen>
   late final TabController _tabController;
   bool _isGrid = false;
   bool _filterVisible = true;
+  double _scrollAccum = 0; // cumulative scroll for hide/show threshold
   String _sortBy = 'name'; // 'name' | 'newest'
   static final _tabs = ListingTab.values;
 
   void _onScrollUpdate(ScrollUpdateNotification n) {
     final delta = n.scrollDelta ?? 0;
-    if (delta > 4 && _filterVisible) {
-      setState(() => _filterVisible = false);
-    } else if (delta < -4 && !_filterVisible) {
-      setState(() => _filterVisible = true);
+    _scrollAccum += delta;
+    if (_scrollAccum > 40 && _filterVisible) {
+      setState(() {
+        _filterVisible = false;
+        _scrollAccum = 0;
+      });
+    } else if (_scrollAccum < -20 && !_filterVisible) {
+      setState(() {
+        _filterVisible = true;
+        _scrollAccum = 0;
+      });
+    } else if (_filterVisible && _scrollAccum < 0) {
+      // reset accumulator when already visible and scrolling up
+      _scrollAccum = 0;
     }
   }
 
@@ -71,6 +82,9 @@ class _AdminListingsScreenState extends ConsumerState<AdminListingsScreen>
         ref
             .read(selectedListingTabProvider.notifier)
             .set(_tabs[_tabController.index]);
+        // Reset scroll accumulator + restore filter bar on tab change
+        _scrollAccum = 0;
+        if (!_filterVisible) setState(() => _filterVisible = true);
       }
     });
   }
@@ -99,6 +113,15 @@ class _AdminListingsScreenState extends ConsumerState<AdminListingsScreen>
           ),
         );
         ref.read(adminListingNotifierProvider.notifier).reset();
+      }
+    });
+
+    // Drive the TabController when the selected tab is changed externally
+    // (e.g. tapping a category tile on the Dashboard).
+    ref.listen(selectedListingTabProvider, (_, tab) {
+      final idx = _tabs.indexOf(tab);
+      if (idx != -1 && _tabController.index != idx) {
+        _tabController.animateTo(idx);
       }
     });
 
@@ -256,9 +279,8 @@ class _ListingTabContent extends ConsumerWidget {
   StreamProvider<QuerySnapshot> _provider(ListingTab t) => switch (t) {
     ListingTab.spots => adminSpotsProvider,
     ListingTab.restaurants => adminRestaurantsProvider,
-    ListingTab.hotels => adminHotelsProvider,
+    ListingTab.accommodations => adminAccommodationsProvider,
     ListingTab.cafes => adminCafesProvider,
-    ListingTab.homestays => adminHomestaysProvider,
     ListingTab.adventure => adminAdventureSpotsProvider,
     ListingTab.shopping => adminShoppingAreasProvider,
     ListingTab.events => adminEventsProvider,
@@ -268,6 +290,119 @@ class _ListingTabContent extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final col = context.col;
+
+    // The Accommodations tab merges docs from both 'accommodations'
+    // and 'homestays' Firestore collections into a single list.
+    if (tab == ListingTab.accommodations) {
+      final accAsync = ref.watch(adminAccommodationsProvider);
+      final hsAsync = ref.watch(adminHomestaysProvider);
+
+      // Show loading if either is loading
+      if (accAsync.isLoading || hsAsync.isLoading) {
+        return const Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        );
+      }
+      if (accAsync.hasError) {
+        return Center(
+          child: Text(
+            accAsync.error.toString(),
+            style: const TextStyle(color: AppColors.error),
+          ),
+        );
+      }
+      if (hsAsync.hasError) {
+        return Center(
+          child: Text(
+            hsAsync.error.toString(),
+            style: const TextStyle(color: AppColors.error),
+          ),
+        );
+      }
+
+      // Build tagged doc list: (doc, collection)
+      final tagged = <({QueryDocumentSnapshot doc, String collection})>[
+        ...?accAsync.value?.docs.map(
+          (d) => (doc: d, collection: 'accommodations'),
+        ),
+        ...?hsAsync.value?.docs.map((d) => (doc: d, collection: 'homestays')),
+      ];
+
+      // Apply sort
+      if (sortBy == 'name') {
+        tagged.sort((a, b) {
+          final aData = a.doc.data() as Map<String, dynamic>;
+          final bData = b.doc.data() as Map<String, dynamic>;
+          final aName = (aData['name'] ?? aData['title'] ?? '')
+              .toString()
+              .toLowerCase();
+          final bName = (bData['name'] ?? bData['title'] ?? '')
+              .toString()
+              .toLowerCase();
+          return aName.compareTo(bName);
+        });
+      } else if (sortBy == 'newest') {
+        tagged.sort((a, b) {
+          final aTs = (a.doc.data() as Map<String, dynamic>)['createdAt'];
+          final bTs = (b.doc.data() as Map<String, dynamic>)['createdAt'];
+          if (aTs is Timestamp && bTs is Timestamp) return bTs.compareTo(aTs);
+          return 0;
+        });
+      }
+
+      if (tagged.isEmpty) {
+        return Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.inbox_outlined, color: col.textMuted, size: 48),
+              const SizedBox(height: 12),
+              Text(
+                'No accommodations yet.',
+                style: TextStyle(color: col.textSecondary, fontSize: 14),
+              ),
+            ],
+          ),
+        );
+      }
+
+      if (isGrid) {
+        return GridView.builder(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
+            childAspectRatio: 0.82,
+          ),
+          itemCount: tagged.length,
+          itemBuilder: (ctx, i) {
+            final item = tagged[i];
+            return _GridCard(
+              docId: item.doc.id,
+              data: item.doc.data() as Map<String, dynamic>,
+              collection: item.collection,
+            );
+          },
+        );
+      }
+
+      return ListView.separated(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
+        itemCount: tagged.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 8),
+        itemBuilder: (ctx, i) {
+          final item = tagged[i];
+          return _ListRow(
+            docId: item.doc.id,
+            data: item.doc.data() as Map<String, dynamic>,
+            collection: item.collection,
+          );
+        },
+      );
+    }
+
+    // ── All other tabs: single collection stream ──────────────────────────
     final snapAsync = ref.watch(_provider(tab));
 
     return snapAsync.when(

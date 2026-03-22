@@ -17,6 +17,7 @@ import 'users/admin_users_screen.dart';
 import 'analytics/admin_analytics_screen.dart';
 import 'ventures/admin_ventures_screen.dart';
 import 'moderation/admin_moderation_screen.dart';
+import 'settings/admin_settings_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Navigation items
@@ -64,6 +65,11 @@ const _navItems = [
     icon: Icons.shield_outlined,
     activeIcon: Icons.shield,
   ),
+  _AdminNavItem(
+    label: 'Settings',
+    icon: Icons.settings_outlined,
+    activeIcon: Icons.settings,
+  ),
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -90,6 +96,7 @@ class AdminShell extends ConsumerWidget {
     AdminAnalyticsScreen(),
     AdminVenturesScreen(),
     AdminModerationScreen(),
+    AdminSettingsScreen(),
   ];
 
   @override
@@ -245,19 +252,6 @@ class _NarrowLayout extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
               child: Row(
                 children: [
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [AppColors.primary, AppColors.secondary],
-                      ),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Center(
-                      child: Text('👑', style: TextStyle(fontSize: 16)),
-                    ),
-                  ),
                   const SizedBox(width: 10),
                   Text(
                     profile?.displayName ?? 'Admin Panel',
@@ -268,6 +262,17 @@ class _NarrowLayout extends ConsumerWidget {
                     ),
                   ),
                   const Spacer(),
+                  // Settings button
+                  IconButton(
+                    tooltip: 'Settings',
+                    icon: Icon(
+                      index == 6 ? Icons.settings : Icons.settings_outlined,
+                      color: index == 6 ? AppColors.primary : col.textSecondary,
+                      size: 20,
+                    ),
+                    onPressed: () =>
+                        ref.read(adminTabIndexProvider.notifier).set(6),
+                  ),
                   _SignOutButton(),
                 ],
               ),
@@ -277,14 +282,14 @@ class _NarrowLayout extends ConsumerWidget {
         Expanded(
           child: IndexedStack(index: index, children: screens),
         ),
-        // Bottom nav — show only first 5 tabs; 6th (Moderation) in a menu
+        // Bottom nav — 5 main tabs; Settings accessible via header icon
         Container(
           decoration: BoxDecoration(
             color: col.surface,
             border: Border(top: BorderSide(color: col.border)),
           ),
           child: BottomNavigationBar(
-            currentIndex: index > 4 ? 0 : index,
+            currentIndex: index >= 5 ? 0 : index,
             backgroundColor: col.surface,
             type: BottomNavigationBarType.fixed,
             selectedItemColor: AppColors.primary,

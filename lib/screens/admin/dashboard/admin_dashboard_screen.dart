@@ -7,6 +7,30 @@ import '../../../controllers/admin_controller.dart';
 import '../../../models/admin_model.dart';
 import '../admin_shell.dart';
 
+// icon + accent colour per ListingTab
+const _tabMeta = <ListingTab, ({IconData icon, Color color})>{
+  ListingTab.spots: (icon: Icons.place_outlined, color: AppColors.primary),
+  ListingTab.restaurants: (
+    icon: Icons.restaurant_outlined,
+    color: Color(0xFFFF6B6B),
+  ),
+  ListingTab.accommodations: (
+    icon: Icons.hotel_outlined,
+    color: Color(0xFF4ECDC4),
+  ),
+  ListingTab.cafes: (icon: Icons.coffee_outlined, color: Color(0xFFFFBE0B)),
+  ListingTab.adventure: (icon: Icons.terrain, color: Color(0xFFFF8B94)),
+  ListingTab.shopping: (
+    icon: Icons.shopping_bag_outlined,
+    color: Color(0xFFB8B8FF),
+  ),
+  ListingTab.events: (icon: Icons.event_outlined, color: AppColors.accent),
+  ListingTab.ventures: (
+    icon: Icons.explore_outlined,
+    color: AppColors.secondary,
+  ),
+};
+
 class AdminDashboardScreen extends ConsumerStatefulWidget {
   const AdminDashboardScreen({super.key});
 
@@ -36,38 +60,42 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
 
     return Scaffold(
       backgroundColor: col.bg,
-      body: SafeArea(
-        bottom: false,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      body: RefreshIndicator(
+        color: AppColors.primary,
+        backgroundColor: col.surface,
+        onRefresh: _refresh,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 40),
           children: [
-            Expanded(
-              child: RefreshIndicator(
-                color: AppColors.primary,
-                backgroundColor: col.surface,
-                onRefresh: _refresh,
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 40),
-                  children: [
-                    _SectionLabel('Collection Stats'),
-                    const SizedBox(height: 12),
-                    countsAsync.when(
-                      loading: () => const _StatsShimmer(),
-                      error: (e, _) => _ErrorCard(message: e.toString()),
-                      data: (counts) => _StatsGrid(counts: counts),
-                    ),
-                    const SizedBox(height: 28),
-                    _SectionLabel('Quick Actions'),
-                    const SizedBox(height: 12),
-                    _QuickActionsGrid(ref: ref),
-                    const SizedBox(height: 28),
-                    _SectionLabel('Admin Info'),
-                    const SizedBox(height: 12),
-                    _AdminInfoCard(profile: profile),
-                  ],
-                ),
-              ),
+            // ── Header banner ───────────────────────────────────────────
+            _DashboardHeader(profile: profile),
+            const SizedBox(height: 24),
+
+            // ── Collection Stats ─────────────────────────────────────────
+            _SectionLabel('Collection Stats'),
+            const SizedBox(height: 12),
+            countsAsync.when(
+              loading: () => const _StatsShimmer(),
+              error: (e, _) => _ErrorCard(message: e.toString()),
+              data: (counts) => _StatsGrid(counts: counts),
             ),
+            const SizedBox(height: 28),
+
+            // ── Listing Categories ────────────────────────────────────────
+            _SectionLabel('Listing Categories'),
+            const SizedBox(height: 4),
+            Text(
+              'Tap a category to jump directly to it',
+              style: TextStyle(color: col.textMuted, fontSize: 12),
+            ),
+            const SizedBox(height: 12),
+            _ListingCategoriesSection(ref: ref),
+            const SizedBox(height: 28),
+
+            // ── Admin Info ───────────────────────────────────────────────
+            _SectionLabel('Admin Info'),
+            const SizedBox(height: 12),
+            _AdminInfoCard(profile: profile),
           ],
         ),
       ),
@@ -99,9 +127,13 @@ class _StatsGrid extends StatelessWidget {
       Icons.restaurant_outlined,
       Color(0xFFFF6B6B),
     ),
-    _StatMeta('hotels', 'Hotels', Icons.hotel_outlined, Color(0xFF4ECDC4)),
+    _StatMeta(
+      'accommodations',
+      'Accommodations',
+      Icons.hotel_outlined,
+      Color(0xFF4ECDC4),
+    ),
     _StatMeta('cafes', 'Cafes', Icons.coffee_outlined, Color(0xFFFFE66D)),
-    _StatMeta('homestays', 'Homestays', Icons.home_outlined, Color(0xFFA8E6CF)),
     _StatMeta('adventureSpots', 'Adventure', Icons.terrain, Color(0xFFFF8B94)),
     _StatMeta(
       'shoppingAreas',
@@ -257,82 +289,201 @@ class _StatsShimmer extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Quick Actions
+// Dashboard header banner
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _ActionMeta {
-  final IconData icon;
-  final String label;
-  final int tab;
-  const _ActionMeta(this.icon, this.label, this.tab);
-}
-
-class _QuickActionsGrid extends StatelessWidget {
-  final WidgetRef ref;
-  const _QuickActionsGrid({required this.ref});
-
-  static const _actions = [
-    _ActionMeta(Icons.place_outlined, 'Listings', 1),
-    _ActionMeta(Icons.people_outline, 'Users', 2),
-    _ActionMeta(Icons.bar_chart_outlined, 'Analytics', 3),
-    _ActionMeta(Icons.explore_outlined, 'Ventures', 4),
-    _ActionMeta(Icons.shield_outlined, 'Moderation', 5),
-    _ActionMeta(Icons.event_outlined, 'Events', 1),
-  ];
+class _DashboardHeader extends StatelessWidget {
+  final AdminModel? profile;
+  const _DashboardHeader({this.profile});
 
   @override
   Widget build(BuildContext context) {
-    final col = context.col;
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: _actions.length,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 10,
-        childAspectRatio: 1.15,
+    final hour = DateTime.now().hour;
+    final greeting = hour < 12
+        ? 'Good morning'
+        : hour < 17
+        ? 'Good afternoon'
+        : 'Good evening';
+    final name = profile?.displayName.split(' ').first ?? 'Admin';
+
+    return Container(
+      margin: const EdgeInsets.only(top: 16),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [AppColors.primary, AppColors.secondary],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(18),
       ),
-      itemBuilder: (context, i) {
-        final a = _actions[i];
-        return InkWell(
-          onTap: () => ref.read(adminTabIndexProvider.notifier).set(a.tab),
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            decoration: BoxDecoration(
-              color: col.surfaceElevated,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: col.border),
-            ),
+      child: Row(
+        children: [
+          Expanded(
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(a.icon, color: AppColors.primary, size: 20),
-                ),
-                const SizedBox(height: 7),
                 Text(
-                  a.label,
-                  style: TextStyle(
-                    color: col.textSecondary,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
+                  '$greeting,',
+                  style: const TextStyle(
+                    color: Colors.black54,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  name,
+                  style: const TextStyle(
+                    color: Colors.black,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    height: 1.1,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    profile?.role.label ?? 'Super Admin',
+                    style: const TextStyle(
+                      color: Colors.black87,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ],
             ),
           ),
+          Container(
+            width: 54,
+            height: 54,
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Center(
+              child: Text('👑', style: TextStyle(fontSize: 28)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Listing Categories section
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _ListingCategoriesSection extends ConsumerWidget {
+  final WidgetRef ref;
+  const _ListingCategoriesSection({required this.ref});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final col = context.col;
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: ListingTab.values.length,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 10,
+        childAspectRatio: 1.1,
+      ),
+      itemBuilder: (context, i) {
+        final tab = ListingTab.values[i];
+        final meta = _tabMeta[tab]!;
+        return _ListingCategoryTile(
+          tab: tab,
+          icon: meta.icon,
+          color: meta.color,
+          col: col,
+          onTap: () {
+            // Switch to Listings tab (index 1) and pre-select the tab
+            ref.read(selectedListingTabProvider.notifier).set(tab);
+            ref.read(adminTabIndexProvider.notifier).set(1);
+          },
         );
       },
     );
   }
 }
+
+class _ListingCategoryTile extends StatelessWidget {
+  final ListingTab tab;
+  final IconData icon;
+  final Color color;
+  final AppColorScheme col;
+  final VoidCallback onTap;
+
+  const _ListingCategoryTile({
+    required this.tab,
+    required this.icon,
+    required this.color,
+    required this.col,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        decoration: BoxDecoration(
+          color: col.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: col.border),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: color, size: 20),
+            ),
+            const SizedBox(height: 7),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Text(
+                tab.label,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: col.textSecondary,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Quick Actions (removed — replaced by Listing Categories)
+// ─────────────────────────────────────────────────────────────────────────────
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Admin Info Card

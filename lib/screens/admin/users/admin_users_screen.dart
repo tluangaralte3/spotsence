@@ -45,107 +45,123 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
 
     return Scaffold(
       backgroundColor: col.bg,
-      appBar: AppBar(
-        backgroundColor: col.surface,
-        title: Text(
-          'Users',
-          style: TextStyle(color: col.textPrimary, fontWeight: FontWeight.w700),
-        ),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(56),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: TextField(
-              controller: _search,
-              onChanged: (v) => setState(() => _query = v.toLowerCase()),
-              style: TextStyle(color: col.textPrimary, fontSize: 14),
-              decoration: InputDecoration(
-                hintText: 'Search users…',
-                hintStyle: TextStyle(color: col.textMuted),
-                prefixIcon: Icon(Icons.search, color: col.textMuted),
-                filled: true,
-                fillColor: col.surfaceElevated,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 10,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide.none,
+      body: Column(
+        children: [
+          // ── Search bar ────────────────────────────────────────────────
+          Material(
+            color: col.surface,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+              child: TextField(
+                controller: _search,
+                onChanged: (v) => setState(() => _query = v.toLowerCase()),
+                style: TextStyle(color: col.textPrimary, fontSize: 14),
+                decoration: InputDecoration(
+                  hintText: 'Search users…',
+                  hintStyle: TextStyle(color: col.textMuted),
+                  prefixIcon: Icon(Icons.search, color: col.textMuted),
+                  filled: true,
+                  fillColor: col.surfaceElevated,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-      ),
-      body: usersAsync.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: AppColors.primary),
-        ),
-        error: (e, _) => Center(
-          child: Text(
-            e.toString(),
-            style: const TextStyle(color: AppColors.error),
-          ),
-        ),
-        data: (users) {
-          final filtered = _query.isEmpty
-              ? users
-              : users
-                    .where(
-                      (u) =>
-                          u.displayName.toLowerCase().contains(_query) ||
-                          u.email.toLowerCase().contains(_query),
-                    )
-                    .toList();
-
-          if (filtered.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.people_outline, color: col.textMuted, size: 48),
-                  const SizedBox(height: 12),
-                  Text(
-                    _query.isNotEmpty
-                        ? 'No users match "$_query"'
-                        : 'No users found.',
-                    style: TextStyle(color: col.textSecondary, fontSize: 14),
-                  ),
-                ],
+          Divider(height: 1, color: col.border),
+          // ── User list ─────────────────────────────────────────────────
+          Expanded(
+            child: usersAsync.when(
+              loading: () => const Center(
+                child: CircularProgressIndicator(color: AppColors.primary),
               ),
-            );
-          }
-
-          return Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 10,
+              error: (e, _) => Center(
+                child: Text(
+                  e.toString(),
+                  style: const TextStyle(color: AppColors.error),
                 ),
-                child: Row(
+              ),
+              data: (users) {
+                final filtered = _query.isEmpty
+                    ? users
+                    : users
+                          .where(
+                            (u) =>
+                                u.displayName.toLowerCase().contains(_query) ||
+                                u.email.toLowerCase().contains(_query),
+                          )
+                          .toList();
+
+                if (filtered.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.people_outline,
+                          color: col.textMuted,
+                          size: 48,
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          _query.isNotEmpty
+                              ? 'No users match "$_query"'
+                              : 'No users found.',
+                          style: TextStyle(
+                            color: col.textSecondary,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                return Column(
                   children: [
-                    Icon(Icons.people, color: AppColors.primary, size: 16),
-                    const SizedBox(width: 6),
-                    Text(
-                      '${filtered.length} user(s)',
-                      style: TextStyle(color: col.textSecondary, fontSize: 13),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.people,
+                            color: AppColors.primary,
+                            size: 16,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            '${filtered.length} user(s)',
+                            style: TextStyle(
+                              color: col.textSecondary,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: ListView.separated(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: filtered.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 8),
+                        itemBuilder: (ctx, i) => _UserRow(user: filtered[i]),
+                      ),
                     ),
                   ],
-                ),
-              ),
-              Expanded(
-                child: ListView.separated(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: filtered.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
-                  itemBuilder: (ctx, i) => _UserRow(user: filtered[i]),
-                ),
-              ),
-            ],
-          );
-        },
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
