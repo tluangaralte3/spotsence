@@ -47,7 +47,13 @@
 	<true/>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>SpotMizoram uses your location to show nearby restaurants and cafes on the map.</string>
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>SpotMizoram uses your location to show nearby restaurants and cafes on the map.</string>
+        <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+        <string>SpotMizoram uses your location to show nearby restaurants and cafes on the map.</string>
+        <key>NSPhotoLibraryUsageDescription</key>
+        <string>SpotMizoram needs access to your photo library to upload listing images.</string>
+        <key>NSPhotoLibraryAddUsageDescription</key>
+        <string>SpotMizoram needs access to save images to your photo library.</string>
+        <key>NSCameraUsageDescription</key>
+        <string>SpotMizoram needs camera access to capture listing photos.</string>
 </dict>
 </plist>

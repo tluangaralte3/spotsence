@@ -180,8 +180,8 @@ class EventModel {
       time: d['time']?.toString() ?? d['startTime']?.toString() ?? '',
       endTime: d['endTime']?.toString() ?? '',
       attendees:
-          (d['attendees'] as num?)?.toInt() ??
-          (d['attendeeCount'] as num?)?.toInt() ??
+          _toNum(d['attendees'])?.toInt() ??
+          _toNum(d['attendeeCount'])?.toInt() ??
           0,
       category: d['category']?.toString() ?? '',
       imageUrl: _pickImageUrl(d),
@@ -194,10 +194,10 @@ class EventModel {
       updatedAt: _parseDateTime(d['updatedAt']),
       // ticketing
       ticketingEnabled: d['ticketingEnabled'] == true,
-      ticketPrice: (d['ticketPrice'] as num?)?.toDouble(),
+      ticketPrice: _toNum(d['ticketPrice'])?.toDouble(),
       ticketCurrency: d['ticketCurrency']?.toString() ?? 'INR',
-      totalTickets: (d['totalTickets'] as num?)?.toInt(),
-      ticketsBooked: (d['ticketsBooked'] as num?)?.toInt() ?? 0,
+      totalTickets: _toNum(d['totalTickets'])?.toInt(),
+      ticketsBooked: _toNum(d['ticketsBooked'])?.toInt() ?? 0,
       ticketingDeadline: _parseDateTime(d['ticketingDeadline']),
     );
   }
@@ -321,5 +321,14 @@ class EventModel {
   static List<String> _toStringList(dynamic raw) {
     if (raw is List) return raw.map((e) => e.toString()).toList();
     return [];
+  }
+
+  /// Safely converts a dynamic value to num, handling both numeric types
+  /// and String representations (e.g. Firestore stored "10" instead of 10).
+  static num? _toNum(dynamic raw) {
+    if (raw == null) return null;
+    if (raw is num) return raw;
+    if (raw is String) return num.tryParse(raw);
+    return null;
   }
 }

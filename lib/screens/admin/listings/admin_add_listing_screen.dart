@@ -54,15 +54,29 @@ class _AdminAddListingScreenState extends ConsumerState<AdminAddListingScreen> {
 
   // Events-specific extra state
   final _timeCtrl = TextEditingController();
+  final _endTimeCtrl = TextEditingController();
   final _attendeesCtrl = TextEditingController();
+  final _maxAttendeesCtrl = TextEditingController();
   final _ticketPriceCtrl = TextEditingController();
   final _organizerCtrl = TextEditingController();
   final _categoryTextCtrl = TextEditingController();
   final _districtTextCtrl = TextEditingController();
+  final _contactEmailCtrl = TextEditingController();
+  final _contactPhoneCtrl = TextEditingController();
+  final _registrationUrlCtrl = TextEditingController();
   String _eventType = 'cultural';
   String _eventStatus = 'Published';
+  bool _eventFeatured = false;
 
-  static const _eventTypes = ['festival', 'cultural', 'adventure', 'personal'];
+  static const _eventTypes = [
+    'festival',
+    'cultural',
+    'adventure',
+    'personal',
+    'sports',
+    'music',
+    'food',
+  ];
   static const _eventStatuses = ['Published', 'Draft'];
 
   bool _isLoading = false;
@@ -200,12 +214,18 @@ class _AdminAddListingScreenState extends ConsumerState<AdminAddListingScreen> {
           // Events-specific fields
           _timeCtrl.text =
               d['time']?.toString() ?? d['startTime']?.toString() ?? '';
+          _endTimeCtrl.text = d['endTime']?.toString() ?? '';
           _attendeesCtrl.text =
               (d['attendees'] ?? d['attendeeCount'])?.toString() ?? '';
+          _maxAttendeesCtrl.text = d['maxAttendees']?.toString() ?? '';
           _ticketPriceCtrl.text = d['ticketPrice']?.toString() ?? '';
           _organizerCtrl.text = d['organizer']?.toString() ?? '';
           _categoryTextCtrl.text = d['category']?.toString() ?? '';
           _districtTextCtrl.text = d['district']?.toString() ?? '';
+          _contactEmailCtrl.text = d['contactEmail']?.toString() ?? '';
+          _contactPhoneCtrl.text = d['contactPhone']?.toString() ?? '';
+          _registrationUrlCtrl.text = d['registrationUrl']?.toString() ?? '';
+          _eventFeatured = d['featured'] == true;
           if (_eventTypes.contains(d['type'])) _eventType = d['type']!;
           if (_eventStatuses.contains(d['status'])) _eventStatus = d['status']!;
           // Parse start/end dates
@@ -399,11 +419,16 @@ class _AdminAddListingScreenState extends ConsumerState<AdminAddListingScreen> {
     _locationCtrl.dispose();
     _tagsCtrl.dispose();
     _timeCtrl.dispose();
+    _endTimeCtrl.dispose();
     _attendeesCtrl.dispose();
+    _maxAttendeesCtrl.dispose();
     _ticketPriceCtrl.dispose();
     _organizerCtrl.dispose();
     _categoryTextCtrl.dispose();
     _districtTextCtrl.dispose();
+    _contactEmailCtrl.dispose();
+    _contactPhoneCtrl.dispose();
+    _registrationUrlCtrl.dispose();
     // spots
     _locationAddressCtrl.dispose();
     _districtSpotCtrl.dispose();
@@ -461,6 +486,8 @@ class _AdminAddListingScreenState extends ConsumerState<AdminAddListingScreen> {
   }
 
   /// Uploads all pending [_newImages] to Firebase Storage and returns their URLs.
+  /// Uses [XFile.readAsBytes] instead of [File] to avoid iOS sandbox
+  /// restrictions on image_picker temporary paths (error -1017).
   Future<List<String>> _uploadNewImages() async {
     if (_newImages.isEmpty) return [];
     setState(() => _uploadingImages = true);
@@ -468,17 +495,22 @@ class _AdminAddListingScreenState extends ConsumerState<AdminAddListingScreen> {
     try {
       final bucket = widget.collection;
       for (final xFile in _newImages) {
-        final ext = xFile.path.split('.').last.toLowerCase();
+        // Normalise extension — HEIC/HEIF from iOS camera → jpeg
+        final rawExt = xFile.path.split('.').last.toLowerCase();
+        final ext = (rawExt == 'heic' || rawExt == 'heif') ? 'jpg' : rawExt;
+        final mimeType = ext == 'png' ? 'image/png' : 'image/jpeg';
         final name =
             '${bucket}_${DateTime.now().millisecondsSinceEpoch}_${urls.length}.$ext';
         final storageRef = FirebaseStorage.instance.ref().child(
           'admin_listings/$bucket/$name',
         );
-        final task = storageRef.putFile(
-          File(xFile.path),
-          SettableMetadata(contentType: 'image/$ext'),
+
+        // Read bytes — avoids iOS -1017 sandbox path issue with putFile
+        final bytes = await xFile.readAsBytes();
+        await storageRef.putData(
+          bytes,
+          SettableMetadata(contentType: mimeType),
         );
-        await task;
         urls.add(await storageRef.getDownloadURL());
       }
     } catch (e) {
@@ -492,7 +524,6 @@ class _AdminAddListingScreenState extends ConsumerState<AdminAddListingScreen> {
           ),
         );
       }
-      // Return empty so caller knows upload failed
       return [];
     } finally {
       if (mounted) setState(() => _uploadingImages = false);
@@ -518,32 +549,45 @@ class _AdminAddListingScreenState extends ConsumerState<AdminAddListingScreen> {
     Map<String, dynamic> data;
 
     if (_isEvents) {
-      // Events use 'title', 'imageUrl' + 'images' list
+      // Events schema: title, description, location, date, time, endDate,
+      // endTime, attendees, maxAttendees, category, type, status,
+      // imageUrl (required), featured, organizer, contactEmail,
+      // contactPhone, ticketPrice, registrationUrl, tags, createdAt, updatedAt
       data = <String, dynamic>{
         'title': _nameCtrl.text.trim(),
-        'name': _nameCtrl.text
-            .trim(), // keep 'name' for admin_listings_screen queries
+        'name': _nameCtrl.text.trim(), // keep for listings screen queries
         'description': _descCtrl.text.trim(),
         'location': _locationCtrl.text.trim(),
+        'imageUrl': allImages.isNotEmpty ? allImages.first : '',
         'images': allImages,
-        if (allImages.isNotEmpty) 'imageUrl': allImages.first,
         'tags': tags,
         'type': _eventType,
         'status': _eventStatus,
-        if (_categoryTextCtrl.text.trim().isNotEmpty)
-          'category': _categoryTextCtrl.text.trim(),
+        'featured': _eventFeatured,
+        'attendees': int.tryParse(_attendeesCtrl.text.trim()) ?? 0,
+        'category': _categoryTextCtrl.text.trim(),
         if (_districtTextCtrl.text.trim().isNotEmpty)
           'district': _districtTextCtrl.text.trim(),
         if (_timeCtrl.text.trim().isNotEmpty) 'time': _timeCtrl.text.trim(),
-        if (_attendeesCtrl.text.trim().isNotEmpty)
-          'attendees': int.tryParse(_attendeesCtrl.text.trim()) ?? 0,
+        if (_endTimeCtrl.text.trim().isNotEmpty)
+          'endTime': _endTimeCtrl.text.trim(),
+        if (_maxAttendeesCtrl.text.trim().isNotEmpty)
+          'maxAttendees': int.tryParse(_maxAttendeesCtrl.text.trim()) ?? 0,
         if (_ticketPriceCtrl.text.trim().isNotEmpty)
           'ticketPrice': _ticketPriceCtrl.text.trim(),
         if (_organizerCtrl.text.trim().isNotEmpty)
           'organizer': _organizerCtrl.text.trim(),
-        if (_startDate != null) 'startDate': Timestamp.fromDate(_startDate!),
+        if (_contactEmailCtrl.text.trim().isNotEmpty)
+          'contactEmail': _contactEmailCtrl.text.trim(),
+        if (_contactPhoneCtrl.text.trim().isNotEmpty)
+          'contactPhone': _contactPhoneCtrl.text.trim(),
+        if (_registrationUrlCtrl.text.trim().isNotEmpty)
+          'registrationUrl': _registrationUrlCtrl.text.trim(),
         if (_startDate != null) 'date': Timestamp.fromDate(_startDate!),
+        if (_startDate != null) 'startDate': Timestamp.fromDate(_startDate!),
         if (_endDate != null) 'endDate': Timestamp.fromDate(_endDate!),
+        if (!_isEditMode) 'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
       };
     } else if (_isAccommodations) {
       // accommodations collection
@@ -870,7 +914,7 @@ class _AdminAddListingScreenState extends ConsumerState<AdminAddListingScreen> {
                         const SizedBox(height: 8),
 
                         // Type dropdown
-                        _FieldLabel('Event Type'),
+                        _FieldLabel('Event Type *'),
                         _DropdownField<String>(
                           value: _eventType,
                           items: _eventTypes,
@@ -882,7 +926,7 @@ class _AdminAddListingScreenState extends ConsumerState<AdminAddListingScreen> {
                         const SizedBox(height: 12),
 
                         // Status dropdown
-                        _FieldLabel('Status'),
+                        _FieldLabel('Status *'),
                         _DropdownField<String>(
                           value: _eventStatus,
                           items: _eventStatuses,
@@ -891,6 +935,29 @@ class _AdminAddListingScreenState extends ConsumerState<AdminAddListingScreen> {
                               setState(() => _eventStatus = v ?? _eventStatus),
                         ),
                         const SizedBox(height: 12),
+
+                        // Featured toggle
+                        SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text(
+                            'Featured',
+                            style: TextStyle(
+                              color: context.col.textPrimary,
+                              fontSize: 14,
+                            ),
+                          ),
+                          subtitle: Text(
+                            'Show on featured events section',
+                            style: TextStyle(
+                              color: context.col.textMuted,
+                              fontSize: 12,
+                            ),
+                          ),
+                          value: _eventFeatured,
+                          activeColor: AppColors.primary,
+                          onChanged: (v) => setState(() => _eventFeatured = v),
+                        ),
+                        const SizedBox(height: 4),
 
                         // Start date & time
                         _FieldLabel('Start Date & Time'),
@@ -912,16 +979,24 @@ class _AdminAddListingScreenState extends ConsumerState<AdminAddListingScreen> {
                         ),
                         const SizedBox(height: 12),
 
-                        // Time (display string like "10:00 AM")
-                        _FieldLabel('Display Time (e.g. 10:00 AM)'),
+                        // Start time display string
+                        _FieldLabel('Start Time Display (e.g. 10:00 AM)'),
                         _TextField(controller: _timeCtrl, hint: '10:00 AM'),
                         const SizedBox(height: 12),
 
+                        // End time display string
+                        _FieldLabel('End Time Display (e.g. 5:00 PM)'),
+                        _TextField(controller: _endTimeCtrl, hint: '5:00 PM'),
+                        const SizedBox(height: 12),
+
                         // Category
-                        _FieldLabel('Category'),
+                        _FieldLabel('Category *'),
                         _TextField(
                           controller: _categoryTextCtrl,
                           hint: 'e.g. Festival, Cultural, Sports',
+                          validator: (v) => (v == null || v.trim().isEmpty)
+                              ? 'Category is required'
+                              : null,
                         ),
                         const SizedBox(height: 12),
 
@@ -938,6 +1013,14 @@ class _AdminAddListingScreenState extends ConsumerState<AdminAddListingScreen> {
                         _TextField(controller: _attendeesCtrl, hint: '0'),
                         const SizedBox(height: 12),
 
+                        // Max attendees
+                        _FieldLabel('Max Attendees (blank = unlimited)'),
+                        _TextField(
+                          controller: _maxAttendeesCtrl,
+                          hint: 'Leave blank for unlimited',
+                        ),
+                        const SizedBox(height: 12),
+
                         // Ticket price
                         _FieldLabel('Ticket Price'),
                         _TextField(
@@ -946,11 +1029,35 @@ class _AdminAddListingScreenState extends ConsumerState<AdminAddListingScreen> {
                         ),
                         const SizedBox(height: 12),
 
+                        // Registration URL
+                        _FieldLabel('Registration URL'),
+                        _TextField(
+                          controller: _registrationUrlCtrl,
+                          hint: 'https://...',
+                        ),
+                        const SizedBox(height: 12),
+
                         // Organizer
                         _FieldLabel('Organizer'),
                         _TextField(
                           controller: _organizerCtrl,
                           hint: 'e.g. Mizoram Tourism Dept.',
+                        ),
+                        const SizedBox(height: 12),
+
+                        // Contact email
+                        _FieldLabel('Contact Email'),
+                        _TextField(
+                          controller: _contactEmailCtrl,
+                          hint: 'organizer@example.com',
+                        ),
+                        const SizedBox(height: 12),
+
+                        // Contact phone
+                        _FieldLabel('Contact Phone'),
+                        _TextField(
+                          controller: _contactPhoneCtrl,
+                          hint: '+91 XXXXXXXXXX',
                         ),
                       ],
                     ),
