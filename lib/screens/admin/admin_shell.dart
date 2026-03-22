@@ -239,39 +239,39 @@ class _NarrowLayout extends ConsumerWidget {
         // App bar
         Container(
           color: col.surface,
-          padding: EdgeInsets.only(
-            top: MediaQuery.paddingOf(context).top + 8,
-            left: 16,
-            right: 16,
-            bottom: 12,
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [AppColors.primary, AppColors.secondary],
+          child: SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+              child: Row(
+                children: [
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [AppColors.primary, AppColors.secondary],
+                      ),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Center(
+                      child: Text('👑', style: TextStyle(fontSize: 16)),
+                    ),
                   ),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Center(
-                  child: Text('👑', style: TextStyle(fontSize: 16)),
-                ),
+                  const SizedBox(width: 10),
+                  Text(
+                    profile?.displayName ?? 'Admin Panel',
+                    style: TextStyle(
+                      color: col.textPrimary,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 17,
+                    ),
+                  ),
+                  const Spacer(),
+                  _SignOutButton(),
+                ],
               ),
-              const SizedBox(width: 10),
-              Text(
-                profile?.displayName ?? 'Admin Panel',
-                style: TextStyle(
-                  color: col.textPrimary,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 17,
-                ),
-              ),
-              const Spacer(),
-              _SignOutButton(),
-            ],
+            ),
           ),
         ),
         Expanded(

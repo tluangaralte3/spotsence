@@ -7,44 +7,65 @@ import '../../../controllers/admin_controller.dart';
 import '../../../models/admin_model.dart';
 import '../admin_shell.dart';
 
-class AdminDashboardScreen extends ConsumerWidget {
+class AdminDashboardScreen extends ConsumerStatefulWidget {
   const AdminDashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AdminDashboardScreen> createState() =>
+      _AdminDashboardScreenState();
+}
+
+class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
+  bool _isRefreshing = false;
+
+  Future<void> _refresh() async {
+    if (_isRefreshing) return;
+    setState(() => _isRefreshing = true);
+    ref.invalidate(collectionCountsProvider);
+    await ref
+        .read(collectionCountsProvider.future)
+        .catchError((_) => <String, int>{});
+    if (mounted) setState(() => _isRefreshing = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final col = context.col;
     final countsAsync = ref.watch(collectionCountsProvider);
     final profile = ref.watch(adminProfileProvider).asData?.value;
 
     return Scaffold(
       backgroundColor: col.bg,
-      body: RefreshIndicator(
-        color: AppColors.primary,
-        onRefresh: () async => ref.invalidate(collectionCountsProvider),
-        child: CustomScrollView(
-          slivers: [
-            _DashboardAppBar(profile: profile),
-            SliverPadding(
-              padding: const EdgeInsets.all(16),
-              sliver: SliverList(
-                delegate: SliverChildListDelegate([
-                  _SectionHeader('📊 Collection Stats'),
-                  const SizedBox(height: 12),
-                  countsAsync.when(
-                    loading: () => const _StatsGridShimmer(),
-                    error: (e, _) => _ErrorCard(message: e.toString()),
-                    data: (counts) => _StatsGrid(counts: counts),
-                  ),
-                  const SizedBox(height: 24),
-                  _SectionHeader('⚡ Quick Actions'),
-                  const SizedBox(height: 12),
-                  _QuickActionsGrid(ref: ref),
-                  const SizedBox(height: 24),
-                  _SectionHeader('🔔 Admin Info'),
-                  const SizedBox(height: 12),
-                  _AdminInfoCard(profile: profile),
-                  const SizedBox(height: 40),
-                ]),
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: RefreshIndicator(
+                color: AppColors.primary,
+                backgroundColor: col.surface,
+                onRefresh: _refresh,
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 40),
+                  children: [
+                    _SectionLabel('Collection Stats'),
+                    const SizedBox(height: 12),
+                    countsAsync.when(
+                      loading: () => const _StatsShimmer(),
+                      error: (e, _) => _ErrorCard(message: e.toString()),
+                      data: (counts) => _StatsGrid(counts: counts),
+                    ),
+                    const SizedBox(height: 28),
+                    _SectionLabel('Quick Actions'),
+                    const SizedBox(height: 12),
+                    _QuickActionsGrid(ref: ref),
+                    const SizedBox(height: 28),
+                    _SectionLabel('Admin Info'),
+                    const SizedBox(height: 12),
+                    _AdminInfoCard(profile: profile),
+                  ],
+                ),
               ),
             ),
           ],
@@ -55,144 +76,94 @@ class AdminDashboardScreen extends ConsumerWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// App Bar
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _DashboardAppBar extends StatelessWidget {
-  final AdminModel? profile;
-  const _DashboardAppBar({this.profile});
-
-  @override
-  Widget build(BuildContext context) {
-    final col = context.col;
-    return SliverAppBar(
-      expandedHeight: 160,
-      pinned: true,
-      backgroundColor: col.surface,
-      flexibleSpace: FlexibleSpaceBar(
-        background: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF0A1628), Color(0xFF121827)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-          child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [AppColors.primary, AppColors.secondary],
-                          ),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: const Text(
-                          '👑 SUPER ADMIN',
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Welcome back,',
-                    style: TextStyle(color: col.textSecondary, fontSize: 14),
-                  ),
-                  Text(
-                    profile?.displayName ?? 'Admin',
-                    style: const TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 26,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // Stats Grid
 // ─────────────────────────────────────────────────────────────────────────────
+
+class _StatMeta {
+  final String key, label;
+  final IconData icon;
+  final Color color;
+  const _StatMeta(this.key, this.label, this.icon, this.color);
+}
 
 class _StatsGrid extends StatelessWidget {
   final Map<String, int> counts;
   const _StatsGrid({required this.counts});
 
-  static const _statMeta = [
-    ('users', 'Users', Icons.people, AppColors.secondary),
-    ('spots', 'Spots', Icons.place, AppColors.primary),
-    ('restaurants', 'Restaurants', Icons.restaurant, Color(0xFFFF6B6B)),
-    ('hotels', 'Hotels', Icons.hotel, Color(0xFF4ECDC4)),
-    ('cafes', 'Cafes', Icons.coffee, Color(0xFFFFE66D)),
-    ('homestays', 'Homestays', Icons.home, Color(0xFFA8E6CF)),
-    ('adventureSpots', 'Adventure', Icons.terrain, Color(0xFFFF8B94)),
-    ('shoppingAreas', 'Shopping', Icons.shopping_bag, Color(0xFFB8B8FF)),
-    ('events', 'Events', Icons.event, AppColors.accent),
-    ('tour_packages', 'Ventures', Icons.explore, AppColors.primary),
+  static const _meta = [
+    _StatMeta('users', 'Users', Icons.people_outline, AppColors.secondary),
+    _StatMeta('spots', 'Spots', Icons.place_outlined, AppColors.primary),
+    _StatMeta(
+      'restaurants',
+      'Restaurants',
+      Icons.restaurant_outlined,
+      Color(0xFFFF6B6B),
+    ),
+    _StatMeta('hotels', 'Hotels', Icons.hotel_outlined, Color(0xFF4ECDC4)),
+    _StatMeta('cafes', 'Cafes', Icons.coffee_outlined, Color(0xFFFFE66D)),
+    _StatMeta('homestays', 'Homestays', Icons.home_outlined, Color(0xFFA8E6CF)),
+    _StatMeta('adventureSpots', 'Adventure', Icons.terrain, Color(0xFFFF8B94)),
+    _StatMeta(
+      'shoppingAreas',
+      'Shopping',
+      Icons.shopping_bag_outlined,
+      Color(0xFFB8B8FF),
+    ),
+    _StatMeta('events', 'Events', Icons.event_outlined, AppColors.accent),
+    _StatMeta(
+      'tour_packages',
+      'Ventures',
+      Icons.explore_outlined,
+      AppColors.primary,
+    ),
   ];
 
   @override
   Widget build(BuildContext context) {
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
-      childAspectRatio: 1.6,
-      children: _statMeta.map((m) {
-        final (key, label, icon, color) = m;
-        return _StatCard(
-          label: label,
-          value: counts[key] ?? 0,
-          icon: icon,
-          color: color,
-        );
-      }).toList(),
+    final col = context.col;
+    return Column(
+      children: [
+        for (int i = 0; i < _meta.length; i += 2)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _StatTile(
+                    meta: _meta[i],
+                    value: counts[_meta[i].key] ?? 0,
+                    col: col,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                if (i + 1 < _meta.length)
+                  Expanded(
+                    child: _StatTile(
+                      meta: _meta[i + 1],
+                      value: counts[_meta[i + 1].key] ?? 0,
+                      col: col,
+                    ),
+                  )
+                else
+                  const Expanded(child: SizedBox()),
+              ],
+            ),
+          ),
+      ],
     );
   }
 }
 
-class _StatCard extends StatelessWidget {
-  final String label;
+class _StatTile extends StatelessWidget {
+  final _StatMeta meta;
   final int value;
-  final IconData icon;
-  final Color color;
-  const _StatCard({
-    required this.label,
-    required this.value,
-    required this.icon,
-    required this.color,
-  });
+  final AppColorScheme col;
+  const _StatTile({required this.meta, required this.value, required this.col});
 
   @override
   Widget build(BuildContext context) {
-    final col = context.col;
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       decoration: BoxDecoration(
         color: col.surface,
         borderRadius: BorderRadius.circular(14),
@@ -201,34 +172,37 @@ class _StatCard extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            width: 40,
-            height: 40,
+            width: 38,
+            height: 38,
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
+              color: meta.color.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, color: color, size: 20),
+            child: Icon(meta.icon, color: meta.color, size: 18),
           ),
           const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  value.toString(),
-                  style: TextStyle(
-                    color: col.textPrimary,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                  ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '$value',
+                style: TextStyle(
+                  color: col.textPrimary,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  height: 1,
                 ),
-                Text(
-                  label,
-                  style: TextStyle(color: col.textSecondary, fontSize: 11),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                meta.label,
+                style: TextStyle(
+                  color: col.textSecondary,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ),
@@ -236,34 +210,43 @@ class _StatCard extends StatelessWidget {
   }
 }
 
-class _StatsGridShimmer extends StatelessWidget {
-  const _StatsGridShimmer();
+class _StatsShimmer extends StatelessWidget {
+  const _StatsShimmer();
 
   @override
   Widget build(BuildContext context) {
     final col = context.col;
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
-      childAspectRatio: 1.6,
+    return Column(
       children: List.generate(
-        10,
-        (_) => Container(
-          decoration: BoxDecoration(
-            color: col.surface,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: col.border),
-          ),
-          child: Center(
-            child: SizedBox(
-              width: 24,
-              height: 24,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: AppColors.primary,
+        5,
+        (r) => Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: Row(
+            children: List.generate(
+              2,
+              (c) => Expanded(
+                child: Container(
+                  margin: EdgeInsets.only(
+                    right: c == 0 ? 5 : 0,
+                    left: c == 1 ? 5 : 0,
+                  ),
+                  height: 66,
+                  decoration: BoxDecoration(
+                    color: col.surface,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: col.border),
+                  ),
+                  child: const Center(
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
@@ -277,30 +260,41 @@ class _StatsGridShimmer extends StatelessWidget {
 // Quick Actions
 // ─────────────────────────────────────────────────────────────────────────────
 
+class _ActionMeta {
+  final IconData icon;
+  final String label;
+  final int tab;
+  const _ActionMeta(this.icon, this.label, this.tab);
+}
+
 class _QuickActionsGrid extends StatelessWidget {
   final WidgetRef ref;
   const _QuickActionsGrid({required this.ref});
 
+  static const _actions = [
+    _ActionMeta(Icons.place_outlined, 'Listings', 1),
+    _ActionMeta(Icons.people_outline, 'Users', 2),
+    _ActionMeta(Icons.bar_chart_outlined, 'Analytics', 3),
+    _ActionMeta(Icons.explore_outlined, 'Ventures', 4),
+    _ActionMeta(Icons.shield_outlined, 'Moderation', 5),
+    _ActionMeta(Icons.event_outlined, 'Events', 1),
+  ];
+
   @override
   Widget build(BuildContext context) {
     final col = context.col;
-    final actions = [
-      (icon: Icons.place_outlined, label: 'Add Spot', tab: 0),
-      (icon: Icons.restaurant, label: 'Add Restaurant', tab: 0),
-      (icon: Icons.hotel, label: 'Add Hotel', tab: 0),
-      (icon: Icons.explore_outlined, label: 'Add Venture', tab: 0),
-      (icon: Icons.event_outlined, label: 'Add Event', tab: 0),
-      (icon: Icons.people_outline, label: 'View Users', tab: 2),
-    ];
-
-    return GridView.count(
-      crossAxisCount: 3,
+    return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      crossAxisSpacing: 10,
-      mainAxisSpacing: 10,
-      childAspectRatio: 1.2,
-      children: actions.map((a) {
+      itemCount: _actions.length,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 10,
+        childAspectRatio: 1.15,
+      ),
+      itemBuilder: (context, i) {
+        final a = _actions[i];
         return InkWell(
           onTap: () => ref.read(adminTabIndexProvider.notifier).set(a.tab),
           borderRadius: BorderRadius.circular(12),
@@ -313,28 +307,35 @@ class _QuickActionsGrid extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(a.icon, color: AppColors.primary, size: 24),
-                const SizedBox(height: 6),
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(a.icon, color: AppColors.primary, size: 20),
+                ),
+                const SizedBox(height: 7),
                 Text(
                   a.label,
-                  textAlign: TextAlign.center,
                   style: TextStyle(
                     color: col.textSecondary,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w500,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
             ),
           ),
         );
-      }).toList(),
+      },
     );
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Admin info card
+// Admin Info Card
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _AdminInfoCard extends StatelessWidget {
@@ -345,98 +346,86 @@ class _AdminInfoCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final col = context.col;
     return Container(
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: col.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: col.border),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _InfoRow('Email', profile?.email ?? '—', Icons.email_outlined),
-          const SizedBox(height: 8),
-          _InfoRow('Role', profile?.role.label ?? '—', Icons.badge_outlined),
-          const SizedBox(height: 8),
           _InfoRow(
-            'Last Login',
-            profile?.lastLogin != null ? _formatDate(profile!.lastLogin!) : '—',
-            Icons.access_time,
+            icon: Icons.email_outlined,
+            label: 'Email',
+            value: profile?.email ?? '—',
+            col: col,
           ),
-          const SizedBox(height: 8),
+          Divider(color: col.border, height: 1),
           _InfoRow(
-            'Status',
-            (profile?.isActive ?? false) ? '✅ Active' : '⛔ Inactive',
-            Icons.circle_outlined,
+            icon: Icons.badge_outlined,
+            label: 'Role',
+            value: profile?.role.label ?? '—',
+            col: col,
           ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: AppColors.warning.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: AppColors.warning.withValues(alpha: 0.3),
-              ),
-            ),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.info_outline,
-                  color: AppColors.warning,
-                  size: 16,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Custom Claim (superAdmin) must be set via Firebase '
-                    'Admin SDK. The client cannot set claims.',
-                    style: TextStyle(
-                      color: AppColors.warning,
-                      fontSize: 11,
-                      height: 1.4,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+          Divider(color: col.border, height: 1),
+          _InfoRow(
+            icon: Icons.access_time_outlined,
+            label: 'Last Login',
+            value: profile?.lastLogin != null ? _fmt(profile!.lastLogin!) : '—',
+            col: col,
+          ),
+          Divider(color: col.border, height: 1),
+          _InfoRow(
+            icon: Icons.circle_outlined,
+            label: 'Status',
+            value: (profile?.isActive ?? false) ? 'Active' : 'Inactive',
+            col: col,
+            valueColor: (profile?.isActive ?? false)
+                ? AppColors.primary
+                : AppColors.error,
           ),
         ],
       ),
     );
   }
 
-  String _formatDate(DateTime d) =>
-      '${d.day}/${d.month}/${d.year}  ${d.hour}:${d.minute.toString().padLeft(2, '0')}';
+  String _fmt(DateTime d) =>
+      '${d.day}/${d.month}/${d.year}  '
+      '${d.hour}:${d.minute.toString().padLeft(2, '0')}';
 }
 
 class _InfoRow extends StatelessWidget {
-  final String label, value;
   final IconData icon;
-  const _InfoRow(this.label, this.value, this.icon);
+  final String label, value;
+  final AppColorScheme col;
+  final Color? valueColor;
+  const _InfoRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.col,
+    this.valueColor,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final col = context.col;
-    return Row(
-      children: [
-        Icon(icon, color: col.textMuted, size: 16),
-        const SizedBox(width: 8),
-        Text(
-          '$label: ',
-          style: TextStyle(color: col.textSecondary, fontSize: 13),
-        ),
-        Expanded(
-          child: Text(
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          Icon(icon, color: col.textMuted, size: 16),
+          const SizedBox(width: 10),
+          Text(label, style: TextStyle(color: col.textSecondary, fontSize: 13)),
+          const Spacer(),
+          Text(
             value,
             style: TextStyle(
-              color: col.textPrimary,
+              color: valueColor ?? col.textPrimary,
               fontSize: 13,
               fontWeight: FontWeight.w600,
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -445,9 +434,9 @@ class _InfoRow extends StatelessWidget {
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _SectionHeader extends StatelessWidget {
+class _SectionLabel extends StatelessWidget {
   final String text;
-  const _SectionHeader(this.text);
+  const _SectionLabel(this.text);
 
   @override
   Widget build(BuildContext context) {
@@ -455,7 +444,7 @@ class _SectionHeader extends StatelessWidget {
       text,
       style: TextStyle(
         color: context.col.textPrimary,
-        fontSize: 17,
+        fontSize: 16,
         fontWeight: FontWeight.w700,
       ),
     );
@@ -469,11 +458,11 @@ class _ErrorCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.error.withValues(alpha: 0.1),
+        color: AppColors.error.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+        border: Border.all(color: AppColors.error.withValues(alpha: 0.25)),
       ),
       child: Text(
         message,
