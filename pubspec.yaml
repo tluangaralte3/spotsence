@@ -101,6 +101,10 @@ dependencies:
   # Functional Programming
   dartz: ^0.10.1
 
+  # CSV & File Picking (bulk upload)
+  file_picker: ^8.1.7
+  csv: ^6.0.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

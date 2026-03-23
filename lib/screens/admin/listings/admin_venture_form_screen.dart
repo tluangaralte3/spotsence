@@ -16,6 +16,7 @@
 //  • Section headers show live item-count badge.
 //  • Full edit-mode population from Firestore.
 
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
@@ -2240,6 +2241,54 @@ class _MedalCard extends StatefulWidget {
 }
 
 class _MedalCardState extends State<_MedalCard> {
+  bool _uploadingBadge = false;
+  XFile? _pickedBadge;
+
+  Future<void> _uploadBadgeImage() async {
+    final picked = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 512,
+      maxHeight: 512,
+      imageQuality: 85,
+    );
+    if (picked == null) return;
+    setState(() {
+      _pickedBadge = picked;
+      _uploadingBadge = true;
+    });
+    try {
+      final ext = picked.path.split('.').last.toLowerCase();
+      final safeExt = (ext == 'heic' || ext == 'heif') ? 'jpg' : ext;
+      final mime = safeExt == 'png' ? 'image/png' : 'image/jpeg';
+      final name =
+          'medal_badge_${DateTime.now().millisecondsSinceEpoch}.$safeExt';
+      final ref = FirebaseStorage.instance.ref().child(
+        'admin_listings/medals/$name',
+      );
+      final bytes = await picked.readAsBytes();
+      await ref.putData(bytes, SettableMetadata(contentType: mime));
+      final url = await ref.getDownloadURL();
+      if (mounted) {
+        setState(() {
+          widget.entry.imageUrlCtrl.text = url;
+          _uploadingBadge = false;
+        });
+        widget.onChanged();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _uploadingBadge = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Badge upload failed: $e'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final e = widget.entry;
@@ -2302,9 +2351,15 @@ class _MedalCardState extends State<_MedalCard> {
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: _SF(
-                  ctrl: e.imageUrlCtrl,
-                  hint: 'Badge image URL (optional)',
+                child: _BadgeImagePicker(
+                  entry: e,
+                  uploading: _uploadingBadge,
+                  pickedFile: _pickedBadge,
+                  onTap: _uploadBadgeImage,
+                  onClear: () => setState(() {
+                    e.imageUrlCtrl.clear();
+                    _pickedBadge = null;
+                  }),
                 ),
               ),
             ],
@@ -2319,6 +2374,108 @@ class _MedalCardState extends State<_MedalCard> {
       ),
     );
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Badge image picker
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _BadgeImagePicker extends StatelessWidget {
+  final _MedalEntry entry;
+  final bool uploading;
+  final XFile? pickedFile;
+  final VoidCallback onTap;
+  final VoidCallback onClear;
+
+  const _BadgeImagePicker({
+    required this.entry,
+    required this.uploading,
+    required this.pickedFile,
+    required this.onTap,
+    required this.onClear,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final col = context.col;
+    final hasUrl = entry.imageUrlCtrl.text.trim().isNotEmpty;
+    final hasLocal = pickedFile != null;
+    final hasAny = hasUrl || hasLocal || uploading;
+
+    return GestureDetector(
+      onTap: uploading ? null : onTap,
+      child: Container(
+        height: 48,
+        decoration: BoxDecoration(
+          color: col.surfaceElevated,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: hasAny ? col.primary.withOpacity(0.5) : col.border,
+          ),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: uploading
+            ? const Center(
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              )
+            : hasLocal
+            ? Stack(
+                fit: StackFit.expand,
+                children: [
+                  Image.file(
+                    File(pickedFile!.path),
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => _placeholder(col),
+                  ),
+                  Positioned(top: 2, right: 2, child: _clearBtn(col)),
+                ],
+              )
+            : hasUrl
+            ? Stack(
+                fit: StackFit.expand,
+                children: [
+                  Image.network(
+                    entry.imageUrlCtrl.text.trim(),
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => _placeholder(col),
+                  ),
+                  Positioned(top: 2, right: 2, child: _clearBtn(col)),
+                ],
+              )
+            : _placeholder(col),
+      ),
+    );
+  }
+
+  Widget _placeholder(AppColorScheme col) => Row(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+      Icon(
+        Icons.add_photo_alternate_outlined,
+        size: 18,
+        color: col.textSecondary,
+      ),
+      const SizedBox(width: 4),
+      Text('Badge', style: TextStyle(fontSize: 12, color: col.textSecondary)),
+    ],
+  );
+
+  Widget _clearBtn(AppColorScheme col) => GestureDetector(
+    onTap: onClear,
+    child: Container(
+      width: 18,
+      height: 18,
+      decoration: BoxDecoration(
+        color: Colors.black54,
+        borderRadius: BorderRadius.circular(9),
+      ),
+      child: const Icon(Icons.close, size: 12, color: Colors.white),
+    ),
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

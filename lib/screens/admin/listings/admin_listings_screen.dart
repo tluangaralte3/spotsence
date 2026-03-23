@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../controllers/admin_controller.dart';
+import 'csv_upload_sheet.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -184,6 +185,19 @@ class _AdminListingsScreenState extends ConsumerState<AdminListingsScreen>
                             onTap: () => setState(() => _sortBy = 'newest'),
                           ),
                           const Spacer(),
+                          // Bulk CSV upload button
+                          GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () => showCsvUploadSheet(context, activeTab),
+                            child: Padding(
+                              padding: const EdgeInsets.all(6),
+                              child: Icon(
+                                Icons.upload_file_outlined,
+                                color: col.textSecondary,
+                                size: 20,
+                              ),
+                            ),
+                          ),
                           GestureDetector(
                             behavior: HitTestBehavior.opaque,
                             onTap: () => setState(() => _isGrid = !_isGrid),

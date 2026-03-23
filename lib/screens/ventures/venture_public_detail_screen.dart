@@ -40,9 +40,22 @@ class VenturePublicDetailScreen extends ConsumerWidget {
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _VentureDetailBody extends StatelessWidget {
+class _VentureDetailBody extends StatefulWidget {
   final Map<String, dynamic> data;
   const _VentureDetailBody({required this.data});
+
+  @override
+  State<_VentureDetailBody> createState() => _VentureDetailBodyState();
+}
+
+class _VentureDetailBodyState extends State<_VentureDetailBody> {
+  // Index of each selected add-on
+  final Set<int> _selectedAddons = {};
+
+  // Index of the selected pricing tier (null = none selected)
+  int? _selectedTierIndex;
+
+  Map<String, dynamic> get data => widget.data;
 
   String _str(String key, [String fallback = '']) {
     final v = data[key];
@@ -78,6 +91,42 @@ class _VentureDetailBody extends StatelessWidget {
   List<dynamic> _list(String key) {
     final v = data[key];
     return v is List ? v : [];
+  }
+
+  double _addonTotal(List<dynamic> addons) {
+    double total = 0;
+    for (final i in _selectedAddons) {
+      if (i < addons.length && addons[i] is Map) {
+        total += double.tryParse('${addons[i]['pricePerUnit']}') ?? 0;
+      }
+    }
+    return total;
+  }
+
+  /// Price from the selected pricing tier, or 0 if none selected.
+  double _tierPrice(List<dynamic> tiers) {
+    if (_selectedTierIndex == null) return 0;
+    final idx = _selectedTierIndex!;
+    if (idx >= tiers.length || tiers[idx] is! Map) return 0;
+    return double.tryParse('${tiers[idx]['pricePerPerson']}') ?? 0;
+  }
+
+  /// Label shown in the booking bar.
+  String _bookingLabel(List<dynamic> tiers, double basePrice) {
+    if (_selectedTierIndex != null) {
+      final t = tiers[_selectedTierIndex!];
+      final name = (t is Map ? t['name'] as String? : null) ?? 'Package';
+      final parts = <String>[
+        name,
+        if (_selectedAddons.isNotEmpty)
+          '+ ${_selectedAddons.length} add-on${_selectedAddons.length > 1 ? 's' : ''}',
+      ];
+      return parts.join(' ');
+    }
+    if (_selectedAddons.isNotEmpty) {
+      return '${_selectedAddons.length} add-on${_selectedAddons.length > 1 ? 's' : ''} added';
+    }
+    return 'Starting from';
   }
 
   @override
@@ -168,10 +217,9 @@ class _VentureDetailBody extends StatelessWidget {
       ),
 
       // ── Booking bar ───────────────────────────────────────────────────────
-      bottomNavigationBar: price > 0
+      bottomNavigationBar: (price > 0 || _selectedTierIndex != null)
           ? SafeArea(
               child: Container(
-                height: 80,
                 padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
                 decoration: BoxDecoration(
                   color: context.col.surface,
@@ -179,54 +227,73 @@ class _VentureDetailBody extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Starting from',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: context.col.textMuted,
+                    Expanded(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _bookingLabel(pricingTiers, price),
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: context.col.textMuted,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                        Text(
-                          '₹${price.toStringAsFixed(0)}',
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w900,
-                            color: AppColors.primary,
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                '₹${(_selectedTierIndex != null ? _tierPrice(pricingTiers) : price) + _addonTotal(addons)}'
+                                    .replaceAllMapped(
+                                      RegExp(r'(\d)(?=(\d{3})+\.)'),
+                                      (m) => '${m[1]},',
+                                    ),
+                                style: const TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w900,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                              const SizedBox(width: 3),
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 3),
+                                child: Text(
+                                  '/ person',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: context.col.textMuted,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '/ person',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: context.col.textMuted,
+                        ],
                       ),
                     ),
-                    const Spacer(),
-                    // ElevatedButton(
-                    //   onPressed: () => _contact(opPhone, opWhatsapp),
-                    //   style: ElevatedButton.styleFrom(
-                    //     backgroundColor: AppColors.primary,
-                    //     foregroundColor: Colors.black,
-                    //     padding: const EdgeInsets.symmetric(
-                    //       horizontal: 24,
-                    //       vertical: 12,
-                    //     ),
-                    //     shape: RoundedRectangleBorder(
-                    //       borderRadius: BorderRadius.circular(12),
-                    //     ),
-                    //   ),
-                    //   child: const Text(
-                    //     'Book Now',
-                    //     style: TextStyle(fontWeight: FontWeight.w800),
-                    //   ),
-                    // ),
+                    const SizedBox(width: 12),
+                    GestureDetector(
+                      onTap: () => _contact(opPhone, opWhatsapp),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 14,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Text(
+                          'Book Now',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 15,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -376,89 +443,381 @@ class _VentureDetailBody extends StatelessWidget {
                     // Pricing tiers
                     if (pricingTiers.isNotEmpty) ...[
                       const SizedBox(height: 20),
-                      _sectionHeader('Pricing', context),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _sectionHeader('Pricing Packages', context),
+                          ),
+                          if (_selectedTierIndex != null)
+                            Text(
+                              '₹${_tierPrice(pricingTiers).toStringAsFixed(0)} / person',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Tap a package to select it',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: context.col.textMuted,
+                        ),
+                      ),
                       const SizedBox(height: 10),
-                      ...pricingTiers.map((t) {
+                      ...pricingTiers.asMap().entries.map((entry) {
+                        final tierIdx = entry.key;
+                        final t = entry.value;
                         if (t is! Map) return const SizedBox.shrink();
                         final tierName = t['name'] as String? ?? 'Standard';
-                        final tierPrice = double.tryParse('${t['price']}') ?? 0;
+                        final tierPrice =
+                            double.tryParse('${t['pricePerPerson']}') ?? 0;
                         final tierDesc = t['description'] as String? ?? '';
                         final isPopular = t['isPopular'] == true;
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 10),
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: isPopular
-                                ? AppColors.primary.withValues(alpha: 0.08)
-                                : context.col.surface,
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: isPopular
-                                  ? AppColors.primary.withValues(alpha: 0.4)
-                                  : context.col.border,
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
+                        final isAvailable = t['isAvailable'] != false;
+                        final minPersons = t['minPersons'];
+                        final maxPersons = t['maxPersons'];
+                        final includes = (t['includes'] is List)
+                            ? (t['includes'] as List)
+                                  .whereType<String>()
+                                  .toList()
+                            : <String>[];
+                        final excludes = (t['excludes'] is List)
+                            ? (t['excludes'] as List)
+                                  .whereType<String>()
+                                  .toList()
+                            : <String>[];
+
+                        final isSelected = _selectedTierIndex == tierIdx;
+
+                        return Opacity(
+                          opacity: isAvailable ? 1.0 : 0.5,
+                          child: GestureDetector(
+                            onTap: isAvailable
+                                ? () => setState(() {
+                                      _selectedTierIndex =
+                                          isSelected ? null : tierIdx;
+                                    })
+                                : null,
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              curve: Curves.easeInOut,
+                              margin: const EdgeInsets.only(bottom: 12),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? AppColors.primary.withValues(alpha: 0.10)
+                                    : isPopular
+                                        ? AppColors.primary
+                                              .withValues(alpha: 0.06)
+                                        : context.col.surface,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? AppColors.primary
+                                      : isPopular
+                                          ? AppColors.primary
+                                                .withValues(alpha: 0.5)
+                                          : context.col.border,
+                                  width:
+                                      isSelected ? 2 : (isPopular ? 1.5 : 1),
+                                ),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // ── Top row: name + price ──────────────
+                                  Padding(
+                                    padding: const EdgeInsets.fromLTRB(
+                                      14, 14, 14, 10),
+                                    child: Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
-                                        Text(
-                                          tierName,
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.w700,
-                                            color: context.col.textPrimary,
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Row(
+                                                children: [
+                                                  if (isSelected) ...[
+                                                    Icon(
+                                                      Icons
+                                                          .check_circle_rounded,
+                                                      size: 18,
+                                                      color: AppColors.primary,
+                                                    ),
+                                                    const SizedBox(width: 6),
+                                                  ],
+                                                  Flexible(
+                                                    child: Text(
+                                                      tierName,
+                                                      style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.w800,
+                                                        fontSize: 15,
+                                                        color: isSelected
+                                                            ? AppColors.primary
+                                                            : context.col
+                                                                  .textPrimary,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  if (isPopular) ...[
+                                                    const SizedBox(width: 8),
+                                                    Container(
+                                                      padding: const EdgeInsets
+                                                          .symmetric(
+                                                        horizontal: 8,
+                                                        vertical: 3,
+                                                      ),
+                                                      decoration: BoxDecoration(
+                                                        color: AppColors.primary,
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(20),
+                                                      ),
+                                                      child: const Text(
+                                                        '\u2b50 Popular',
+                                                        style: TextStyle(
+                                                          fontSize: 10,
+                                                          fontWeight:
+                                                              FontWeight.w700,
+                                                          color: Colors.black,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                  if (!isAvailable) ...[
+                                                    const SizedBox(width: 8),
+                                                    Container(
+                                                      padding: const EdgeInsets
+                                                          .symmetric(
+                                                        horizontal: 8,
+                                                        vertical: 3,
+                                                      ),
+                                                      decoration: BoxDecoration(
+                                                        color:
+                                                            context.col.border,
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(20),
+                                                      ),
+                                                      child: Text(
+                                                        'Unavailable',
+                                                        style: TextStyle(
+                                                          fontSize: 10,
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                          color: context
+                                                              .col.textMuted,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ],
+                                              ),
+                                              if (tierDesc.isNotEmpty) ...[
+                                                const SizedBox(height: 4),
+                                                Text(
+                                                  tierDesc,
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    color: context
+                                                        .col.textSecondary,
+                                                  ),
+                                                ),
+                                              ],
+                                              if (minPersons != null ||
+                                                  maxPersons != null) ...[
+                                                const SizedBox(height: 6),
+                                                Row(
+                                                  children: [
+                                                    Icon(
+                                                      Icons.people_alt_outlined,
+                                                      size: 13,
+                                                      color:
+                                                          context.col.textMuted,
+                                                    ),
+                                                    const SizedBox(width: 4),
+                                                    Text(
+                                                      '${minPersons ?? 1}\u2013${maxPersons ?? '\u221e'} persons',
+                                                      style: TextStyle(
+                                                        fontSize: 12,
+                                                        color: context
+                                                            .col.textMuted,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            ],
                                           ),
                                         ),
-                                        if (isPopular) ...[
-                                          const SizedBox(width: 6),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 6,
-                                              vertical: 2,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: AppColors.primary,
-                                              borderRadius:
-                                                  BorderRadius.circular(20),
-                                            ),
-                                            child: const Text(
-                                              'Popular',
+                                        const SizedBox(width: 12),
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.end,
+                                          children: [
+                                            Text(
+                                              '\u20b9${tierPrice.toStringAsFixed(0)}',
                                               style: TextStyle(
-                                                fontSize: 9,
-                                                fontWeight: FontWeight.w700,
-                                                color: Colors.black,
+                                                fontSize: 22,
+                                                fontWeight: FontWeight.w900,
+                                                color: AppColors.primary,
                                               ),
                                             ),
-                                          ),
-                                        ],
+                                            Text(
+                                              '/ person',
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                color: context.col.textMuted,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ],
                                     ),
-                                    if (tierDesc.isNotEmpty) ...[
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        tierDesc,
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: context.col.textSecondary,
-                                        ),
+                                  ),
+
+                                  // ── Includes ───────────────────────────
+                                  if (includes.isNotEmpty) ...[
+                                    Divider(
+                                        height: 1,
+                                        color: context.col.border),
+                                    Padding(
+                                      padding: const EdgeInsets.fromLTRB(
+                                          14, 10, 14, 10),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            '\u2705  Included',
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w700,
+                                              color: context.col.textMuted,
+                                              letterSpacing: 0.4,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 6),
+                                          Wrap(
+                                            spacing: 6,
+                                            runSpacing: 6,
+                                            children: includes
+                                                .map(
+                                                  (inc) => Container(
+                                                    padding: const EdgeInsets
+                                                        .symmetric(
+                                                      horizontal: 9,
+                                                      vertical: 4,
+                                                    ),
+                                                    decoration: BoxDecoration(
+                                                      color: const Color(
+                                                        0xFF22C55E,
+                                                      ).withValues(alpha: 0.1),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              20),
+                                                      border: Border.all(
+                                                        color: const Color(
+                                                          0xFF22C55E,
+                                                        ).withValues(
+                                                            alpha: 0.35),
+                                                      ),
+                                                    ),
+                                                    child: Text(
+                                                      inc,
+                                                      style: const TextStyle(
+                                                        fontSize: 12,
+                                                        color:
+                                                            Color(0xFF16A34A),
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                )
+                                                .toList(),
+                                          ),
+                                        ],
                                       ),
-                                    ],
+                                    ),
                                   ],
-                                ),
+
+                                  // ── Excludes ───────────────────────────
+                                  if (excludes.isNotEmpty) ...[
+                                    Divider(
+                                        height: 1,
+                                        color: context.col.border),
+                                    Padding(
+                                      padding: const EdgeInsets.fromLTRB(
+                                          14, 10, 14, 14),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            '\u274c  Not included',
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w700,
+                                              color: context.col.textMuted,
+                                              letterSpacing: 0.4,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 6),
+                                          Wrap(
+                                            spacing: 6,
+                                            runSpacing: 6,
+                                            children: excludes
+                                                .map(
+                                                  (exc) => Container(
+                                                    padding: const EdgeInsets
+                                                        .symmetric(
+                                                      horizontal: 9,
+                                                      vertical: 4,
+                                                    ),
+                                                    decoration: BoxDecoration(
+                                                      color: const Color(
+                                                        0xFFEF4444,
+                                                      ).withValues(alpha: 0.08),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              20),
+                                                      border: Border.all(
+                                                        color: const Color(
+                                                          0xFFEF4444,
+                                                        ).withValues(
+                                                            alpha: 0.3),
+                                                      ),
+                                                    ),
+                                                    child: Text(
+                                                      exc,
+                                                      style: const TextStyle(
+                                                        fontSize: 12,
+                                                        color:
+                                                            Color(0xFFDC2626),
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                )
+                                                .toList(),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ] else
+                                    const SizedBox(height: 14),
+                                ],
                               ),
-                              Text(
-                                '₹${tierPrice.toStringAsFixed(0)}',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w900,
-                                  color: AppColors.primary,
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
                         );
                       }),
@@ -505,63 +864,134 @@ class _VentureDetailBody extends StatelessWidget {
                     // Add-ons
                     if (addons.isNotEmpty) ...[
                       const SizedBox(height: 20),
-                      _sectionHeader('Gear & Add-ons', context),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _sectionHeader('Gear & Add-ons', context),
+                          ),
+                          if (_selectedAddons.isNotEmpty)
+                            Text(
+                              '+₹${_addonTotal(addons).toStringAsFixed(0)}',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Tap to add to your booking',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: context.col.textMuted,
+                        ),
+                      ),
                       const SizedBox(height: 10),
                       Wrap(
                         spacing: 10,
                         runSpacing: 10,
-                        children: addons.map((a) {
+                        children: List.generate(addons.length, (i) {
+                          final a = addons[i];
                           if (a is! Map) return const SizedBox.shrink();
                           final emoji = a['emoji'] as String? ?? '🎒';
                           final name = a['name'] as String? ?? '';
                           final addonPrice =
-                              double.tryParse('${a['price']}') ?? 0;
-                          return Container(
-                            width: (MediaQuery.of(context).size.width - 60) / 2,
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: context.col.surface,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: context.col.border),
-                            ),
-                            child: Row(
-                              children: [
-                                Text(
-                                  emoji,
-                                  style: const TextStyle(fontSize: 18),
+                              double.tryParse('${a['pricePerUnit']}') ?? 0;
+                          final unit = a['unit'] as String? ?? 'per person';
+                          final addonDesc = a['description'] as String? ?? '';
+                          final selected = _selectedAddons.contains(i);
+                          return GestureDetector(
+                            onTap: () => setState(() {
+                              if (selected) {
+                                _selectedAddons.remove(i);
+                              } else {
+                                _selectedAddons.add(i);
+                              }
+                            }),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 180),
+                              width:
+                                  (MediaQuery.of(context).size.width - 60) / 2,
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: selected
+                                    ? AppColors.primary.withValues(alpha: 0.1)
+                                    : context.col.surface,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: selected
+                                      ? AppColors.primary
+                                      : context.col.border,
+                                  width: selected ? 1.5 : 1,
                                 ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        name,
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                          color: context.col.textPrimary,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      if (addonPrice > 0)
-                                        Text(
-                                          '₹${addonPrice.toStringAsFixed(0)}',
-                                          style: const TextStyle(
-                                            fontSize: 11,
-                                            color: AppColors.primary,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        ),
-                                    ],
+                              ),
+                              child: Row(
+                                children: [
+                                  Text(
+                                    emoji,
+                                    style: const TextStyle(fontSize: 18),
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          name,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                            color: selected
+                                                ? AppColors.primary
+                                                : context.col.textPrimary,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        if (addonPrice > 0)
+                                          Text(
+                                            '+₹${addonPrice.toStringAsFixed(0)}',
+                                            style: const TextStyle(
+                                              fontSize: 11,
+                                              color: AppColors.primary,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                        if (addonPrice > 0)
+                                          Text(
+                                            unit,
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              color: context.col.textMuted,
+                                            ),
+                                          ),
+                                        if (addonDesc.isNotEmpty)
+                                          Text(
+                                            addonDesc,
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              color: context.col.textMuted,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                  if (selected)
+                                    const Icon(
+                                      Icons.check_circle_rounded,
+                                      size: 16,
+                                      color: AppColors.primary,
+                                    ),
+                                ],
+                              ),
                             ),
                           );
-                        }).toList(),
+                        }),
                       ),
                     ],
 
