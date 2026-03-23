@@ -4,10 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../controllers/auth_controller.dart';
 import '../../controllers/spots_controller.dart';
+import '../../controllers/tour_venture_controller.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/router/app_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/spot_model.dart';
+import '../../models/tour_venture_models.dart';
 import '../../widgets/shared_widgets.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -1194,79 +1196,17 @@ class _CardImagePlaceholder extends StatelessWidget {
   }
 }
 
-// ───────────────────────────────────────────────────────────────────────────────
-// Venture — static placeholder (connect to Firestore later)
-// ───────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Venture Section — live Firestore stream from `ventures` collection
+// ─────────────────────────────────────────────────────────────────────────────
 
-// Mock data — replace with Firestore stream when ready
-const _kMockPackages = [
-  (
-    emoji: '🦜',
-    category: 'Bird Watching',
-    title: 'Murlen Bird Watching Trail',
-    subtitle: 'Spot 300+ exotic species in Murlen NP',
-    duration: '2 Days',
-    price: '₹3,500',
-    difficulty: 'Easy',
-    difficultyColor: Color(0xFF22C55E),
-    season: 'Oct – Mar',
-    rating: 4.8,
-  ),
-  (
-    emoji: '🎣',
-    category: 'Fishing',
-    title: 'Tuivai River Angling',
-    subtitle: 'Fly fishing on pristine mountain rivers',
-    duration: '1 Day',
-    price: '₹1,800',
-    difficulty: 'Easy',
-    difficultyColor: Color(0xFF22C55E),
-    season: 'Nov – Apr',
-    rating: 4.6,
-  ),
-  (
-    emoji: '🌿',
-    category: 'Eco Tourism',
-    title: 'Phawngpui Eco Trek',
-    subtitle: 'Trek to the Blue Mountain peak',
-    duration: '3 Days',
-    price: '₹5,200',
-    difficulty: 'Moderate',
-    difficultyColor: Color(0xFFF59E0B),
-    season: 'Sep – May',
-    rating: 4.9,
-  ),
-  (
-    emoji: '🏕️',
-    category: 'Camping',
-    title: 'Tamdil Lake Camping',
-    subtitle: 'Stargazing & campfire at Mizoram\'s largest lake',
-    duration: '2 Days',
-    price: '₹2,400',
-    difficulty: 'Easy',
-    difficultyColor: Color(0xFF22C55E),
-    season: 'All Year',
-    rating: 4.7,
-  ),
-  (
-    emoji: '📸',
-    category: 'Photography',
-    title: 'Aizawl Sunrise Photo Walk',
-    subtitle: 'Capture the city of churches at golden hour',
-    duration: 'Half Day',
-    price: '₹800',
-    difficulty: 'Easy',
-    difficultyColor: Color(0xFF22C55E),
-    season: 'All Year',
-    rating: 4.5,
-  ),
-];
-
-class _TourVentureSection extends StatelessWidget {
+class _TourVentureSection extends ConsumerWidget {
   const _TourVentureSection();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final venturesAsync = ref.watch(featuredVenturesProvider);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1332,45 +1272,178 @@ class _TourVentureSection extends StatelessWidget {
 
         const SizedBox(height: 12),
 
-        // ── Horizontal card list ───────────────────────────────────────
-        SizedBox(
-          height: 272,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            itemCount: _kMockPackages.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 14),
-            itemBuilder: (ctx, i) =>
-                _PackagePlaceholderCard(data: _kMockPackages[i]),
+        // ── Card list ─────────────────────────────────────────────────
+        venturesAsync.when(
+          loading: () => SizedBox(
+            height: 272,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              itemCount: 3,
+              separatorBuilder: (_, __) => const SizedBox(width: 14),
+              itemBuilder: (_, __) => const _VentureCardShimmer(),
+            ),
           ),
+          error: (err, _) => Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            child: Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: context.col.surface,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: context.col.border),
+              ),
+              child: Row(
+                children: [
+                  const Text('⚠️', style: TextStyle(fontSize: 20)),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Could not load ventures. Check Firestore index.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: context.col.textSecondary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          data: (ventures) {
+            if (ventures.isEmpty) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: context.col.surface,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: context.col.border),
+                  ),
+                  child: Row(
+                    children: [
+                      const Text('🌿', style: TextStyle(fontSize: 20)),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'No ventures yet — add some from the admin panel.',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: context.col.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+            return SizedBox(
+              height: 272,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                itemCount: ventures.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 14),
+                itemBuilder: (ctx, i) => _VentureCard(data: ventures[i]),
+              ),
+            );
+          },
         ),
       ],
     );
   }
 }
 
-class _PackagePlaceholderCard extends StatelessWidget {
-  // ignore: library_private_types_in_public_api
-  final ({
-    String emoji,
-    String category,
-    String title,
-    String subtitle,
-    String duration,
-    String price,
-    String difficulty,
-    Color difficultyColor,
-    String season,
-    double rating,
-  })
-  data;
+// ── Shimmer placeholder ──────────────────────────────────────────────────────
 
-  const _PackagePlaceholderCard({required this.data});
+class _VentureCardShimmer extends StatelessWidget {
+  const _VentureCardShimmer();
 
   @override
   Widget build(BuildContext context) {
+    return Container(
+      width: 230,
+      decoration: BoxDecoration(
+        color: context.col.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: context.col.border),
+      ),
+      child: Column(
+        children: [
+          Container(
+            height: 110,
+            decoration: BoxDecoration(
+              color: context.col.surfaceElevated,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(18),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(height: 14, width: 160, color: context.col.border),
+                const SizedBox(height: 8),
+                Container(height: 11, width: 130, color: context.col.border),
+                const SizedBox(height: 8),
+                Container(height: 11, width: 110, color: context.col.border),
+                const SizedBox(height: 8),
+                Container(height: 15, width: 80, color: context.col.border),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Live card ────────────────────────────────────────────────────────────────
+
+class _VentureCard extends StatelessWidget {
+  final Map<String, dynamic> data;
+  const _VentureCard({required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    final String id = data['id'] as String? ?? '';
+    final String title = data['title'] as String? ?? 'Untitled';
+    final String tagline =
+        (data['tagline'] as String? ?? data['description'] as String?) ?? '';
+    final String category = data['category'] as String? ?? '';
+    final String difficulty = data['difficulty'] as String? ?? '';
+    final int days = data['durationDays'] is int
+        ? data['durationDays'] as int
+        : int.tryParse('${data['durationDays']}') ?? 1;
+    final double price = data['startingPrice'] is double
+        ? data['startingPrice'] as double
+        : (data['startingPrice'] is int
+              ? (data['startingPrice'] as int).toDouble()
+              : double.tryParse('${data['startingPrice']}') ?? 0.0);
+
+    // Image — prefer first item in `images` list, fall back to `imageUrl`
+    final List<dynamic> images = (data['images'] is List)
+        ? data['images'] as List<dynamic>
+        : [];
+    final String? imageUrl = images.isNotEmpty
+        ? images.first as String?
+        : data['imageUrl'] as String?;
+
+    final cat = PackageCategory.fromString(category);
+    final diffColor = _difficultyColor(difficulty);
+    final durationLabel = days == 1 ? '1 Day' : '$days Days';
+
     return GestureDetector(
-      onTap: () => context.push(AppRoutes.tourPackages),
+      onTap: () {
+        if (id.isNotEmpty) context.push(AppRoutes.ventureDetailPath(id));
+      },
       child: Container(
         width: 230,
         decoration: BoxDecoration(
@@ -1388,72 +1461,49 @@ class _PackagePlaceholderCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Emoji hero area ──────────────────────────────────────
-            Container(
-              height: 110,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.08),
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(18),
+            // ── Image / Emoji hero ───────────────────────────────────
+            Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(18),
+                  ),
+                  child: SizedBox(
+                    height: 110,
+                    width: double.infinity,
+                    child: imageUrl != null && imageUrl.isNotEmpty
+                        ? CachedNetworkImage(
+                            imageUrl: imageUrl,
+                            fit: BoxFit.cover,
+                            errorWidget: (_, __, ___) =>
+                                _EmojiHero(emoji: cat.emoji),
+                            placeholder: (_, __) =>
+                                _EmojiHero(emoji: cat.emoji),
+                          )
+                        : _EmojiHero(emoji: cat.emoji),
+                  ),
                 ),
-              ),
-              child: Stack(
-                children: [
-                  Center(
-                    child: Text(
-                      data.emoji,
-                      style: const TextStyle(fontSize: 52),
-                    ),
+                // Category badge
+                Positioned(
+                  top: 10,
+                  left: 10,
+                  child: _Chip(
+                    label: cat.label,
+                    bg: AppColors.primary,
+                    fg: Colors.black,
                   ),
-                  // Category badge
-                  Positioned(
-                    top: 10,
-                    left: 10,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        data.category,
-                        style: const TextStyle(
-                          color: Colors.black,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
+                ),
+                // Duration badge
+                Positioned(
+                  top: 10,
+                  right: 10,
+                  child: _Chip(
+                    label: durationLabel,
+                    bg: Colors.black54,
+                    fg: Colors.white,
                   ),
-                  // Duration badge
-                  Positioned(
-                    top: 10,
-                    right: 10,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.black54,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        data.duration,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
 
             // ── Content ──────────────────────────────────────────────
@@ -1463,7 +1513,7 @@ class _PackagePlaceholderCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    data.title,
+                    title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
@@ -1474,7 +1524,7 @@ class _PackagePlaceholderCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    data.subtitle,
+                    tagline,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
@@ -1484,43 +1534,11 @@ class _PackagePlaceholderCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  // Rating + season
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.star_rounded,
-                        size: 13,
-                        color: Color(0xFFFBBF24),
-                      ),
-                      const SizedBox(width: 3),
-                      Text(
-                        data.rating.toStringAsFixed(1),
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: context.col.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          '📅 ${data.season}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: context.col.textSecondary,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
                   // Price + difficulty
                   Row(
                     children: [
                       Text(
-                        data.price,
+                        price > 0 ? '₹${price.toStringAsFixed(0)}' : 'Free',
                         style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w900,
@@ -1535,24 +1553,25 @@ class _PackagePlaceholderCard extends StatelessWidget {
                         ),
                       ),
                       const Spacer(),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 7,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: data.difficultyColor.withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          data.difficulty,
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: data.difficultyColor,
-                            fontWeight: FontWeight.w600,
+                      if (difficulty.isNotEmpty)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 7,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: diffColor.withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            difficulty,
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: diffColor,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
-                      ),
                     ],
                   ),
                 ],
@@ -1560,6 +1579,53 @@ class _PackagePlaceholderCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Color _difficultyColor(String d) {
+    switch (d.toLowerCase()) {
+      case 'easy':
+        return const Color(0xFF22C55E);
+      case 'hard':
+      case 'extreme':
+        return const Color(0xFFEF4444);
+      default:
+        return const Color(0xFFF59E0B);
+    }
+  }
+}
+
+class _EmojiHero extends StatelessWidget {
+  final String emoji;
+  const _EmojiHero({required this.emoji});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: AppColors.primary.withOpacity(0.08),
+      child: Center(child: Text(emoji, style: const TextStyle(fontSize: 52))),
+    );
+  }
+}
+
+class _Chip extends StatelessWidget {
+  final String label;
+  final Color bg;
+  final Color fg;
+  const _Chip({required this.label, required this.bg, required this.fg});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(color: fg, fontSize: 10, fontWeight: FontWeight.w700),
       ),
     );
   }

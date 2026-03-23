@@ -29,6 +29,7 @@ import '../../screens/events/event_detail_screen.dart';
 import '../../screens/listings/all_reviews_screen.dart';
 import '../../screens/packages/tour_venture_screen.dart';
 import '../../screens/packages/venture_detail_screen.dart';
+import '../../screens/ventures/venture_public_detail_screen.dart';
 import '../../screens/admin/admin_shell.dart';
 import '../../screens/admin/listings/admin_add_listing_screen.dart';
 import '../../screens/admin/listings/admin_venture_form_screen.dart';
@@ -63,6 +64,9 @@ abstract class AppRoutes {
   static const tourPackages = '/packages';
   static const packageDetail = '/packages/:id';
   static String packageDetailPath(String id) => '/packages/$id';
+
+  static const ventureDetail = '/ventures/:id';
+  static String ventureDetailPath(String id) => '/ventures/$id';
 
   // ── Super Admin ──────────────────────────────────────────────────────────
   static const admin = '/admin';
@@ -233,6 +237,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 ),
               ),
             ],
+          ),
+          GoRoute(
+            path: '/ventures/:id',
+            pageBuilder: (_, state) => _fade(
+              state,
+              VenturePublicDetailScreen(ventureId: state.pathParameters['id']!),
+            ),
           ),
           GoRoute(
             path: AppRoutes.community,
