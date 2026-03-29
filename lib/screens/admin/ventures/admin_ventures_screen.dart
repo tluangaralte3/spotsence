@@ -5,14 +5,18 @@
 // Tab 1 – Packages       : streams from `ventures` collection
 // Tab 2 – Registrations  : streams from `ventures/{docId}/registrations` sub-collections
 // Tab 3 – Feedback       : streams from `ventures/{docId}/feedback` sub-collections
+// Tab 4 – Bookings       : streams from top-level `bookings` collection
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:iconsax/iconsax.dart';
+import '../../../controllers/booking_controller.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/router/app_router.dart';
 import '../../../controllers/admin_controller.dart';
+import '../../../models/booking_model.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Safe data helpers
@@ -139,12 +143,12 @@ class _AdminVenturesScreenState extends ConsumerState<AdminVenturesScreen>
   @override
   Widget build(BuildContext context) {
     final packagesAsync = ref.watch(venturePackagesProvider);
-    final regAsync = ref.watch(allVentureRegistrationsProvider);
     final fbAsync = ref.watch(allVentureFeedbackProvider);
+    final bookingsAsync = ref.watch(allBookingsProvider);
 
     final pkgCount = packagesAsync.value?.docs.length ?? 0;
-    final regCount = regAsync.value?.docs.length ?? 0;
     final fbCount = fbAsync.value?.docs.length ?? 0;
+    final bookingCount = bookingsAsync.value?.length ?? 0;
 
     final col = context.col;
 
@@ -155,8 +159,8 @@ class _AdminVenturesScreenState extends ConsumerState<AdminVenturesScreen>
           _VenturesHeader(
             tabs: _tabs,
             pkgCount: pkgCount,
-            regCount: regCount,
             fbCount: fbCount,
+            bookingCount: bookingCount,
           ),
           Divider(height: 1, color: col.border),
           Expanded(
@@ -164,8 +168,8 @@ class _AdminVenturesScreenState extends ConsumerState<AdminVenturesScreen>
               controller: _tabs,
               children: const [
                 _PackagesTab(),
-                _RegistrationsTab(),
                 _FeedbackTab(),
+                _BookingsTab(),
               ],
             ),
           ),
@@ -182,14 +186,14 @@ class _AdminVenturesScreenState extends ConsumerState<AdminVenturesScreen>
 class _VenturesHeader extends StatelessWidget {
   final TabController tabs;
   final int pkgCount;
-  final int regCount;
   final int fbCount;
+  final int bookingCount;
 
   const _VenturesHeader({
     required this.tabs,
     required this.pkgCount,
-    required this.regCount,
     required this.fbCount,
+    required this.bookingCount,
   });
 
   @override
@@ -232,7 +236,7 @@ class _VenturesHeader extends StatelessWidget {
                       ),
                       Text(
                         '$pkgCount package${pkgCount == 1 ? '' : 's'} · '
-                        '$regCount registration${regCount == 1 ? '' : 's'} · '
+                        '$bookingCount booking${bookingCount == 1 ? '' : 's'} · '
                         '$fbCount review${fbCount == 1 ? '' : 's'}',
                         style: TextStyle(
                           color: col.textMuted,
@@ -285,8 +289,8 @@ class _VenturesHeader extends StatelessWidget {
             ),
             tabs: [
               _CountTab(label: 'Packages', count: pkgCount),
-              _CountTab(label: 'Registrations', count: regCount),
               _CountTab(label: 'Feedback', count: fbCount),
+              _CountTab(label: 'Bookings', count: bookingCount),
             ],
           ),
         ],
@@ -717,275 +721,7 @@ class _PackageCard extends ConsumerWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Tab 2 — Registrations
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _RegistrationsTab extends ConsumerWidget {
-  const _RegistrationsTab();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final async = ref.watch(allVentureRegistrationsProvider);
-
-    return async.when(
-      loading: () => const Center(
-        child: CircularProgressIndicator(color: AppColors.primary),
-      ),
-      error: (e, _) => _ErrorState(message: e.toString()),
-      data: (snap) {
-        if (snap.docs.isEmpty) {
-          return const _EmptyState(
-            icon: Icons.how_to_reg_outlined,
-            title: 'No registrations yet',
-            subtitle:
-                'When users book a venture package, their registration details will appear here.',
-          );
-        }
-
-        final docs = snap.docs;
-        final confirmed = docs
-            .where((d) => _str(_safeMap(d.data()), ['status']) == 'confirmed')
-            .length;
-        final pending = docs
-            .where((d) => _str(_safeMap(d.data()), ['status']) == 'pending')
-            .length;
-        final cancelled = docs
-            .where((d) => _str(_safeMap(d.data()), ['status']) == 'cancelled')
-            .length;
-
-        return Column(
-          children: [
-            _SummaryBanner(
-              items: [
-                _SummaryItem('Total', '${docs.length}', AppColors.primary),
-                _SummaryItem('Confirmed', '$confirmed', const Color(0xFF22C55E)),
-                _SummaryItem('Pending', '$pending', const Color(0xFFF59E0B)),
-                _SummaryItem('Cancelled', '$cancelled', AppColors.error),
-              ],
-            ),
-            Expanded(
-              child: ListView.separated(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
-                itemCount: docs.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 10),
-                itemBuilder: (_, i) {
-                  try {
-                    return _RegistrationCard(
-                      docId: docs[i].id,
-                      data: _safeMap(docs[i].data()),
-                    );
-                  } catch (e) {
-                    return _ErrorCard('registration', docs[i].id, e);
-                  }
-                },
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-class _RegistrationCard extends StatelessWidget {
-  final String docId;
-  final Map<String, dynamic> data;
-  const _RegistrationCard({required this.docId, required this.data});
-
-  @override
-  Widget build(BuildContext context) {
-    final col = context.col;
-
-    final userName =
-        _str(data, ['userName', 'displayName', 'name'], fb: 'Unknown User');
-    final userEmail = _str(data, ['userEmail', 'email']);
-    final userPhone = _str(data, ['phone', 'userPhone']);
-    final ventureName =
-        _str(data, ['ventureName', 'packageName', 'title'], fb: 'Venture');
-    final tierName = _str(data, ['selectedTier', 'tierName', 'tier']);
-    final status = _str(data, ['status'], fb: 'pending');
-    final persons = _dbl(data, 'numberOfPersons', fb: 1).toInt();
-    final totalPrice = _dbl(data, 'totalPrice');
-    final addons = _listLen(data, 'selectedAddons');
-    final slotDate = _str(data, ['selectedDate', 'slotDate']);
-    final notes = _str(data, ['notes', 'specialRequests']);
-    final createdAt = _formatDate(data['createdAt']);
-
-    final statusColor = switch (status) {
-      'confirmed' => const Color(0xFF22C55E),
-      'cancelled' => AppColors.error,
-      'completed' => const Color(0xFF3B82F6),
-      _ => const Color(0xFFF59E0B),
-    };
-    final statusLabel =
-        status.isNotEmpty ? status[0].toUpperCase() + status.substring(1) : 'Pending';
-
-    return Container(
-      decoration: BoxDecoration(
-        color: col.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: statusColor.withValues(alpha: 0.25),
-          width: 1.2,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        children: [
-          Container(
-            height: 4,
-            color: statusColor,
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 42,
-                      height: 42,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.12),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: Text(
-                          userName.isNotEmpty
-                              ? userName[0].toUpperCase()
-                              : '?',
-                          style: const TextStyle(
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            userName,
-                            style: TextStyle(
-                              color: col.textPrimary,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 14,
-                            ),
-                          ),
-                          if (userEmail.isNotEmpty)
-                            Text(
-                              userEmail,
-                              style: TextStyle(
-                                  color: col.textMuted, fontSize: 11),
-                            ),
-                          if (userPhone.isNotEmpty)
-                            Text(
-                              userPhone,
-                              style: TextStyle(
-                                  color: col.textMuted, fontSize: 11),
-                            ),
-                        ],
-                      ),
-                    ),
-                    _Pill(statusLabel, statusColor),
-                  ],
-                ),
-
-                const SizedBox(height: 10),
-                Divider(height: 1, color: col.border),
-                const SizedBox(height: 10),
-
-                Row(
-                  children: [
-                    const Icon(Icons.explore_outlined,
-                        size: 14, color: AppColors.primary),
-                    const SizedBox(width: 5),
-                    Expanded(
-                      child: Text(
-                        ventureName,
-                        style: TextStyle(
-                          color: col.textPrimary,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ),
-                    if (tierName.isNotEmpty)
-                      _MetaChip(Icons.layers_outlined, tierName,
-                          color: const Color(0xFF3B82F6)),
-                  ],
-                ),
-
-                const SizedBox(height: 8),
-
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 6,
-                  children: [
-                    _InfoPair(
-                      Icons.people_alt_outlined,
-                      '$persons person${persons == 1 ? '' : 's'}',
-                    ),
-                    _InfoPair(
-                      Icons.currency_rupee,
-                      '₹${totalPrice.toStringAsFixed(0)}',
-                    ),
-                    if (addons > 0)
-                      _InfoPair(
-                        Icons.backpack_outlined,
-                        '$addons add-on${addons == 1 ? '' : 's'}',
-                      ),
-                    if (slotDate.isNotEmpty)
-                      _InfoPair(Icons.event_outlined, slotDate),
-                    if (createdAt.isNotEmpty)
-                      _InfoPair(
-                          Icons.access_time_outlined, 'Booked $createdAt'),
-                  ],
-                ),
-
-                if (notes.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: col.surfaceElevated,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      '💬 $notes',
-                      style: TextStyle(
-                        color: col.textSecondary,
-                        fontSize: 12,
-                        fontStyle: FontStyle.italic,
-                        height: 1.4,
-                      ),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Tab 3 — Feedback
+// Tab 2 — Feedback
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _FeedbackTab extends ConsumerWidget {
@@ -1383,29 +1119,6 @@ class _StatBadge extends StatelessWidget {
   );
 }
 
-class _InfoPair extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  const _InfoPair(this.icon, this.label);
-
-  @override
-  Widget build(BuildContext context) => Row(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      Icon(icon, size: 12, color: context.col.textMuted),
-      const SizedBox(width: 4),
-      Text(
-        label,
-        style: TextStyle(
-          color: context.col.textSecondary,
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-    ],
-  );
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Empty & error states
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1545,4 +1258,666 @@ class _ErrorCard extends StatelessWidget {
       style: const TextStyle(color: AppColors.error, fontSize: 11),
     ),
   );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Tab 4 — Bookings
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _BookingsTab extends ConsumerStatefulWidget {
+  const _BookingsTab();
+
+  @override
+  ConsumerState<_BookingsTab> createState() => _BookingsTabState();
+}
+
+class _BookingsTabState extends ConsumerState<_BookingsTab> {
+  BookingStatus? _filter; // null = show all
+
+  static const _statuses = [
+    null,
+    BookingStatus.pending,
+    BookingStatus.confirmed,
+    BookingStatus.completed,
+    BookingStatus.cancelled,
+  ];
+
+  static const _filterLabels = [
+    'All',
+    'Pending',
+    'Confirmed',
+    'Completed',
+    'Cancelled',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final bookingsAsync = ref.watch(allBookingsProvider);
+    final col = context.col;
+
+    return bookingsAsync.when(
+      loading: () => const Center(
+        child: CircularProgressIndicator(color: AppColors.primary),
+      ),
+      error: (e, _) => Center(
+        child: Text('Error: $e',
+            style: const TextStyle(color: AppColors.error)),
+      ),
+      data: (all) {
+        final filtered = _filter == null
+            ? all
+            : all.where((b) => b.status == _filter).toList();
+
+        final pending =
+            all.where((b) => b.status == BookingStatus.pending).length;
+        final confirmed =
+            all.where((b) => b.status == BookingStatus.confirmed).length;
+        final cancelled =
+            all.where((b) => b.status == BookingStatus.cancelled).length;
+        final completed =
+            all.where((b) => b.status == BookingStatus.completed).length;
+
+        return Column(
+          children: [
+            // ─ Summary banner ─────────────────────────────
+            Container(
+              margin: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+              padding:
+                  const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+              decoration: BoxDecoration(
+                color: col.surface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: col.border),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _BStat('${all.length}', 'Total', col.textPrimary),
+                  _BStat('$pending', 'Pending', const Color(0xFFF59E0B)),
+                  _BStat('$confirmed', 'Confirmed', const Color(0xFF22C55E)),
+                  _BStat('$completed', 'Completed', const Color(0xFF3B82F6)),
+                  _BStat('$cancelled', 'Cancelled', AppColors.error),
+                ],
+              ),
+            ),
+
+            // ─ Filter chips ───────────────────────────────
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+              child: Row(
+                children: List.generate(_statuses.length, (i) {
+                  final s = _statuses[i];
+                  final active = _filter == s;
+                  final color = _statusColor(s);
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: FilterChip(
+                      label: Text(_filterLabels[i]),
+                      selected: active,
+                      onSelected: (_) =>
+                          setState(() => _filter = s),
+                      selectedColor: color.withValues(alpha: 0.18),
+                      checkmarkColor: color,
+                      labelStyle: TextStyle(
+                        color:
+                            active ? color : col.textSecondary,
+                        fontWeight: active
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+                        fontSize: 12,
+                      ),
+                      backgroundColor: col.surface,
+                      side: BorderSide(
+                        color: active
+                            ? color.withValues(alpha: 0.5)
+                            : col.border,
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 4, vertical: 0),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  );
+                }),
+              ),
+            ),
+
+            // ─ List ─────────────────────────────────────────
+            Expanded(
+              child: filtered.isEmpty
+                  ? Center(
+                      child: Text(
+                        'No bookings${_filter != null ? ' with status “${_filter!.label}”' : ''}.',
+                        style: TextStyle(
+                            color: col.textMuted, fontSize: 13),
+                      ),
+                    )
+                  : ListView.separated(
+                      padding:
+                          const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                      itemCount: filtered.length,
+                      separatorBuilder: (_, __) =>
+                          const SizedBox(height: 10),
+                      itemBuilder: (_, i) =>
+                          _AdminBookingCard(booking: filtered[i]),
+                    ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Color _statusColor(BookingStatus? s) => switch (s) {
+        BookingStatus.confirmed => const Color(0xFF22C55E),
+        BookingStatus.cancelled => AppColors.error,
+        BookingStatus.completed => const Color(0xFF3B82F6),
+        BookingStatus.pending => const Color(0xFFF59E0B),
+        null => AppColors.primary,
+      };
+}
+
+// ── Admin booking card ────────────────────────────────────────────────────────────
+
+class _AdminBookingCard extends ConsumerWidget {
+  final VentureBooking booking;
+  const _AdminBookingCard({required this.booking});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final col = context.col;
+    final statusColor = _statusColor(booking.status);
+    final dateStr = _fmtDate(booking.createdAt);
+
+    return InkWell(
+      onTap: () => _showStatusSheet(context, ref),
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        decoration: BoxDecoration(
+          color: col.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: col.border),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          children: [
+            // Status strip
+            Container(height: 3, color: statusColor),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Title + status badge
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              booking.ventureTitle,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: col.textPrimary,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              booking.userName.isNotEmpty
+                                  ? booking.userName
+                                  : booking.userEmail,
+                              style: TextStyle(
+                                  fontSize: 11, color: col.textMuted),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color:
+                              statusColor.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                              color:
+                                  statusColor.withValues(alpha: 0.4)),
+                        ),
+                        child: Text(
+                          booking.status.label,
+                          style: TextStyle(
+                            color: statusColor,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Divider(height: 1, color: col.border),
+                  const SizedBox(height: 8),
+                  // Package + persons + total + date
+                  Row(
+                    children: [
+                      if (booking.selectedPackageName != null) ...[
+                        Icon(Iconsax.receipt_1,
+                            size: 11, color: col.textMuted),
+                        const SizedBox(width: 3),
+                        Flexible(
+                          child: Text(
+                            booking.selectedPackageName!,
+                            style: TextStyle(
+                                fontSize: 11,
+                                color: col.textSecondary),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                      ],
+                      Icon(Iconsax.people,
+                          size: 11, color: col.textMuted),
+                      const SizedBox(width: 3),
+                      Text(
+                        '${booking.personCount} pax',
+                        style: TextStyle(
+                            fontSize: 11, color: col.textSecondary),
+                      ),
+                      const Spacer(),
+                      Text(
+                        '₹${_fmt(booking.grandTotal)}',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Icon(Icons.calendar_today_outlined,
+                          size: 11, color: col.textMuted),
+                      const SizedBox(width: 3),
+                      Text(
+                        dateStr,
+                        style: TextStyle(
+                            fontSize: 11, color: col.textMuted),
+                      ),
+                      const Spacer(),
+                      Text(
+                        'Tap to update status →',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  // Admin note
+                  if (booking.adminNote != null &&
+                      booking.adminNote!.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: statusColor.withValues(alpha: 0.07),
+                        borderRadius: BorderRadius.circular(7),
+                        border: Border.all(
+                            color:
+                                statusColor.withValues(alpha: 0.2)),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(Iconsax.message_2,
+                              size: 11, color: statusColor),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              booking.adminNote!,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: col.textSecondary,
+                                height: 1.4,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showStatusSheet(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: context.col.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => _StatusUpdateSheet(
+        booking: booking,
+        onSave: (status, note) async {
+          await ref
+              .read(bookingServiceProvider)
+              .updateStatus(booking.id, status, adminNote: note);
+        },
+      ),
+    );
+  }
+
+  Color _statusColor(BookingStatus s) => switch (s) {
+        BookingStatus.confirmed => const Color(0xFF22C55E),
+        BookingStatus.cancelled => AppColors.error,
+        BookingStatus.completed => const Color(0xFF3B82F6),
+        BookingStatus.pending => const Color(0xFFF59E0B),
+      };
+
+  String _fmt(double v) => v
+      .toStringAsFixed(0)
+      .replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
+
+  String _fmtDate(DateTime dt) =>
+      '${dt.day.toString().padLeft(2, '0')} ${_months[dt.month - 1]} ${dt.year}';
+
+  static const _months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+}
+
+// ── Status update sheet ────────────────────────────────────────────────────────────
+
+class _StatusUpdateSheet extends StatefulWidget {
+  final VentureBooking booking;
+  final Future<void> Function(BookingStatus, String?) onSave;
+  const _StatusUpdateSheet({
+    required this.booking,
+    required this.onSave,
+  });
+
+  @override
+  State<_StatusUpdateSheet> createState() => _StatusUpdateSheetState();
+}
+
+class _StatusUpdateSheetState extends State<_StatusUpdateSheet> {
+  late BookingStatus _selected;
+  late final TextEditingController _noteCtrl;
+  bool _saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _selected = widget.booking.status;
+    _noteCtrl =
+        TextEditingController(text: widget.booking.adminNote ?? '');
+  }
+
+  @override
+  void dispose() {
+    _noteCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final col = context.col;
+    final b = widget.booking;
+
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 20,
+        right: 20,
+        top: 20,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Drag handle
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: col.border,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+
+          Text(
+            'Update Booking',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              color: col.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            b.ventureTitle,
+            style: TextStyle(fontSize: 12, color: col.textMuted),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+
+          const SizedBox(height: 4),
+          Text(
+            '₹${b.grandTotal.toStringAsFixed(0)} · ${b.personCount} person${b.personCount > 1 ? 's' : ''} · ${b.userName}',
+            style: TextStyle(fontSize: 12, color: col.textSecondary),
+          ),
+
+          const SizedBox(height: 16),
+          Text(
+            'Status',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: col.textSecondary,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 8),
+
+          // Status selector
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: BookingStatus.values.map((s) {
+              final color = _statusColor(s);
+              final active = _selected == s;
+              return GestureDetector(
+                onTap: () => setState(() => _selected = s),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: active
+                        ? color.withValues(alpha: 0.15)
+                        : col.bg,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: active
+                          ? color.withValues(alpha: 0.6)
+                          : col.border,
+                      width: active ? 1.5 : 1,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (active)
+                        Icon(Icons.check_circle_rounded,
+                            size: 14, color: color),
+                      if (active) const SizedBox(width: 5),
+                      Text(
+                        s.label,
+                        style: TextStyle(
+                          color: active ? color : col.textSecondary,
+                          fontWeight: active
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+
+          const SizedBox(height: 16),
+          Text(
+            'Note to user (optional)',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: col.textSecondary,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _noteCtrl,
+            maxLines: 3,
+            style: TextStyle(fontSize: 13, color: col.textPrimary),
+            decoration: InputDecoration(
+              hintText:
+                  'e.g. “Payment received, booking confirmed for 15 Apr”',
+              hintStyle:
+                  TextStyle(fontSize: 12, color: col.textMuted),
+              filled: true,
+              fillColor: col.bg,
+              contentPadding: const EdgeInsets.all(12),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: col.border),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: col.border),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(
+                    color: AppColors.primary, width: 1.5),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: _saving ? null : _save,
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.black,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+              ),
+              child: _saving
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.black),
+                    )
+                  : const Text(
+                      'Save Changes',
+                      style: TextStyle(
+                          fontWeight: FontWeight.w800, fontSize: 15),
+                    ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _save() async {
+    setState(() => _saving = true);
+    try {
+      final note = _noteCtrl.text.trim();
+      await widget.onSave(_selected, note.isEmpty ? null : note);
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  Color _statusColor(BookingStatus s) => switch (s) {
+        BookingStatus.confirmed => const Color(0xFF22C55E),
+        BookingStatus.cancelled => AppColors.error,
+        BookingStatus.completed => const Color(0xFF3B82F6),
+        BookingStatus.pending => const Color(0xFFF59E0B),
+      };
+}
+
+// ── Booking summary stat ────────────────────────────────────────────────────────────
+
+class _BStat extends StatelessWidget {
+  final String value;
+  final String label;
+  final Color color;
+  const _BStat(this.value, this.label, this.color);
+
+  @override
+  Widget build(BuildContext context) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+              color: color,
+            ),
+          ),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10,
+              color: context.col.textMuted,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      );
 }

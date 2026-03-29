@@ -39,12 +39,25 @@ class LeaderboardScreen extends ConsumerWidget {
                 children: [
                   const Icon(Iconsax.star_1, size: 22, color: AppColors.primary),
                   const SizedBox(width: 8),
-                  Text(
-                    'Top Rated',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: context.col.textPrimary,
-                      fontWeight: FontWeight.w800,
-                    ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Top Rated',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: context.col.textPrimary,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      Text(
+                        'Best spots & places by category',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: context.col.textSecondary,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

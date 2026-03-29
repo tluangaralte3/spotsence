@@ -271,6 +271,17 @@ service cloud.firestore {
       }
     }
 
+    // ── Bookings (venture booking requests) ──────────────────────────────────
+
+    match /bookings/{bookingId} {
+      // Users can read and create their own bookings
+      allow read: if isAuth() && (request.auth.uid == resource.data.userId || isSuperAdmin());
+      allow create: if isAuth() && request.auth.uid == request.resource.data.userId;
+      // Only admin can update (status changes, adding notes)
+      allow update: if isSuperAdmin();
+      allow delete: if isSuperAdmin();
+    }
+
     // ── Community posts ──────────────────────────────────────────────────────
 
     match /community_posts/{docId} {

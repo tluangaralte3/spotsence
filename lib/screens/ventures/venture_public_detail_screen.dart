@@ -3,10 +3,13 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../controllers/tour_venture_controller.dart';
+import '../../core/router/app_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/tour_venture_models.dart';
+import 'booking_review_screen.dart';
 
 class VenturePublicDetailScreen extends ConsumerWidget {
   final String ventureId;
@@ -49,11 +52,14 @@ class _VentureDetailBody extends StatefulWidget {
 }
 
 class _VentureDetailBodyState extends State<_VentureDetailBody> {
-  // Index of each selected add-on
-  final Set<int> _selectedAddons = {};
+  // Map of add-on index → quantity (absent = not added)
+  final Map<int, int> _selectedAddons = {};
 
   // Index of the selected pricing tier (null = none selected)
   int? _selectedTierIndex;
+
+  // Number of people booking
+  int _personCount = 1;
 
   Map<String, dynamic> get data => widget.data;
 
@@ -95,12 +101,23 @@ class _VentureDetailBodyState extends State<_VentureDetailBody> {
 
   double _addonTotal(List<dynamic> addons) {
     double total = 0;
-    for (final i in _selectedAddons) {
+    for (final entry in _selectedAddons.entries) {
+      final i = entry.key;
+      final qty = entry.value;
       if (i < addons.length && addons[i] is Map) {
-        total += double.tryParse('${addons[i]['pricePerUnit']}') ?? 0;
+        total += (double.tryParse('${addons[i]['pricePerUnit']}') ?? 0) * qty;
       }
     }
     return total;
+  }
+
+  /// Price per person (tier or base) + add-ons, then multiplied by person count.
+  double _totalBill(
+      List<dynamic> tiers, double basePrice, List<dynamic> addons) {
+    final perPerson =
+        (_selectedTierIndex != null ? _tierPrice(tiers) : basePrice) +
+            _addonTotal(addons);
+    return perPerson * _personCount;
   }
 
   /// Price from the selected pricing tier, or 0 if none selected.
@@ -113,20 +130,24 @@ class _VentureDetailBodyState extends State<_VentureDetailBody> {
 
   /// Label shown in the booking bar.
   String _bookingLabel(List<dynamic> tiers, double basePrice) {
+    final peopleStr =
+        '$_personCount person${_personCount > 1 ? 's' : ''}';
     if (_selectedTierIndex != null) {
       final t = tiers[_selectedTierIndex!];
       final name = (t is Map ? t['name'] as String? : null) ?? 'Package';
       final parts = <String>[
         name,
         if (_selectedAddons.isNotEmpty)
-          '+ ${_selectedAddons.length} add-on${_selectedAddons.length > 1 ? 's' : ''}',
+          '+ ${_selectedAddons.values.fold(0, (a, b) => a + b)} item${_selectedAddons.values.fold(0, (a, b) => a + b) > 1 ? 's' : ''}',
+        '· $peopleStr',
       ];
       return parts.join(' ');
     }
     if (_selectedAddons.isNotEmpty) {
-      return '${_selectedAddons.length} add-on${_selectedAddons.length > 1 ? 's' : ''} added';
+      final totalItems = _selectedAddons.values.fold(0, (a, b) => a + b);
+      return '$totalItems add-on item${totalItems > 1 ? 's' : ''} · $peopleStr';
     }
-    return 'Starting from';
+    return 'Starting from · $peopleStr';
   }
 
   @override
@@ -241,26 +262,22 @@ class _VentureDetailBodyState extends State<_VentureDetailBody> {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          Row(
+          Row(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Text(
-                                '₹${(_selectedTierIndex != null ? _tierPrice(pricingTiers) : price) + _addonTotal(addons)}'
-                                    .replaceAllMapped(
-                                      RegExp(r'(\d)(?=(\d{3})+\.)'),
-                                      (m) => '${m[1]},',
-                                    ),
+                                '₹${_totalBill(pricingTiers, price, addons).toStringAsFixed(0)}',
                                 style: const TextStyle(
                                   fontSize: 22,
                                   fontWeight: FontWeight.w900,
                                   color: AppColors.primary,
                                 ),
                               ),
-                              const SizedBox(width: 3),
+                              const SizedBox(width: 4),
                               Padding(
                                 padding: const EdgeInsets.only(bottom: 3),
                                 child: Text(
-                                  '/ person',
+                                  'total',
                                   style: TextStyle(
                                     fontSize: 11,
                                     color: context.col.textMuted,
@@ -269,12 +286,71 @@ class _VentureDetailBodyState extends State<_VentureDetailBody> {
                               ),
                             ],
                           ),
+                          if (_personCount > 1)
+                            Text(
+                              '₹${((_selectedTierIndex != null ? _tierPrice(pricingTiers) : price) + _addonTotal(addons)).toStringAsFixed(0)} × $_personCount people',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: context.col.textMuted,
+                              ),
+                            ),
                         ],
                       ),
                     ),
                     const SizedBox(width: 12),
                     GestureDetector(
-                      onTap: () => _contact(opPhone, opWhatsapp),
+                      onTap: () {
+                        final ventureId = _str('id');
+                        // Build add-ons list from selected map
+                        final addonsList = _selectedAddons.entries
+                            .where((e) =>
+                                e.key < addons.length &&
+                                addons[e.key] is Map)
+                            .map((e) {
+                              final a = addons[e.key] as Map;
+                              return <String, dynamic>{
+                                'name': a['name'] ?? '',
+                                'emoji': a['emoji'] ?? '🎒',
+                                'pricePerUnit': double.tryParse(
+                                        '${a['pricePerUnit']}') ??
+                                    0.0,
+                                'unit': a['unit'] ?? 'per person',
+                                'qty': e.value,
+                              };
+                            })
+                            .toList();
+
+                        final selectedTier = _selectedTierIndex != null &&
+                                _selectedTierIndex! < pricingTiers.length
+                            ? pricingTiers[_selectedTierIndex!] as Map?
+                            : null;
+
+                        final args = BookingReviewArgs(
+                          ventureId: ventureId,
+                          ventureTitle: title,
+                          heroImage:
+                              allImages.isNotEmpty ? allImages.first : '',
+                          category: category,
+                          location: locationFull,
+                          operatorName: opName,
+                          operatorPhone: opPhone,
+                          operatorWhatsapp: opWhatsapp,
+                          operatorEmail: opEmail,
+                          selectedPackageName:
+                              selectedTier?['name'] as String?,
+                          selectedPackageDesc:
+                              selectedTier?['description'] as String?,
+                          pricePerPerson: _selectedTierIndex != null
+                              ? _tierPrice(pricingTiers)
+                              : price,
+                          personCount: _personCount,
+                          selectedAddons: addonsList,
+                        );
+                        context.push(
+                          AppRoutes.bookingReviewPath(ventureId),
+                          extra: args,
+                        );
+                      },
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 24,
@@ -440,6 +516,116 @@ class _VentureDetailBodyState extends State<_VentureDetailBody> {
                       ),
                     ],
 
+                    // ── Number of people stepper ─────────────────────────
+                    const SizedBox(height: 20),
+                    _sectionHeader('Number of People', context),
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        color: context.col.surface,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: context.col.border),
+                      ),
+                      child: Row(
+                        children: [
+                          // Decrement
+                          Material(
+                            color: _personCount > 1
+                                ? AppColors.primary.withValues(alpha: 0.12)
+                                : context.col.border.withValues(alpha: 0.4),
+                            borderRadius: BorderRadius.circular(10),
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(10),
+                              onTap: _personCount > 1
+                                  ? () =>
+                                      setState(() => _personCount--)
+                                  : null,
+                              child: Container(
+                                width: 38,
+                                height: 38,
+                                alignment: Alignment.center,
+                                child: Icon(
+                                  Icons.remove_rounded,
+                                  size: 18,
+                                  color: _personCount > 1
+                                      ? AppColors.primary
+                                      : context.col.textMuted,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Text(
+                                  '$_personCount',
+                                  style: TextStyle(
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.w900,
+                                    color: context.col.textPrimary,
+                                  ),
+                                ),
+                                Text(
+                                  _personCount == 1 ? 'person' : 'people',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: context.col.textMuted,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          // Increment
+                          Material(
+                            color: (maxGroup == 0 || _personCount < maxGroup)
+                                ? AppColors.primary.withValues(alpha: 0.12)
+                                : context.col.border.withValues(alpha: 0.4),
+                            borderRadius: BorderRadius.circular(10),
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(10),
+                              onTap:
+                                  (maxGroup == 0 || _personCount < maxGroup)
+                                      ? () =>
+                                          setState(() => _personCount++)
+                                      : null,
+                              child: Container(
+                                width: 38,
+                                height: 38,
+                                alignment: Alignment.center,
+                                child: Icon(
+                                  Icons.add_rounded,
+                                  size: 18,
+                                  color:
+                                      (maxGroup == 0 ||
+                                              _personCount < maxGroup)
+                                          ? AppColors.primary
+                                          : context.col.textMuted,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (maxGroup > 0)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: Text(
+                          'Max group size: $maxGroup',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: context.col.textMuted,
+                          ),
+                        ),
+                      ),
+
                     // Pricing tiers
                     if (pricingTiers.isNotEmpty) ...[
                       const SizedBox(height: 20),
@@ -495,14 +681,18 @@ class _VentureDetailBodyState extends State<_VentureDetailBody> {
 
                         return Opacity(
                           opacity: isAvailable ? 1.0 : 0.5,
-                          child: GestureDetector(
-                            onTap: isAvailable
-                                ? () => setState(() {
-                                      _selectedTierIndex =
-                                          isSelected ? null : tierIdx;
-                                    })
-                                : null,
-                            child: AnimatedContainer(
+                          child: Material(
+                            color: Colors.transparent,
+                            borderRadius: BorderRadius.circular(14),
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(14),
+                              onTap: isAvailable
+                                  ? () => setState(() {
+                                        _selectedTierIndex =
+                                            isSelected ? null : tierIdx;
+                                      })
+                                  : null,
+                              child: AnimatedContainer(
                               duration: const Duration(milliseconds: 200),
                               curve: Curves.easeInOut,
                               margin: const EdgeInsets.only(bottom: 12),
@@ -543,15 +733,33 @@ class _VentureDetailBodyState extends State<_VentureDetailBody> {
                                             children: [
                                               Row(
                                                 children: [
-                                                  if (isSelected) ...[
-                                                    Icon(
-                                                      Icons
-                                                          .check_circle_rounded,
-                                                      size: 18,
-                                                      color: AppColors.primary,
+                                                  AnimatedContainer(
+                                                    duration: const Duration(milliseconds: 200),
+                                                    width: 22,
+                                                    height: 22,
+                                                    margin: const EdgeInsets.only(right: 8),
+                                                    decoration: BoxDecoration(
+                                                      shape: BoxShape.circle,
+                                                      color: isSelected
+                                                          ? AppColors.primary
+                                                          : Colors.transparent,
+                                                      border: Border.all(
+                                                        color: isSelected
+                                                            ? AppColors.primary
+                                                            : context.col.border,
+                                                        width: isSelected ? 0 : 1.5,
+                                                      ),
                                                     ),
-                                                    const SizedBox(width: 6),
-                                                  ],
+                                                    child: isSelected
+                                                        ? const Center(
+                                                            child: Icon(
+                                                              Icons.check,
+                                                              size: 13,
+                                                              color: Colors.black,
+                                                            ),
+                                                          )
+                                                        : null,
+                                                  ),
                                                   Flexible(
                                                     child: Text(
                                                       tierName,
@@ -819,11 +1027,12 @@ class _VentureDetailBodyState extends State<_VentureDetailBody> {
                               ),
                             ),
                           ),
-                        );
-                      }),
-                    ],
+                        ),
+                      );
+                  }),
+                ],
 
-                    // Schedule slots
+                // Schedule slots
                     if (scheduleSlots.isNotEmpty) ...[
                       const SizedBox(height: 20),
                       _sectionHeader('Available Dates', context),
@@ -871,7 +1080,7 @@ class _VentureDetailBodyState extends State<_VentureDetailBody> {
                           ),
                           if (_selectedAddons.isNotEmpty)
                             Text(
-                              '+₹${_addonTotal(addons).toStringAsFixed(0)}',
+                              '+₹${_addonTotal(addons).toStringAsFixed(0)}  (${_selectedAddons.values.fold(0, (a, b) => a + b)} items)',
                               style: const TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,
@@ -901,101 +1110,180 @@ class _VentureDetailBodyState extends State<_VentureDetailBody> {
                               double.tryParse('${a['pricePerUnit']}') ?? 0;
                           final unit = a['unit'] as String? ?? 'per person';
                           final addonDesc = a['description'] as String? ?? '';
-                          final selected = _selectedAddons.contains(i);
-                          return GestureDetector(
-                            onTap: () => setState(() {
-                              if (selected) {
-                                _selectedAddons.remove(i);
-                              } else {
-                                _selectedAddons.add(i);
-                              }
-                            }),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 180),
-                              width:
-                                  (MediaQuery.of(context).size.width - 60) / 2,
-                              padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(
+                          final qty = _selectedAddons[i] ?? 0;
+                          final selected = qty > 0;
+                          return AnimatedContainer(
+                            duration: const Duration(milliseconds: 180),
+                            width: (MediaQuery.of(context).size.width - 60) / 2,
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: selected
+                                  ? AppColors.primary.withValues(alpha: 0.1)
+                                  : context.col.surface,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
                                 color: selected
-                                    ? AppColors.primary.withValues(alpha: 0.1)
-                                    : context.col.surface,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: selected
-                                      ? AppColors.primary
-                                      : context.col.border,
-                                  width: selected ? 1.5 : 1,
-                                ),
+                                    ? AppColors.primary
+                                    : context.col.border,
+                                width: selected ? 1.5 : 1,
                               ),
-                              child: Row(
-                                children: [
-                                  Text(
-                                    emoji,
-                                    style: const TextStyle(fontSize: 18),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          name,
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w600,
-                                            color: selected
-                                                ? AppColors.primary
-                                                : context.col.textPrimary,
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                        if (addonPrice > 0)
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // ── Name row ────────────────────────────
+                                Row(
+                                  children: [
+                                    Text(emoji,
+                                        style:
+                                            const TextStyle(fontSize: 18)),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
                                           Text(
-                                            '+₹${addonPrice.toStringAsFixed(0)}',
-                                            style: const TextStyle(
-                                              fontSize: 11,
-                                              color: AppColors.primary,
-                                              fontWeight: FontWeight.w700,
-                                            ),
-                                          ),
-                                        if (addonPrice > 0)
-                                          Text(
-                                            unit,
+                                            name,
                                             style: TextStyle(
-                                              fontSize: 10,
-                                              color: context.col.textMuted,
-                                            ),
-                                          ),
-                                        if (addonDesc.isNotEmpty)
-                                          Text(
-                                            addonDesc,
-                                            style: TextStyle(
-                                              fontSize: 10,
-                                              color: context.col.textMuted,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                              color: selected
+                                                  ? AppColors.primary
+                                                  : context.col.textPrimary,
                                             ),
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
                                           ),
+                                          if (addonPrice > 0)
+                                            Text(
+                                              '+₹${addonPrice.toStringAsFixed(0)} / $unit',
+                                              style: const TextStyle(
+                                                fontSize: 10,
+                                                color: AppColors.primary,
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                            ),
+                                          if (addonDesc.isNotEmpty)
+                                            Text(
+                                              addonDesc,
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                color:
+                                                    context.col.textMuted,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                // ── Quantity stepper ─────────────────────
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    if (selected && addonPrice > 0)
+                                      Text(
+                                        '₹${(addonPrice * qty).toStringAsFixed(0)}',
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppColors.primary,
+                                        ),
+                                      )
+                                    else
+                                      const SizedBox.shrink(),
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        // − button
+                                        GestureDetector(
+                                          onTap: selected
+                                              ? () => setState(() {
+                                                    if (qty <= 1) {
+                                                      _selectedAddons.remove(i);
+                                                    } else {
+                                                      _selectedAddons[i] = qty - 1;
+                                                    }
+                                                  })
+                                              : null,
+                                          child: AnimatedContainer(
+                                            duration: const Duration(
+                                                milliseconds: 150),
+                                            width: 28,
+                                            height: 28,
+                                            decoration: BoxDecoration(
+                                              color: selected
+                                                  ? AppColors.primary
+                                                      .withValues(alpha: 0.15)
+                                                  : context.col.border
+                                                      .withValues(alpha: 0.4),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                            alignment: Alignment.center,
+                                            child: Icon(
+                                              Icons.remove_rounded,
+                                              size: 14,
+                                              color: selected
+                                                  ? AppColors.primary
+                                                  : context.col.textMuted,
+                                            ),
+                                          ),
+                                        ),
+                                        // Qty
+                                        SizedBox(
+                                          width: 30,
+                                          child: Text(
+                                            '$qty',
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w800,
+                                              color: selected
+                                                  ? AppColors.primary
+                                                  : context.col.textMuted,
+                                            ),
+                                          ),
+                                        ),
+                                        // + button
+                                        GestureDetector(
+                                          onTap: () => setState(() {
+                                            _selectedAddons[i] = qty + 1;
+                                          }),
+                                          child: Container(
+                                            width: 28,
+                                            height: 28,
+                                            decoration: BoxDecoration(
+                                              color: AppColors.primary
+                                                  .withValues(alpha: 0.15),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                            alignment: Alignment.center,
+                                            child: const Icon(
+                                              Icons.add_rounded,
+                                              size: 14,
+                                              color: AppColors.primary,
+                                            ),
+                                          ),
+                                        ),
                                       ],
                                     ),
-                                  ),
-                                  if (selected)
-                                    const Icon(
-                                      Icons.check_circle_rounded,
-                                      size: 16,
-                                      color: AppColors.primary,
-                                    ),
-                                ],
-                              ),
+                                  ],
+                                ),
+                              ],
                             ),
                           );
-                        }),
-                      ),
-                    ],
+                    }),
+                  ),
+                ],
 
-                    // Challenges
+                // Challenges
                     if (challenges.isNotEmpty) ...[
                       const SizedBox(height: 20),
                       _sectionHeader('🏆 Challenges', context),
@@ -1364,14 +1652,6 @@ class _VentureDetailBodyState extends State<_VentureDetailBody> {
       ),
     ),
   );
-
-  void _contact(String phone, String whatsapp) {
-    if (whatsapp.isNotEmpty) {
-      _launch('https://wa.me/${whatsapp.replaceAll(RegExp(r'\D'), '')}');
-    } else if (phone.isNotEmpty) {
-      _launch('tel:$phone');
-    }
-  }
 
   Future<void> _launch(String url) async {
     final uri = Uri.parse(url);

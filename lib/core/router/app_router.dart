@@ -30,6 +30,8 @@ import '../../screens/listings/all_reviews_screen.dart';
 import '../../screens/packages/tour_venture_screen.dart';
 import '../../screens/packages/venture_detail_screen.dart';
 import '../../screens/ventures/venture_public_detail_screen.dart';
+import '../../screens/ventures/booking_review_screen.dart';
+import '../../screens/ventures/my_bookings_screen.dart';
 import '../../screens/admin/admin_shell.dart';
 import '../../screens/admin/listings/admin_add_listing_screen.dart';
 import '../../screens/admin/listings/admin_venture_form_screen.dart';
@@ -67,6 +69,10 @@ abstract class AppRoutes {
 
   static const ventureDetail = '/ventures/:id';
   static String ventureDetailPath(String id) => '/ventures/$id';
+  static const bookingReview = '/ventures/:id/booking-review';
+  static String bookingReviewPath(String id) => '/ventures/$id/booking-review';
+
+  static const myBookings = '/my-bookings';
 
   // ── Super Admin ──────────────────────────────────────────────────────────
   static const admin = '/admin';
@@ -239,13 +245,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             ],
           ),
           GoRoute(
-            path: '/ventures/:id',
-            pageBuilder: (_, state) => _fade(
-              state,
-              VenturePublicDetailScreen(ventureId: state.pathParameters['id']!),
-            ),
-          ),
-          GoRoute(
             path: AppRoutes.community,
             builder: (_, __) => const CommunityScreen(),
           ),
@@ -261,6 +260,26 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
 
       // ── Modal routes (outside shell) ───────────────────────────────────
+      GoRoute(
+        path: '/ventures/:id',
+        pageBuilder: (_, state) => _fade(
+          state,
+          VenturePublicDetailScreen(ventureId: state.pathParameters['id']!),
+        ),
+      ),
+      GoRoute(
+        path: '/ventures/:id/booking-review',
+        pageBuilder: (_, state) {
+          final args = state.extra as BookingReviewArgs;
+          return _fade(state, BookingReviewScreen(args: args));
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.myBookings,
+        pageBuilder: (_, state) =>
+            _fade(state, const MyBookingsScreen()),
+      ),
+
       // ── Admin (outside shell — own navigation) ─────────────────────────
       // Use pageBuilder with HeroControllerScope to prevent Hero tag conflicts
       // when transitioning from MainShell (which also has a Scaffold + Heroes).
