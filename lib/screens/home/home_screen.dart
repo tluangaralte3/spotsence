@@ -1,13 +1,18 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:iconsax/iconsax.dart';
+import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../controllers/auth_controller.dart';
+import '../../controllers/banner_controller.dart';
 import '../../controllers/spots_controller.dart';
 import '../../controllers/tour_venture_controller.dart';
-import '../../core/constants/app_constants.dart';
 import '../../core/router/app_router.dart';
 import '../../core/theme/app_theme.dart';
+import '../../models/banner_model.dart';
 import '../../models/spot_model.dart';
 import '../../models/tour_venture_models.dart';
 import '../../widgets/shared_widgets.dart';
@@ -84,7 +89,7 @@ class HomeScreen extends ConsumerWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Hello, ${user.displayName.split(' ').first} 👋',
+                                'Hello, ${user.displayName.split(' ').first},',
                                 style: Theme.of(context).textTheme.titleLarge,
                               ),
                               const SizedBox(height: 2),
@@ -164,93 +169,13 @@ class HomeScreen extends ConsumerWidget {
                     const SizedBox(height: 20),
                   ],
 
-                  // ── Quick search bar ──────────────────────────────────
-                  GestureDetector(
-                    onTap: () => context.go(AppRoutes.search),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 13,
-                      ),
-                      decoration: BoxDecoration(
-                        color: context.col.surfaceElevated,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: context.col.border),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.search,
-                            color: context.col.textMuted,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 10),
-                          Text(
-                            'Search spots, restaurants...',
-                            style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(color: context.col.textMuted),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                  // ── Banner Carousel ───────────────────────────────────
+                  const _HomeBannerCarousel(),
                   const SizedBox(height: 20),
 
-                  // ── Category pills ────────────────────────────────────
-                  Text(
-                    'Categories',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 12),
-                ],
-              ),
-            ),
-          ),
 
-          // Category horizontal scroll
-          SliverToBoxAdapter(
-            child: SizedBox(
-              height: 42,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                itemCount: AppConstants.categories.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 8),
-                itemBuilder: (context, i) {
-                  final cat = AppConstants.categories[i];
-                  return GestureDetector(
-                    onTap: () => context.go(AppRoutes.listings),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: context.col.surfaceElevated,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: context.col.border),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            cat['emoji']!,
-                            style: const TextStyle(fontSize: 14),
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            cat['label']!,
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: context.col.textSecondary,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
+
+                ],
               ),
             ),
           ),
@@ -262,9 +187,19 @@ class HomeScreen extends ConsumerWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    '🗂️ Browse Listings',
-                    style: Theme.of(context).textTheme.titleMedium,
+                  Row(
+                    children: [
+                      const Icon(
+                        Iconsax.category,
+                        size: 18,
+                        color: AppColors.primary,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Browse Listings',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                    ],
                   ),
                   TextButton(
                     onPressed: () => context.go(AppRoutes.listings),
@@ -306,17 +241,17 @@ class HomeScreen extends ConsumerWidget {
 // Northeast India state picker — opens from subtitle tap
 // ─────────────────────────────────────────────────────────────────────────────
 
-typedef _StateItem = ({String emoji, String name, String abbr, bool available});
+typedef _StateItem = ({String name, String abbr, bool available});
 
 const _kNeStates = <_StateItem>[
-  (emoji: '🟢', name: 'Mizoram', abbr: 'MZ', available: true),
-  (emoji: '🏔️', name: 'Manipur', abbr: 'MN', available: false),
-  (emoji: '🌿', name: 'Meghalaya', abbr: 'ML', available: false),
-  (emoji: '🌄', name: 'Assam', abbr: 'AS', available: false),
-  (emoji: '🦏', name: 'Nagaland', abbr: 'NL', available: false),
-  (emoji: '🌺', name: 'Tripura', abbr: 'TR', available: false),
-  (emoji: '🏞️', name: 'Arunachal', abbr: 'AR', available: false),
-  (emoji: '🌸', name: 'Sikkim', abbr: 'SK', available: false),
+  (name: 'Mizoram', abbr: 'MZ', available: true),
+  (name: 'Manipur', abbr: 'MN', available: false),
+  (name: 'Meghalaya', abbr: 'ML', available: false),
+  (name: 'Assam', abbr: 'AS', available: false),
+  (name: 'Nagaland', abbr: 'NL', available: false),
+  (name: 'Tripura', abbr: 'TR', available: false),
+  (name: 'Arunachal', abbr: 'AR', available: false),
+  (name: 'Sikkim', abbr: 'SK', available: false),
 ];
 
 void _showStatePicker(BuildContext context) {
@@ -485,7 +420,7 @@ class _StatePickerSheet extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'We\'re working hard to bring SpotSence\nto $stateName. Stay tuned! 🎉',
+              'We\'re working hard to bring SpotSence\nto $stateName. Stay tuned!',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: context.col.textSecondary,
@@ -624,14 +559,14 @@ class _StateListTile extends StatelessWidget {
 
 class _ListingCategoryGrid extends StatelessWidget {
   static const _items = [
-    (emoji: '🗺️', label: 'Tourist\nSpots', tab: 0),
-    (emoji: '🍽️', label: 'Restaurants', tab: 1),
-    (emoji: '🏨', label: 'Hotels', tab: 2),
-    (emoji: '☕', label: 'Cafes', tab: 3),
-    (emoji: '🏡', label: 'Homestays', tab: 4),
-    (emoji: '🧗', label: 'Adventure', tab: 5),
-    (emoji: '🛍️', label: 'Shopping', tab: 6),
-    (emoji: '📅', label: 'Events', tab: 7),
+    (icon: Iconsax.map_1, label: 'Tourist\nSpots', tab: 0),
+    (icon: Iconsax.cup, label: 'Restaurants', tab: 1),
+    (icon: Iconsax.buildings, label: 'Hotels', tab: 2),
+    (icon: Iconsax.coffee, label: 'Cafes', tab: 3),
+    (icon: Iconsax.home_2, label: 'Homestays', tab: 4),
+    (icon: Iconsax.activity, label: 'Adventure', tab: 5),
+    (icon: Iconsax.bag_2, label: 'Shopping', tab: 6),
+    (icon: Iconsax.calendar, label: 'Events', tab: 7),
   ];
 
   @override
@@ -656,7 +591,19 @@ class _ListingCategoryGrid extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(item.emoji, style: const TextStyle(fontSize: 24)),
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    item.icon,
+                    size: 20,
+                    color: AppColors.primary,
+                  ),
+                ),
                 const SizedBox(height: 6),
                 Text(
                   item.label,
@@ -691,19 +638,22 @@ class _StatsRow extends StatelessWidget {
         Row(
           children: [
             _StatCard(
-              icon: '⭐',
+              icon: Iconsax.star_1,
+              iconColor: const Color(0xFFFBBF24),
               label: 'Reviews',
               value: '${user.ratingsCount}',
             ),
             const SizedBox(width: 10),
             _StatCard(
-              icon: '📍',
+              icon: Iconsax.location,
+              iconColor: AppColors.primary,
               label: 'Contributions',
               value: '${user.contributionsCount}',
             ),
             const SizedBox(width: 10),
             _StatCard(
-              icon: '🏆',
+              icon: Iconsax.award,
+              iconColor: AppColors.secondary,
               label: 'Badges',
               value: '${user.badgesEarned.length}',
             ),
@@ -715,11 +665,13 @@ class _StatsRow extends StatelessWidget {
 }
 
 class _StatCard extends StatelessWidget {
-  final String icon;
+  final IconData icon;
+  final Color iconColor;
   final String label;
   final String value;
   const _StatCard({
     required this.icon,
+    required this.iconColor,
     required this.label,
     required this.value,
   });
@@ -736,7 +688,7 @@ class _StatCard extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Text(icon, style: const TextStyle(fontSize: 22)),
+            Icon(icon, size: 26, color: iconColor),
             const SizedBox(height: 6),
             Text(
               value,
@@ -772,12 +724,12 @@ class _FeaturedSpotsSection extends ConsumerStatefulWidget {
 
 class _FeaturedSpotsSectionState extends ConsumerState<_FeaturedSpotsSection> {
   static const _tabs = [
-    (id: 'all', label: 'Popular nearby', emoji: '🗺️'),
-    (id: 'Mountains', label: 'Mountains', emoji: '⛰️'),
-    (id: 'Waterfalls', label: 'Waterfalls', emoji: '💧'),
-    (id: 'Cultural Sites', label: 'Cultural Sites', emoji: '🏛️'),
-    (id: 'Viewpoints', label: 'Viewpoints', emoji: '👁️'),
-    (id: 'Adventure', label: 'Adventure', emoji: '🧗'),
+    (id: 'all', label: 'Popular nearby', icon: Iconsax.discover),
+    (id: 'Mountains', label: 'Mountains', icon: Iconsax.wind),
+    (id: 'Waterfalls', label: 'Waterfalls', icon: Iconsax.drop),
+    (id: 'Cultural Sites', label: 'Cultural Sites', icon: Iconsax.building),
+    (id: 'Viewpoints', label: 'Viewpoints', icon: Iconsax.eye),
+    (id: 'Adventure', label: 'Adventure', icon: Iconsax.activity),
   ];
 
   String _selectedCategory = 'all';
@@ -901,15 +853,28 @@ class _FeaturedSpotsSectionState extends ConsumerState<_FeaturedSpotsSection> {
                             : context.col.border,
                       ),
                     ),
-                    child: Text(
-                      '${tab.emoji}  ${tab.label}',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: selected
-                            ? Colors.white
-                            : context.col.textSecondary,
-                      ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          tab.icon,
+                          size: 13,
+                          color: selected
+                              ? Colors.white
+                              : context.col.textSecondary,
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          tab.label,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: selected
+                                ? Colors.white
+                                : context.col.textSecondary,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 );
@@ -936,14 +901,16 @@ class _FeaturedSpotsSectionState extends ConsumerState<_FeaturedSpotsSection> {
                   ),
                   error: (_, __) => const Center(
                     child: EmptyState(
-                      emoji: '😕',
+                      icon: Iconsax.warning_2,
+                      iconColor: AppColors.error,
                       title: 'Could not load spots',
                     ),
                   ),
                   data: (spots) => spots.isEmpty
                       ? const Center(
                           child: EmptyState(
-                            emoji: '🗺️',
+                            icon: Iconsax.map_1,
+                            iconColor: AppColors.primary,
                             title: 'No spots found',
                           ),
                         )
@@ -1221,10 +1188,20 @@ class _TourVentureSection extends ConsumerWidget {
                 children: [
                   Row(
                     children: [
+                      Row(
+                    children: [
+                      const Icon(
+                        Iconsax.flash,
+                        size: 18,
+                        color: AppColors.primary,
+                      ),
+                      const SizedBox(width: 6),
                       Text(
-                        '⚡ Venture',
+                        'Venture',
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
+                    ],
+                  ),
                       const SizedBox(width: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(
@@ -1326,7 +1303,11 @@ class _TourVentureSection extends ConsumerWidget {
                   ),
                   child: Row(
                     children: [
-                      const Text('🌿', style: TextStyle(fontSize: 20)),
+                      const Icon(
+                        Iconsax.tree,
+                        size: 20,
+                        color: AppColors.success,
+                      ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
@@ -1476,11 +1457,11 @@ class _VentureCard extends StatelessWidget {
                             imageUrl: imageUrl,
                             fit: BoxFit.cover,
                             errorWidget: (_, __, ___) =>
-                                _EmojiHero(emoji: cat.emoji),
+                                const _EmojiHero(),
                             placeholder: (_, __) =>
-                                _EmojiHero(emoji: cat.emoji),
+                                const _EmojiHero(),
                           )
-                        : _EmojiHero(emoji: cat.emoji),
+                        : const _EmojiHero(),
                   ),
                 ),
                 // Category badge
@@ -1597,14 +1578,19 @@ class _VentureCard extends StatelessWidget {
 }
 
 class _EmojiHero extends StatelessWidget {
-  final String emoji;
-  const _EmojiHero({required this.emoji});
+  const _EmojiHero();
 
   @override
   Widget build(BuildContext context) {
     return Container(
       color: AppColors.primary.withOpacity(0.08),
-      child: Center(child: Text(emoji, style: const TextStyle(fontSize: 52))),
+      child: const Center(
+        child: Icon(
+          Iconsax.discover,
+          size: 52,
+          color: AppColors.primary,
+        ),
+      ),
     );
   }
 }
@@ -1626,6 +1612,231 @@ class _Chip extends StatelessWidget {
       child: Text(
         label,
         style: TextStyle(color: fg, fontSize: 10, fontWeight: FontWeight.w700),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Home Banner Carousel
+// Reads `home_banners` from Firestore via [activeBannersProvider].
+// Hidden when sectionVisible == false (admin toggle).
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _HomeBannerCarousel extends ConsumerStatefulWidget {
+  const _HomeBannerCarousel();
+
+  @override
+  ConsumerState<_HomeBannerCarousel> createState() =>
+      _HomeBannerCarouselState();
+}
+
+class _HomeBannerCarouselState
+    extends ConsumerState<_HomeBannerCarousel> {
+  int _currentIndex = 0;
+
+  void _handleTap(BuildContext context, BannerModel banner) {
+    switch (banner.linkType) {
+      case BannerLinkType.internalRoute:
+        if (banner.linkValue != null && banner.linkValue!.isNotEmpty) {
+          context.go(banner.linkValue!);
+        }
+      case BannerLinkType.externalUrl:
+        if (banner.linkValue != null && banner.linkValue!.isNotEmpty) {
+          final uri = Uri.tryParse(banner.linkValue!);
+          if (uri != null) launchUrl(uri, mode: LaunchMode.externalApplication);
+        }
+      case BannerLinkType.none:
+        break;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final configAsync = ref.watch(bannerSectionConfigProvider);
+    final bannersAsync = ref.watch(activeBannersProvider);
+
+    // Respect admin visibility toggle
+    final config = configAsync.asData?.value;
+    if (config != null && !config.sectionVisible) {
+      return const SizedBox.shrink();
+    }
+
+    return bannersAsync.when(
+      loading: () => _BannerSkeleton(),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (banners) {
+        if (banners.isEmpty) return const SizedBox.shrink();
+        return Column(
+          children: [
+            CarouselSlider.builder(
+              itemCount: banners.length,
+              options: CarouselOptions(
+                height: 160,
+                viewportFraction: 1.0,
+                enlargeCenterPage: false,
+                autoPlay: banners.length > 1,
+                autoPlayInterval: const Duration(seconds: 5),
+                autoPlayAnimationDuration:
+                    const Duration(milliseconds: 600),
+                autoPlayCurve: Curves.easeInOut,
+                onPageChanged: (index, _) =>
+                    setState(() => _currentIndex = index),
+              ),
+              itemBuilder: (_, i, __) {
+                final banner = banners[i];
+                return GestureDetector(
+                  onTap: () => _handleTap(context, banner),
+                  child: _BannerCard(banner: banner),
+                );
+              },
+            ),
+            if (banners.length > 1) ...[
+              const SizedBox(height: 10),
+              AnimatedSmoothIndicator(
+                activeIndex: _currentIndex,
+                count: banners.length,
+                effect: ExpandingDotsEffect(
+                  dotHeight: 6,
+                  dotWidth: 6,
+                  activeDotColor: AppColors.primary,
+                  dotColor: AppColors.primary.withValues(alpha: 0.25),
+                  expansionFactor: 3,
+                ),
+              ),
+            ],
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _BannerCard extends StatelessWidget {
+  final BannerModel banner;
+  const _BannerCard({required this.banner});
+
+  @override
+  Widget build(BuildContext context) {
+    final hasImage = banner.imageUrl.isNotEmpty;
+    return Container(
+      width: double.infinity,
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppColors.secondary, AppColors.primary],
+        ),
+      ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          // ── Background image ─────────────────────────────────────────
+          if (hasImage)
+            CachedNetworkImage(
+              imageUrl: banner.imageUrl,
+              fit: BoxFit.cover,
+              errorWidget: (_, __, ___) => const SizedBox.shrink(),
+            ),
+
+          // ── Gradient overlay for readability ─────────────────────────
+          DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.centerRight,
+                end: Alignment.centerLeft,
+                colors: [
+                  Colors.black.withValues(alpha: 0.0),
+                  Colors.black.withValues(alpha: 0.65),
+                ],
+              ),
+            ),
+          ),
+
+          // ── Text content ─────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (banner.title.isNotEmpty)
+                  Text(
+                    banner.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      height: 1.25,
+                    ),
+                  ),
+                if (banner.subtitle.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    banner.subtitle,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.85),
+                      fontSize: 12,
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+                // Tap hint for linked banners
+                if (banner.linkType != BannerLinkType.none) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.4)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Tap to explore',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.95),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(
+                          Icons.arrow_forward_rounded,
+                          size: 12,
+                          color: Colors.white.withValues(alpha: 0.95),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BannerSkeleton extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 160,
+      decoration: BoxDecoration(
+        color: context.col.surfaceElevated,
+        borderRadius: BorderRadius.circular(16),
       ),
     );
   }

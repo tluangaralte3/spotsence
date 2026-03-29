@@ -54,6 +54,9 @@ dependencies:
   flutter_secure_storage: ^10.0.0
 
   # UI
+  carousel_slider: ^5.0.0
+  smooth_page_indicator: ^1.2.0+3
+  iconsax: ^0.0.8
   cupertino_icons: ^1.0.8
   google_fonts: ^8.0.2
   cached_network_image: ^3.4.1

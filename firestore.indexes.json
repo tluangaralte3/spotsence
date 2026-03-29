@@ -1,6 +1,14 @@
 {
   "indexes": [
     {
+      "collectionGroup": "home_banners",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "isActive", "order": "ASCENDING" },
+        { "fieldPath": "order", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "bucketLists",
       "queryScope": "COLLECTION",
       "fields": [
@@ -14,41 +22,6 @@
       "fields": [
         { "fieldPath": "visibility", "order": "ASCENDING" },
         { "fieldPath": "createdAt", "order": "DESCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "spots",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "averageRating", "order": "DESCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "cafes",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "rating", "order": "DESCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "restaurants",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "rating", "order": "DESCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "accommodations",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "rating", "order": "DESCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "homestays",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "rating", "order": "DESCENDING" }
       ]
     }
   ],

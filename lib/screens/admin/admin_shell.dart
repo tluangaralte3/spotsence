@@ -17,6 +17,7 @@ import 'users/admin_users_screen.dart';
 import 'analytics/admin_analytics_screen.dart';
 import 'ventures/admin_ventures_screen.dart';
 import 'moderation/admin_moderation_screen.dart';
+import 'banners/admin_banners_screen.dart';
 import 'settings/admin_settings_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -66,6 +67,11 @@ const _navItems = [
     activeIcon: Icons.shield,
   ),
   _AdminNavItem(
+    label: 'Banners',
+    icon: Icons.image_outlined,
+    activeIcon: Icons.image,
+  ),
+  _AdminNavItem(
     label: 'Settings',
     icon: Icons.settings_outlined,
     activeIcon: Icons.settings,
@@ -96,6 +102,7 @@ class AdminShell extends ConsumerWidget {
     AdminAnalyticsScreen(),
     AdminVenturesScreen(),
     AdminModerationScreen(),
+    AdminBannersScreen(),
     AdminSettingsScreen(),
   ];
 

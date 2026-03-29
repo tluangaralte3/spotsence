@@ -292,5 +292,23 @@ service cloud.firestore {
         allow update, delete: if isAuth() && request.auth.uid == resource.data.userId;
       }
     }
+    // ── Home Banners ─────────────────────────────────────────────────────────
+
+    match /home_banners/{bannerId} {
+      // Any user (even unauthenticated) can read active banners for the home screen
+      allow read: if true;
+      // Only super admins can create / update / delete banners
+      allow write: if isSuperAdmin();
+    }
+
+    // ── App Config (used for section visibility flags etc.) ──────────────────
+
+    match /app_config/{docId} {
+      // Any user can read config (needed to hide/show home sections)
+      allow read: if true;
+      // Only super admins can write config
+      allow write: if isSuperAdmin();
+    }
+
   }
 }

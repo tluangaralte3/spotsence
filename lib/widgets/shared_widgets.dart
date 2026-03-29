@@ -142,14 +142,18 @@ class CategoryChip extends StatelessWidget {
 
 /// App-wide empty state widget.
 class EmptyState extends StatelessWidget {
-  final String emoji;
+  final String? emoji;
+  final IconData? icon;
+  final Color? iconColor;
   final String title;
   final String? subtitle;
   final Widget? action;
 
   const EmptyState({
     super.key,
-    required this.emoji,
+    this.emoji,
+    this.icon,
+    this.iconColor,
     required this.title,
     this.subtitle,
     this.action,
@@ -163,7 +167,10 @@ class EmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(emoji, style: const TextStyle(fontSize: 56)),
+            if (icon != null)
+              Icon(icon!, size: 56, color: iconColor ?? context.col.textMuted)
+            else if (emoji != null)
+              Text(emoji!, style: const TextStyle(fontSize: 56)),
             const SizedBox(height: 16),
             Text(
               title,

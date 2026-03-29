@@ -400,13 +400,11 @@ class _PrimaryButton extends StatelessWidget {
   final String label;
   final IconData icon;
   final VoidCallback? onTap;
-  final Color? color;
 
   const _PrimaryButton({
     required this.label,
     required this.icon,
     this.onTap,
-    this.color,
   });
 
   @override
@@ -415,7 +413,7 @@ class _PrimaryButton extends StatelessWidget {
     child: ElevatedButton.icon(
       onPressed: onTap,
       style: ElevatedButton.styleFrom(
-        backgroundColor: color ?? AppColors.primary,
+        backgroundColor: AppColors.primary,
         foregroundColor: context.col.bg,
         padding: const EdgeInsets.symmetric(vertical: 14),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -429,13 +427,6 @@ class _PrimaryButton extends StatelessWidget {
 Future<void> _launchPhone(String phone) async {
   final uri = Uri(scheme: 'tel', path: phone);
   if (await canLaunchUrl(uri)) await launchUrl(uri);
-}
-
-Future<void> _launchUrl(String url) async {
-  final uri = Uri.tryParse(url);
-  if (uri != null && await canLaunchUrl(uri)) {
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
-  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
