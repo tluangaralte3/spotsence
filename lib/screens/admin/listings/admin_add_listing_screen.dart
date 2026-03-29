@@ -87,6 +87,48 @@ class _AdminAddListingScreenState extends ConsumerState<AdminAddListingScreen> {
   bool get _isRestaurants => widget.collection == 'restaurants';
   bool get _isAccommodations =>
       widget.collection == 'accommodations' || widget.collection == 'homestays';
+  bool get _isShopping => widget.collection == 'shoppingAreas';
+  bool get _isCafe => widget.collection == 'cafes';
+
+  // ── Cafe-specific fields ─────────────────────────────────────────────────
+  final _phoneCafeCtrl = TextEditingController();
+  final _openingHoursCafeCtrl = TextEditingController();
+  final _specialtiesCafeCtrl = TextEditingController(); // comma-separated
+  final _latCafeCtrl = TextEditingController();
+  final _lngCafeCtrl = TextEditingController();
+  bool _cafeHasParking = false;
+  bool _cafeHasWifi = false;
+  bool _cafeIsSundayOpen = false;
+  bool _cafeIsVerified = false;
+  String _cafePriceRange = 'Low';
+  // Cafe logo (imageUrl) — separate from menu images (images array)
+  String? _cafeExistingLogoUrl;
+  XFile? _newCafeLogoImage;
+  bool _uploadingCafeLogo = false;
+
+  // ── Shopping-specific fields ─────────────────────────────────────────────
+  final _phoneShopCtrl = TextEditingController();
+  final _openingHoursShopCtrl = TextEditingController();
+  final _productsShopCtrl = TextEditingController(); // comma-separated
+  final _specialtiesShopCtrl = TextEditingController(); // comma-separated
+  final _latShopCtrl = TextEditingController();
+  final _lngShopCtrl = TextEditingController();
+  final _districtShopCtrl = TextEditingController();
+  bool _shopHasDelivery = false;
+  bool _shopHasParking = false;
+  bool _shopAcceptsCards = false;
+  bool _shopIsVerified = false;
+  bool _shopIsPopular = false;
+  String _shopType = 'Mall';
+  String _shopPriceRange = 'Medium';
+  static const _shopTypes = [
+    'Mall',
+    'Market',
+    'Store',
+    'Boutique',
+    'Supermarket',
+    'Other',
+  ];
 
   // ── Accommodations-specific fields ──────────────────────────────────────
   final _phoneAccCtrl = TextEditingController();
@@ -125,8 +167,8 @@ class _AdminAddListingScreenState extends ConsumerState<AdminAddListingScreen> {
   bool _hasParking = false;
   bool _hasReservation = false;
   bool _isVerified = false;
-  String _priceRange = r'$';
-  static const _priceRanges = [r'$', r'$$', r'$$$', r'$$$$'];
+  String _priceRange = 'Low';
+  static const _priceRanges = ['Low', 'Medium', 'High'];
 
   // ── Spots-specific fields ───────────────────────────────────────────────
   final _locationAddressCtrl = TextEditingController();
@@ -288,8 +330,8 @@ class _AdminAddListingScreenState extends ConsumerState<AdminAddListingScreen> {
           _hasReservation = d['hasReservation'] == true;
           _isVerified = d['isVerified'] == true;
           // priceRange
-          final pr = d['priceRange']?.toString() ?? r'$';
-          _priceRange = _priceRanges.contains(pr) ? pr : r'$';
+          final pr = d['priceRange']?.toString() ?? 'Low';
+          _priceRange = _priceRanges.contains(pr) ? pr : 'Low';
           _priceRangeCtrl.text = pr;
           // cuisineTypes: List or comma-separated string
           final rawCuisine = d['cuisineTypes'] ?? d['cuisine'];
@@ -368,6 +410,69 @@ class _AdminAddListingScreenState extends ConsumerState<AdminAddListingScreen> {
               imgList.whereType<String>().where((u) => u.isNotEmpty),
             );
           }
+        } else if (_isCafe) {
+          // Cafe fields
+          _phoneCafeCtrl.text = d['phone']?.toString() ?? '';
+          _openingHoursCafeCtrl.text = d['openingHours']?.toString() ?? '';
+          _latCafeCtrl.text = d['latitude']?.toString() ?? '';
+          _lngCafeCtrl.text = d['longitude']?.toString() ?? '';
+          _cafeHasParking = d['hasParking'] == true;
+          _cafeHasWifi = d['hasWifi'] == true;
+          _cafeIsSundayOpen = d['isSundayOpen'] == true;
+          _cafeIsVerified = d['isVerified'] == true;
+          final pr = d['priceRange']?.toString() ?? 'Low';
+          _cafePriceRange =
+              const ['Low', 'Medium', 'High'].contains(pr) ? pr : 'Low';
+          final rawSpec = d['specialties'];
+          if (rawSpec is List) {
+            _specialtiesCafeCtrl.text = rawSpec.join(', ');
+          } else if (rawSpec is String) {
+            _specialtiesCafeCtrl.text = rawSpec;
+          }
+          // Logo (imageUrl) — single string
+          final logoUrl = d['imageUrl']?.toString() ?? '';
+          if (logoUrl.isNotEmpty) _cafeExistingLogoUrl = logoUrl;
+          // Menu images (images) — array
+          final cafeImgList = d['images'];
+          if (cafeImgList is List) {
+            _existingImageUrls.addAll(
+              cafeImgList.whereType<String>().where((u) => u.isNotEmpty),
+            );
+          }
+        } else if (_isShopping) {
+          // Shopping fields
+          _phoneShopCtrl.text = d['phone']?.toString() ?? '';
+          _openingHoursShopCtrl.text = d['openingHours']?.toString() ?? '';
+          _districtShopCtrl.text = d['district']?.toString() ?? '';
+          _latShopCtrl.text = d['latitude']?.toString() ?? '';
+          _lngShopCtrl.text = d['longitude']?.toString() ?? '';
+          _shopHasDelivery = d['hasDelivery'] == true;
+          _shopHasParking = d['hasParking'] == true;
+          _shopAcceptsCards = d['acceptsCards'] == true;
+          _shopIsVerified = d['isVerified'] == true;
+          _shopIsPopular = d['isPopular'] == true;
+          final st = d['type']?.toString() ?? 'Mall';
+          _shopType = _shopTypes.contains(st) ? st : 'Mall';
+          final pr = d['priceRange']?.toString() ?? 'Medium';
+          _shopPriceRange = const ['Low', 'Medium', 'High'].contains(pr) ? pr : 'Medium';
+          final rawProd = d['products'];
+          if (rawProd is List) {
+            _productsShopCtrl.text = rawProd.join(', ');
+          } else if (rawProd is String) {
+            _productsShopCtrl.text = rawProd;
+          }
+          final rawSpec = d['specialties'];
+          if (rawSpec is List) {
+            _specialtiesShopCtrl.text = rawSpec.join(', ');
+          } else if (rawSpec is String) {
+            _specialtiesShopCtrl.text = rawSpec;
+          }
+          final imgList = d['images'];
+          if (imgList is List) {
+            _existingImageUrls.addAll(
+              imgList.whereType<String>().where((u) => u.isNotEmpty),
+            );
+          }
         } else {
           // Other collections use 'images'
           final raw = d['images'];
@@ -404,9 +509,9 @@ class _AdminAddListingScreenState extends ConsumerState<AdminAddListingScreen> {
     'restaurants' => [], // dedicated form
     'accommodations' ||
     'homestays' => [], // dedicated form (Accommodations tab)
-    'cafes' => ['cuisineTypes', 'priceRange', 'openingHours'],
+    'cafes' => [], // dedicated form
     'adventureSpots' => ['difficulty', 'duration', 'equipment'],
-    'shoppingAreas' => ['category', 'openingHours', 'paymentMethods'],
+    'shoppingAreas' => [], // dedicated form
     'events' || 'spots' => [], // dedicated widgets
     'tour_packages' => ['duration', 'basePrice', 'difficulty', 'category'],
     _ => ['district', 'category'],
@@ -470,8 +575,34 @@ class _AdminAddListingScreenState extends ConsumerState<AdminAddListingScreen> {
     _latAccCtrl.dispose();
     _lngAccCtrl.dispose();
     _districtAccCtrl.dispose();
+    // shopping
+    _phoneShopCtrl.dispose();
+    _openingHoursShopCtrl.dispose();
+    _productsShopCtrl.dispose();
+    _specialtiesShopCtrl.dispose();
+    _latShopCtrl.dispose();
+    _lngShopCtrl.dispose();
+    _districtShopCtrl.dispose();
+    // cafe
+    _phoneCafeCtrl.dispose();
+    _openingHoursCafeCtrl.dispose();
+    _specialtiesCafeCtrl.dispose();
+    _latCafeCtrl.dispose();
+    _lngCafeCtrl.dispose();
     for (final c in _extraControllers.values) c.dispose();
     super.dispose();
+  }
+
+  /// Picks a single logo image for cafes.
+  Future<void> _pickCafeLogo() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 800,
+      imageQuality: 90,
+    );
+    if (picked == null) return;
+    setState(() => _newCafeLogoImage = picked);
   }
 
   /// Picks one or more images from the gallery.
@@ -529,6 +660,43 @@ class _AdminAddListingScreenState extends ConsumerState<AdminAddListingScreen> {
       if (mounted) setState(() => _uploadingImages = false);
     }
     return urls;
+  }
+
+  /// Uploads the cafe logo image and returns its download URL, or returns
+  /// the existing logo URL if no new image was picked.
+  Future<String> _uploadCafeLogo() async {
+    if (_newCafeLogoImage == null) return _cafeExistingLogoUrl ?? '';
+    setState(() => _uploadingCafeLogo = true);
+    try {
+      final xFile = _newCafeLogoImage!;
+      final rawExt = xFile.path.split('.').last.toLowerCase();
+      final ext = (rawExt == 'heic' || rawExt == 'heif') ? 'jpg' : rawExt;
+      final mimeType = ext == 'png' ? 'image/png' : 'image/jpeg';
+      final name = 'cafes_logo_${DateTime.now().millisecondsSinceEpoch}.$ext';
+      final storageRef = FirebaseStorage.instance.ref().child(
+        'admin_listings/cafes/$name',
+      );
+      final bytes = await xFile.readAsBytes();
+      await storageRef.putData(
+        bytes,
+        SettableMetadata(contentType: mimeType),
+      );
+      return await storageRef.getDownloadURL();
+    } catch (e) {
+      debugPrint('Logo upload error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Logo upload failed: $e'),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      return _cafeExistingLogoUrl ?? '';
+    } finally {
+      if (mounted) setState(() => _uploadingCafeLogo = false);
+    }
   }
 
   Future<void> _submit() async {
@@ -745,6 +913,89 @@ class _AdminAddListingScreenState extends ConsumerState<AdminAddListingScreen> {
         'averageRating': 0.0,
         'ratingsCount': 0,
       };
+    } else if (_isCafe) {
+      // Upload logo and menu images independently
+      final cafeLogoUrl = await _uploadCafeLogo();
+      final specialtiesList = _specialtiesCafeCtrl.text
+          .split(',')
+          .map((s) => s.trim())
+          .where((s) => s.isNotEmpty)
+          .toList();
+      data = <String, dynamic>{
+        'name': _nameCtrl.text.trim(),
+        'description': _descCtrl.text.trim(),
+        'location': _locationCtrl.text.trim(),
+        'address': _locationCtrl.text.trim(),
+        'imageUrl': cafeLogoUrl, // cafe logo — single string
+        'images': allImages,     // menu item photos — array
+        'tags': tags,
+        'priceRange': _cafePriceRange,
+        'hasParking': _cafeHasParking,
+        'hasWifi': _cafeHasWifi,
+        'isSundayOpen': _cafeIsSundayOpen,
+        'isVerified': _cafeIsVerified,
+        if (specialtiesList.isNotEmpty) 'specialties': specialtiesList,
+        if (_openingHoursCafeCtrl.text.trim().isNotEmpty)
+          'openingHours': _openingHoursCafeCtrl.text.trim(),
+        if (_phoneCafeCtrl.text.trim().isNotEmpty)
+          'phone': _phoneCafeCtrl.text.trim(),
+        if (_latCafeCtrl.text.trim().isNotEmpty)
+          'latitude': double.tryParse(_latCafeCtrl.text.trim()),
+        if (_lngCafeCtrl.text.trim().isNotEmpty)
+          'longitude': double.tryParse(_lngCafeCtrl.text.trim()),
+        'rating': 0,
+        'views': 0,
+        'loves': 0,
+        'bookmarks': 0,
+        'shares': 0,
+        if (!_isEditMode) 'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
+    } else if (_isShopping) {
+      final productsList = _productsShopCtrl.text
+          .split(',')
+          .map((s) => s.trim())
+          .where((s) => s.isNotEmpty)
+          .toList();
+      final specialtiesList = _specialtiesShopCtrl.text
+          .split(',')
+          .map((s) => s.trim())
+          .where((s) => s.isNotEmpty)
+          .toList();
+      data = <String, dynamic>{
+        'name': _nameCtrl.text.trim(),
+        'description': _descCtrl.text.trim(),
+        'location': _locationCtrl.text.trim(),
+        'address': _locationCtrl.text.trim(),
+        'images': allImages,
+        'tags': tags,
+        'type': _shopType,
+        'priceRange': _shopPriceRange,
+        'hasDelivery': _shopHasDelivery,
+        'hasParking': _shopHasParking,
+        'acceptsCards': _shopAcceptsCards,
+        'isVerified': _shopIsVerified,
+        'isPopular': _shopIsPopular,
+        if (productsList.isNotEmpty) 'products': productsList,
+        if (specialtiesList.isNotEmpty) 'specialties': specialtiesList,
+        if (_openingHoursShopCtrl.text.trim().isNotEmpty)
+          'openingHours': _openingHoursShopCtrl.text.trim(),
+        if (_phoneShopCtrl.text.trim().isNotEmpty)
+          'phone': _phoneShopCtrl.text.trim(),
+        if (_districtShopCtrl.text.trim().isNotEmpty)
+          'district': _districtShopCtrl.text.trim(),
+        if (_latShopCtrl.text.trim().isNotEmpty)
+          'latitude': double.tryParse(_latShopCtrl.text.trim()),
+        if (_lngShopCtrl.text.trim().isNotEmpty)
+          'longitude': double.tryParse(_lngShopCtrl.text.trim()),
+        'rating': 0,
+        'views': 0,
+        'loves': 0,
+        'bookmarks': 0,
+        'shares': 0,
+        if (!_isEditMode) 'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
     } else {
       // Other collections use 'images'
       data = <String, dynamic>{
@@ -885,7 +1136,7 @@ class _AdminAddListingScreenState extends ConsumerState<AdminAddListingScreen> {
                         ),
                       ],
                       const SizedBox(height: 16),
-                      _FieldLabel('Photos / Images'),
+                      _FieldLabel(_isCafe ? 'Menu Item Photos' : 'Photos / Images'),
                       _ImagePickerField(
                         existingUrls: _existingImageUrls,
                         newImages: _newImages,
@@ -1657,11 +1908,338 @@ class _AdminAddListingScreenState extends ConsumerState<AdminAddListingScreen> {
                     ),
                   ],
 
+                  // ── Cafe-specific cards ───────────────────────────────────
+                  if (_isCafe) ...[
+                    const SizedBox(height: 16),
+                    _FieldCard(
+                      children: [
+                        _FieldLabel('Cafe Details'),
+                        const SizedBox(height: 8),
+
+                        // Cafe logo — single image (imageUrl)
+                        _FieldLabel('Cafe Logo'),
+                        const SizedBox(height: 6),
+                        _CafeLogoPicker(
+                          existingUrl: _cafeExistingLogoUrl,
+                          newImage: _newCafeLogoImage,
+                          uploading: _uploadingCafeLogo,
+                          onPick: _pickCafeLogo,
+                          onRemove: () => setState(() {
+                            _cafeExistingLogoUrl = null;
+                            _newCafeLogoImage = null;
+                          }),
+                        ),
+                        const SizedBox(height: 16),
+
+                        _FieldLabel('Price Range'),
+                        _DropdownField<String>(
+                          value: _cafePriceRange,
+                          items: const ['Low', 'Medium', 'High'],
+                          label: (v) => v,
+                          onChanged: (v) => setState(
+                              () => _cafePriceRange = v ?? _cafePriceRange),
+                        ),
+                        const SizedBox(height: 12),
+
+                        _FieldLabel('Opening Hours'),
+                        _TextField(
+                          controller: _openingHoursCafeCtrl,
+                          hint: 'e.g. Mon – Sat 10:00AM – 11:00PM',
+                        ),
+                        const SizedBox(height: 12),
+
+                        _FieldLabel('Phone Number'),
+                        _TextField(
+                          controller: _phoneCafeCtrl,
+                          hint: 'e.g. +91 9876543210',
+                        ),
+                        const SizedBox(height: 12),
+
+                        _FieldLabel('Specialties (comma-separated)'),
+                        _TextField(
+                          controller: _specialtiesCafeCtrl,
+                          hint: 'e.g. Coffee, Espresso, Cold Brew',
+                        ),
+                        const SizedBox(height: 12),
+
+                        // Feature toggles
+                        SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text(
+                            'Has Wi-Fi',
+                            style: TextStyle(
+                              color: context.col.textPrimary,
+                              fontSize: 14,
+                            ),
+                          ),
+                          value: _cafeHasWifi,
+                          activeColor: AppColors.primary,
+                          onChanged: (v) => setState(() => _cafeHasWifi = v),
+                        ),
+                        SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text(
+                            'Has Parking',
+                            style: TextStyle(
+                              color: context.col.textPrimary,
+                              fontSize: 14,
+                            ),
+                          ),
+                          value: _cafeHasParking,
+                          activeColor: AppColors.primary,
+                          onChanged: (v) => setState(() => _cafeHasParking = v),
+                        ),
+                        SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text(
+                            'Open on Sunday',
+                            style: TextStyle(
+                              color: context.col.textPrimary,
+                              fontSize: 14,
+                            ),
+                          ),
+                          value: _cafeIsSundayOpen,
+                          activeColor: AppColors.primary,
+                          onChanged: (v) =>
+                              setState(() => _cafeIsSundayOpen = v),
+                        ),
+                        SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text(
+                            'Is Verified',
+                            style: TextStyle(
+                              color: context.col.textPrimary,
+                              fontSize: 14,
+                            ),
+                          ),
+                          value: _cafeIsVerified,
+                          activeColor: AppColors.primary,
+                          onChanged: (v) =>
+                              setState(() => _cafeIsVerified = v),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 16),
+                    // Card 2: Coordinates
+                    _FieldCard(
+                      children: [
+                        _FieldLabel('Coordinates'),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _FieldLabel('Latitude'),
+                                  _TextField(
+                                    controller: _latCafeCtrl,
+                                    hint: 'e.g. 23.72344',
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _FieldLabel('Longitude'),
+                                  _TextField(
+                                    controller: _lngCafeCtrl,
+                                    hint: 'e.g. 92.7344',
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
+
+                  // ── Shopping-specific cards ───────────────────────────────
+                  if (_isShopping) ...[
+                    const SizedBox(height: 16),
+                    // Card 1: Core details
+                    _FieldCard(
+                      children: [
+                        _FieldLabel('Shopping Details'),
+                        const SizedBox(height: 8),
+
+                        _FieldLabel('Type'),
+                        _DropdownField<String>(
+                          value: _shopType,
+                          items: _shopTypes,
+                          label: (v) => v,
+                          onChanged: (v) =>
+                              setState(() => _shopType = v ?? _shopType),
+                        ),
+                        const SizedBox(height: 12),
+
+                        _FieldLabel('Price Range'),
+                        _DropdownField<String>(
+                          value: _shopPriceRange,
+                          items: const ['Low', 'Medium', 'High'],
+                          label: (v) => v,
+                          onChanged: (v) =>
+                              setState(() => _shopPriceRange = v ?? _shopPriceRange),
+                        ),
+                        const SizedBox(height: 12),
+
+                        _FieldLabel('Opening Hours'),
+                        _TextField(
+                          controller: _openingHoursShopCtrl,
+                          hint: 'e.g. 10:00AM – 5:00PM',
+                        ),
+                        const SizedBox(height: 12),
+
+                        _FieldLabel('Phone Number'),
+                        _TextField(
+                          controller: _phoneShopCtrl,
+                          hint: 'e.g. +91 9876543210',
+                        ),
+                        const SizedBox(height: 12),
+
+                        _FieldLabel('District'),
+                        _TextField(
+                          controller: _districtShopCtrl,
+                          hint: 'e.g. Aizawl',
+                        ),
+                        const SizedBox(height: 12),
+
+                        _FieldLabel('Products (comma-separated)'),
+                        _TextField(
+                          controller: _productsShopCtrl,
+                          hint: 'e.g. Clothing, Accessories, Electronics',
+                        ),
+                        const SizedBox(height: 12),
+
+                        _FieldLabel('Specialties (comma-separated)'),
+                        _TextField(
+                          controller: _specialtiesShopCtrl,
+                          hint: 'e.g. Traditional wear, Handloom',
+                        ),
+                        const SizedBox(height: 12),
+
+                        // Feature toggles
+                        SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text(
+                            'Has Delivery',
+                            style: TextStyle(
+                              color: context.col.textPrimary,
+                              fontSize: 14,
+                            ),
+                          ),
+                          value: _shopHasDelivery,
+                          activeColor: AppColors.primary,
+                          onChanged: (v) => setState(() => _shopHasDelivery = v),
+                        ),
+                        SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text(
+                            'Has Parking',
+                            style: TextStyle(
+                              color: context.col.textPrimary,
+                              fontSize: 14,
+                            ),
+                          ),
+                          value: _shopHasParking,
+                          activeColor: AppColors.primary,
+                          onChanged: (v) => setState(() => _shopHasParking = v),
+                        ),
+                        SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text(
+                            'Accepts Cards',
+                            style: TextStyle(
+                              color: context.col.textPrimary,
+                              fontSize: 14,
+                            ),
+                          ),
+                          value: _shopAcceptsCards,
+                          activeColor: AppColors.primary,
+                          onChanged: (v) =>
+                              setState(() => _shopAcceptsCards = v),
+                        ),
+                        SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text(
+                            'Is Popular',
+                            style: TextStyle(
+                              color: context.col.textPrimary,
+                              fontSize: 14,
+                            ),
+                          ),
+                          value: _shopIsPopular,
+                          activeColor: AppColors.primary,
+                          onChanged: (v) => setState(() => _shopIsPopular = v),
+                        ),
+                        SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text(
+                            'Is Verified',
+                            style: TextStyle(
+                              color: context.col.textPrimary,
+                              fontSize: 14,
+                            ),
+                          ),
+                          value: _shopIsVerified,
+                          activeColor: AppColors.primary,
+                          onChanged: (v) =>
+                              setState(() => _shopIsVerified = v),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 16),
+                    // Card 2: Coordinates
+                    _FieldCard(
+                      children: [
+                        _FieldLabel('Coordinates'),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _FieldLabel('Latitude'),
+                                  _TextField(
+                                    controller: _latShopCtrl,
+                                    hint: 'e.g. 23.42344',
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _FieldLabel('Longitude'),
+                                  _TextField(
+                                    controller: _lngShopCtrl,
+                                    hint: 'e.g. 93.3344',
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
+
                   // ── Generic extra-fields card ────────────────────────────
                   if (!_isEvents &&
                       !_isSpots &&
                       !_isRestaurants &&
                       !_isAccommodations &&
+                      !_isCafe &&
+                      !_isShopping &&
                       _extraKeys.isNotEmpty) ...[
                     const SizedBox(height: 16),
                     _FieldCard(
@@ -2201,6 +2779,114 @@ class _DropdownField<T> extends StatelessWidget {
             ),
           )
           .toList(),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Cafe logo picker — single image (imageUrl)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _CafeLogoPicker extends StatelessWidget {
+  final String? existingUrl;
+  final XFile? newImage;
+  final bool uploading;
+  final VoidCallback onPick;
+  final VoidCallback onRemove;
+
+  const _CafeLogoPicker({
+    required this.existingUrl,
+    required this.newImage,
+    required this.uploading,
+    required this.onPick,
+    required this.onRemove,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final col = context.col;
+    final hasImage = newImage != null || (existingUrl?.isNotEmpty ?? false);
+
+    return Row(
+      children: [
+        // Thumbnail / placeholder
+        GestureDetector(
+          onTap: onPick,
+          child: Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: col.surfaceElevated,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: col.border),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(11),
+              child: hasImage
+                  ? (newImage != null
+                      ? Image.network(
+                          newImage!.path,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Icon(
+                            Icons.broken_image_outlined,
+                            color: col.textMuted,
+                          ),
+                        )
+                      : Image.network(
+                          existingUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Icon(
+                            Icons.broken_image_outlined,
+                            color: col.textMuted,
+                          ),
+                        ))
+                  : Icon(
+                      Icons.add_photo_alternate_outlined,
+                      color: col.textMuted,
+                      size: 32,
+                    ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextButton.icon(
+              onPressed: uploading ? null : onPick,
+              icon: const Icon(Icons.photo_library_outlined,
+                  size: 16, color: AppColors.primary),
+              label: Text(
+                hasImage ? 'Change Logo' : 'Pick Logo',
+                style:
+                    const TextStyle(color: AppColors.primary, fontSize: 13),
+              ),
+            ),
+            if (hasImage)
+              TextButton.icon(
+                onPressed: onRemove,
+                icon: const Icon(Icons.delete_outline,
+                    size: 16, color: AppColors.error),
+                label: const Text(
+                  'Remove',
+                  style: TextStyle(color: AppColors.error, fontSize: 13),
+                ),
+              ),
+            if (uploading)
+              const Padding(
+                padding: EdgeInsets.only(left: 8),
+                child: SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ],
     );
   }
 }

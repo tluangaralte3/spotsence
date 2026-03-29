@@ -105,10 +105,10 @@ final allVentureRegistrationsProvider = StreamProvider<QuerySnapshot>((ref) {
 });
 
 /// All feedback from every ventures/{docId}/feedback sub-collection.
+/// Sorted client-side (newest first) to avoid requiring a composite index.
 final allVentureFeedbackProvider = StreamProvider<QuerySnapshot>((ref) {
   return FirebaseFirestore.instance
       .collectionGroup('feedback')
-      .orderBy('createdAt', descending: true)
       .snapshots();
 });
 
@@ -737,7 +737,18 @@ class _FeedbackTab extends ConsumerWidget {
       ),
       error: (e, _) => _ErrorState(message: e.toString()),
       data: (snap) {
-        if (snap.docs.isEmpty) {
+        // Sort newest first client-side (no composite index needed)
+        final docs = snap.docs.toList()
+          ..sort((a, b) {
+            final aTs = _safeMap(a.data())['createdAt'];
+            final bTs = _safeMap(b.data())['createdAt'];
+            if (aTs is Timestamp && bTs is Timestamp) {
+              return bTs.compareTo(aTs);
+            }
+            return 0;
+          });
+
+        if (docs.isEmpty) {
           return const _EmptyState(
             icon: Icons.rate_review_outlined,
             title: 'No feedback yet',
@@ -748,7 +759,7 @@ class _FeedbackTab extends ConsumerWidget {
 
         double totalRating = 0;
         int ratedCount = 0;
-        for (final doc in snap.docs) {
+        for (final doc in docs) {
           final r = _dbl(_safeMap(doc.data()), 'rating');
           if (r > 0) {
             totalRating += r;
@@ -756,10 +767,10 @@ class _FeedbackTab extends ConsumerWidget {
           }
         }
         final avgRating = ratedCount > 0 ? totalRating / ratedCount : 0.0;
-        final highRated = snap.docs
+        final highRated = docs
             .where((d) => _dbl(_safeMap(d.data()), 'rating') >= 4.5)
             .length;
-        final lowRated = snap.docs
+        final lowRated = docs
             .where((d) {
               final r = _dbl(_safeMap(d.data()), 'rating');
               return r > 0 && r < 3;
@@ -770,7 +781,7 @@ class _FeedbackTab extends ConsumerWidget {
           children: [
             _SummaryBanner(
               items: [
-                _SummaryItem('Total', '${snap.docs.length}', AppColors.primary),
+                _SummaryItem('Total', '${docs.length}', AppColors.primary),
                 _SummaryItem(
                     'Avg Rating', avgRating.toStringAsFixed(1), const Color(0xFFF59E0B)),
                 _SummaryItem('5 ★', '$highRated', const Color(0xFF22C55E)),
@@ -780,13 +791,13 @@ class _FeedbackTab extends ConsumerWidget {
             Expanded(
               child: ListView.separated(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
-                itemCount: snap.docs.length,
+                itemCount: docs.length,
                 separatorBuilder: (_, __) => const SizedBox(height: 10),
                 itemBuilder: (_, i) {
                   try {
-                    return _FeedbackCard(data: _safeMap(snap.docs[i].data()));
+                    return _FeedbackCard(data: _safeMap(docs[i].data()));
                   } catch (e) {
-                    return _ErrorCard('feedback', snap.docs[i].id, e);
+                    return _ErrorCard('feedback', docs[i].id, e);
                   }
                 },
               ),
@@ -814,6 +825,8 @@ class _FeedbackCard extends StatelessWidget {
     final comment = _str(data, ['comment', 'review', 'feedback']);
     final tierUsed = _str(data, ['tierName', 'selectedTier']);
     final createdAt = _formatDate(data['createdAt']);
+    final bookingId = data['bookingId'] as String? ?? '';
+    final isBookingReview = bookingId.isNotEmpty;
 
     final ratingColor = rating >= 4
         ? const Color(0xFF22C55E)
@@ -825,7 +838,11 @@ class _FeedbackCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: col.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: col.border),
+        border: Border.all(
+          color: isBookingReview
+              ? const Color(0xFFF59E0B).withValues(alpha: 0.35)
+              : col.border,
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
@@ -834,124 +851,176 @@ class _FeedbackCard extends StatelessWidget {
           ),
         ],
       ),
-      padding: const EdgeInsets.all(14),
+      clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Text(
-                    userName.isNotEmpty ? userName[0].toUpperCase() : '?',
-                    style: const TextStyle(
+          // ── Source strip (booking reviews only) ──────────────────
+          if (isBookingReview)
+            Container(
+              width: double.infinity,
+              color: const Color(0xFFF59E0B).withValues(alpha: 0.10),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+              child: Row(
+                children: [
+                  const Icon(Icons.bookmark_rounded,
+                      size: 11, color: Color(0xFFF59E0B)),
+                  const SizedBox(width: 5),
+                  const Text(
+                    'Booking Review',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
                       color: Color(0xFFF59E0B),
-                      fontWeight: FontWeight.w800,
-                      fontSize: 16,
+                      letterSpacing: 0.3,
                     ),
                   ),
-                ),
+                  const Spacer(),
+                  Text(
+                    'Ref: ${bookingId.length > 8 ? bookingId.substring(0, 8).toUpperCase() : bookingId.toUpperCase()}',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: col.textMuted,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
+            ),
+
+          // ── Card body ─────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // User avatar + name + venture + rating badge
+                Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      userName,
-                      style: TextStyle(
-                        color: col.textPrimary,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 14,
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
                       ),
-                    ),
-                    Text(
-                      ventureName,
-                      style: TextStyle(color: col.textSecondary, fontSize: 12),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-              if (rating > 0)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: ratingColor.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                        color: ratingColor.withValues(alpha: 0.3)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.star_rounded, color: ratingColor, size: 14),
-                      const SizedBox(width: 3),
-                      Text(
-                        rating.toStringAsFixed(1),
-                        style: TextStyle(
-                          color: ratingColor,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 12,
+                      child: Center(
+                        child: Text(
+                          userName.isNotEmpty
+                              ? userName[0].toUpperCase()
+                              : '?',
+                          style: const TextStyle(
+                            color: Color(0xFFF59E0B),
+                            fontWeight: FontWeight.w800,
+                            fontSize: 16,
+                          ),
                         ),
                       ),
-                    ],
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            userName,
+                            style: TextStyle(
+                              color: col.textPrimary,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 14,
+                            ),
+                          ),
+                          Text(
+                            ventureName,
+                            style: TextStyle(
+                                color: col.textSecondary, fontSize: 12),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (rating > 0)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: ratingColor.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                              color: ratingColor.withValues(alpha: 0.3)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.star_rounded,
+                                color: ratingColor, size: 14),
+                            const SizedBox(width: 3),
+                            Text(
+                              rating.toStringAsFixed(1),
+                              style: TextStyle(
+                                color: ratingColor,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+
+                // Star row
+                if (rating > 0) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    children: List.generate(5, (i) {
+                      return Icon(
+                        i < rating.round()
+                            ? Icons.star_rounded
+                            : Icons.star_outline_rounded,
+                        color: const Color(0xFFF59E0B),
+                        size: 16,
+                      );
+                    }),
                   ),
+                ],
+
+                // Comment
+                if (comment.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    comment,
+                    style: TextStyle(
+                      color: col.textSecondary,
+                      fontSize: 13,
+                      height: 1.5,
+                    ),
+                  ),
+                ],
+
+                const SizedBox(height: 8),
+
+                // Tier + date
+                Row(
+                  children: [
+                    if (tierUsed.isNotEmpty) ...[
+                      _MetaChip(Icons.layers_outlined, tierUsed),
+                      const Spacer(),
+                    ] else
+                      const Spacer(),
+                    if (createdAt.isNotEmpty)
+                      Text(
+                        createdAt,
+                        style:
+                            TextStyle(color: col.textMuted, fontSize: 11),
+                      ),
+                  ],
                 ),
-            ],
-          ),
-
-          if (rating > 0) ...[
-            const SizedBox(height: 8),
-            Row(
-              children: List.generate(5, (i) {
-                return Icon(
-                  i < rating.round()
-                      ? Icons.star_rounded
-                      : Icons.star_outline_rounded,
-                  color: const Color(0xFFF59E0B),
-                  size: 16,
-                );
-              }),
+              ],
             ),
-          ],
-
-          if (comment.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Text(
-              comment,
-              style: TextStyle(
-                color: col.textSecondary,
-                fontSize: 13,
-                height: 1.5,
-              ),
-            ),
-          ],
-
-          const SizedBox(height: 8),
-
-          Row(
-            children: [
-              if (tierUsed.isNotEmpty) ...[
-                _MetaChip(Icons.layers_outlined, tierUsed),
-                const Spacer(),
-              ] else
-                const Spacer(),
-              if (createdAt.isNotEmpty)
-                Text(
-                  createdAt,
-                  style: TextStyle(color: col.textMuted, fontSize: 11),
-                ),
-            ],
           ),
         ],
       ),

@@ -68,6 +68,7 @@ class VentureBooking {
 
   final BookingStatus status;
   final String? adminNote;
+  final bool hasFeedback;
 
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -95,6 +96,7 @@ class VentureBooking {
     required this.grandTotal,
     required this.status,
     this.adminNote,
+    this.hasFeedback = false,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -139,6 +141,7 @@ class VentureBooking {
       grandTotal: (d['grandTotal'] as num?)?.toDouble() ?? 0,
       status: BookingStatusX.parse(d['status'] as String? ?? ''),
       adminNote: d['adminNote'] as String?,
+      hasFeedback: d['hasFeedback'] as bool? ?? false,
       createdAt: parseTs(d['createdAt']),
       updatedAt: parseTs(d['updatedAt']),
     );
@@ -169,5 +172,6 @@ class VentureBooking {
         'grandTotal': grandTotal,
         'status': status.name,
         if (adminNote != null) 'adminNote': adminNote,
+        'hasFeedback': hasFeedback,
       };
 }

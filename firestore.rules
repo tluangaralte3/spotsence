@@ -271,14 +271,24 @@ service cloud.firestore {
       }
     }
 
+    // ── Feedback collectionGroup (required for admin collectionGroup query) ──
+
+    match /{path=**}/feedback/{fbId} {
+      allow read: if true;
+    }
+
     // ── Bookings (venture booking requests) ──────────────────────────────────
 
     match /bookings/{bookingId} {
       // Users can read and create their own bookings
       allow read: if isAuth() && (request.auth.uid == resource.data.userId || isSuperAdmin());
       allow create: if isAuth() && request.auth.uid == request.resource.data.userId;
-      // Only admin can update (status changes, adding notes)
-      allow update: if isSuperAdmin();
+      // Admin can update anything; users can only flip hasFeedback on their own booking
+      allow update: if isSuperAdmin()
+        || (isAuth()
+            && request.auth.uid == resource.data.userId
+            && request.resource.data.diff(resource.data).affectedKeys()
+                .hasOnly(['hasFeedback', 'updatedAt']));
       allow delete: if isSuperAdmin();
     }
 
