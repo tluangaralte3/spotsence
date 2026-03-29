@@ -1252,7 +1252,7 @@ class _TourVentureSection extends ConsumerWidget {
         // ── Card list ─────────────────────────────────────────────────
         venturesAsync.when(
           loading: () => SizedBox(
-            height: 272,
+            height: 320,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -1324,7 +1324,7 @@ class _TourVentureSection extends ConsumerWidget {
               );
             }
             return SizedBox(
-              height: 272,
+              height: 320,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -1348,16 +1348,17 @@ class _VentureCardShimmer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 230,
+      width: 250,
       decoration: BoxDecoration(
         color: context.col.surface,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: context.col.border),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            height: 110,
+            height: 130,
             decoration: BoxDecoration(
               color: context.col.surfaceElevated,
               borderRadius: const BorderRadius.vertical(
@@ -1370,13 +1371,25 @@ class _VentureCardShimmer extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(height: 14, width: 160, color: context.col.border),
+                Container(height: 10, width: 70, color: context.col.border),
+                const SizedBox(height: 6),
+                Container(height: 14, width: 180, color: context.col.border),
+                const SizedBox(height: 6),
+                Container(height: 11, width: 200, color: context.col.border),
+                const SizedBox(height: 4),
+                Container(height: 11, width: 160, color: context.col.border),
                 const SizedBox(height: 8),
-                Container(height: 11, width: 130, color: context.col.border),
+                Container(height: 10, width: 120, color: context.col.border),
                 const SizedBox(height: 8),
-                Container(height: 11, width: 110, color: context.col.border),
+                Row(
+                  children: [
+                    Container(height: 22, width: 60, decoration: BoxDecoration(color: context.col.border, borderRadius: BorderRadius.circular(20))),
+                    const SizedBox(width: 6),
+                    Container(height: 22, width: 60, decoration: BoxDecoration(color: context.col.border, borderRadius: BorderRadius.circular(20))),
+                  ],
+                ),
                 const SizedBox(height: 8),
-                Container(height: 15, width: 80, color: context.col.border),
+                Container(height: 16, width: 90, color: context.col.border),
               ],
             ),
           ),
@@ -1421,12 +1434,19 @@ class _VentureCard extends StatelessWidget {
     final diffColor = _difficultyColor(difficulty);
     final durationLabel = days == 1 ? '1 Day' : '$days Days';
 
+    final String location = data['location'] as String? ?? '';
+    final String district = data['district'] as String? ?? '';
+    final String locationText = [
+      if (location.isNotEmpty) location,
+      if (district.isNotEmpty) district,
+    ].join(', ');
+
     return GestureDetector(
       onTap: () {
         if (id.isNotEmpty) context.push(AppRoutes.ventureDetailPath(id));
       },
       child: Container(
-        width: 230,
+        width: 250,
         decoration: BoxDecoration(
           color: context.col.surface,
           borderRadius: BorderRadius.circular(18),
@@ -1450,7 +1470,7 @@ class _VentureCard extends StatelessWidget {
                     top: Radius.circular(18),
                   ),
                   child: SizedBox(
-                    height: 110,
+                    height: 130,
                     width: double.infinity,
                     child: imageUrl != null && imageUrl.isNotEmpty
                         ? CachedNetworkImage(
@@ -1489,60 +1509,93 @@ class _VentureCard extends StatelessWidget {
 
             // ── Content ──────────────────────────────────────────────
             Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Category label text
+                  if (cat.label.isNotEmpty)
+                    Text(
+                      cat.label.toUpperCase(),
+                      style: const TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primary,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  if (cat.label.isNotEmpty) const SizedBox(height: 4),
+
+                  // Title
                   Text(
                     title,
-                    maxLines: 1,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
                       color: context.col.textPrimary,
+                      height: 1.3,
                     ),
                   ),
-                  const SizedBox(height: 3),
-                  Text(
-                    tagline,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: context.col.textSecondary,
-                      height: 1.4,
+                  const SizedBox(height: 5),
+
+                  // Description / tagline
+                  if (tagline.isNotEmpty)
+                    Text(
+                      tagline,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: context.col.textSecondary,
+                        height: 1.4,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  // Price + difficulty
+                  if (tagline.isNotEmpty) const SizedBox(height: 6),
+
+                  // Location row
+                  if (locationText.isNotEmpty) ...
+                    [
+                      Row(
+                        children: [
+                          Icon(
+                            Iconsax.location,
+                            size: 11,
+                            color: context.col.textMuted,
+                          ),
+                          const SizedBox(width: 3),
+                          Expanded(
+                            child: Text(
+                              locationText,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: context.col.textMuted,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                    ],
+
+                  // Labels: difficulty + duration
                   Row(
                     children: [
-                      Text(
-                        price > 0 ? '₹${price.toStringAsFixed(0)}' : 'Free',
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w900,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                      Text(
-                        ' /person',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: context.col.textMuted,
-                        ),
-                      ),
-                      const Spacer(),
                       if (difficulty.isNotEmpty)
                         Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 7,
+                            horizontal: 8,
                             vertical: 3,
                           ),
                           decoration: BoxDecoration(
                             color: diffColor.withOpacity(0.12),
                             borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: diffColor.withOpacity(0.3),
+                            ),
                           ),
                           child: Text(
                             difficulty,
@@ -1551,6 +1604,75 @@ class _VentureCard extends StatelessWidget {
                               color: diffColor,
                               fontWeight: FontWeight.w600,
                             ),
+                          ),
+                        ),
+                      if (difficulty.isNotEmpty) const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: context.col.surfaceElevated,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: context.col.border),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Iconsax.clock,
+                              size: 10,
+                              color: context.col.textMuted,
+                            ),
+                            const SizedBox(width: 3),
+                            Text(
+                              durationLabel,
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: context.col.textSecondary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Price
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Starting from',
+                            style: TextStyle(
+                              fontSize: 9,
+                              color: context.col.textMuted,
+                            ),
+                          ),
+                          Text(
+                            price > 0
+                                ? '₹${price.toStringAsFixed(0)}'
+                                : 'Free',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w900,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (price > 0)
+                        Text(
+                          ' /person',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: context.col.textMuted,
                           ),
                         ),
                     ],

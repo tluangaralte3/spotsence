@@ -1,7 +1,10 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:iconsax/iconsax.dart';
+import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import '../../controllers/community_controller.dart';
 import '../../core/theme/app_theme.dart';
 import '../../services/firestore_leaderboard_service.dart';
@@ -34,10 +37,10 @@ class LeaderboardScreen extends ConsumerWidget {
               titlePadding: const EdgeInsets.only(left: 20, bottom: 16),
               title: Row(
                 children: [
-                  const Text('🏆', style: TextStyle(fontSize: 22)),
+                  const Icon(Iconsax.star_1, size: 22, color: AppColors.primary),
                   const SizedBox(width: 8),
                   Text(
-                    'Leaderboard',
+                    'Top Rated',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       color: context.col.textPrimary,
                       fontWeight: FontWeight.w800,
@@ -107,37 +110,51 @@ class _LeaderboardBody extends StatelessWidget {
     final restaurants = _cat('restaurant');
     final hotels = _cat('hotel');
     final homestays = _cat('homestay');
+    final shopping = _cat('shopping');
+    final events = _cat('event');
 
     final categories = [
       (
-        icon: '🏔️',
+        icon: Iconsax.map_1,
         label: 'Top Spots',
         color: const Color(0xFF4CAF50),
         entries: spots,
       ),
       (
-        icon: '☕',
+        icon: Iconsax.coffee,
         label: 'Top Cafés',
         color: const Color(0xFF8D6E63),
         entries: cafes,
       ),
       (
-        icon: '🍽️',
+        icon: Iconsax.reserve,
         label: 'Top Restaurants',
         color: const Color(0xFFEF5350),
         entries: restaurants,
       ),
       (
-        icon: '🏨',
+        icon: Iconsax.buildings,
         label: 'Top Hotels',
         color: AppColors.secondary,
         entries: hotels,
       ),
       (
-        icon: '🏠',
+        icon: Iconsax.home_2,
         label: 'Top Homestays',
         color: AppColors.warning,
         entries: homestays,
+      ),
+      (
+        icon: Iconsax.bag_2,
+        label: 'Top Shopping',
+        color: const Color(0xFF9C27B0),
+        entries: shopping,
+      ),
+      (
+        icon: Iconsax.calendar,
+        label: 'Top Events',
+        color: const Color(0xFF2196F3),
+        entries: events,
       ),
     ];
 
@@ -145,10 +162,10 @@ class _LeaderboardBody extends StatelessWidget {
 
     return SliverList(
       delegate: SliverChildListDelegate([
-        // ── Top-3 all-category podium ──────────────────────────────────
-        if (entries.length >= 3)
-          _TopThreePodium(
-            top: entries.take(3).toList(),
+        // ── Top-rated carousel (all categories, auto-slide) ─────────────
+        if (entries.isNotEmpty)
+          _TopRatedCarousel(
+            entries: entries,
           ).animate().fadeIn(duration: 400.ms),
 
         // ── Section header ─────────────────────────────────────────────
@@ -156,10 +173,10 @@ class _LeaderboardBody extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
           child: Row(
             children: [
-              const Text('🏖️', style: TextStyle(fontSize: 18)),
+              const Icon(Iconsax.award, size: 18, color: AppColors.primary),
               const SizedBox(width: 8),
               Text(
-                'Rankings by Category',
+                'Best by Category',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   color: context.col.textPrimary,
                   fontWeight: FontWeight.w800,
@@ -210,7 +227,7 @@ class _LeaderboardBody extends StatelessWidget {
             child: Center(
               child: Column(
                 children: [
-                  Text('📭', style: const TextStyle(fontSize: 40)),
+                  Icon(Iconsax.document_text_1, size: 40, color: context.col.textMuted),
                   const SizedBox(height: 12),
                   Text(
                     'No rating data yet.\nTap Rebuild to seed from Firestore reviews.',
@@ -266,7 +283,7 @@ class _LeaderboardBody extends StatelessWidget {
     final messenger = ScaffoldMessenger.of(context);
     messenger.showSnackBar(
       const SnackBar(
-        content: Text('Rebuilding leaderboard from Firestore reviews…'),
+        content: Text('Rebuilding top ratings from Firestore reviews…'),
         duration: Duration(seconds: 30),
       ),
     );
@@ -295,172 +312,402 @@ class _LeaderboardBody extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Top-3 all-category podium
+// Top-rated podium carousel — one slide per category, auto-slide every 4 s
+// Each slide shows the top-3 podium: gold centre (tallest), silver left,
+// bronze right. Empty positions show grey placeholders until data arrives.
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _TopThreePodium extends StatelessWidget {
-  final List<PlaceLeaderboardEntry> top;
-  const _TopThreePodium({required this.top});
+class _TopRatedCarousel extends StatefulWidget {
+  final List<PlaceLeaderboardEntry> entries;
+  const _TopRatedCarousel({required this.entries});
 
-  Color _catColor(String cat) => switch (cat) {
-    'spot' => const Color(0xFF4CAF50),
-    'cafe' => const Color(0xFF8D6E63),
-    'restaurant' => const Color(0xFFEF5350),
-    'hotel' => AppColors.secondary,
-    _ => AppColors.warning,
-  };
+  @override
+  State<_TopRatedCarousel> createState() => _TopRatedCarouselState();
+}
+
+class _TopRatedCarouselState extends State<_TopRatedCarousel> {
+  int _current = 0;
 
   @override
   Widget build(BuildContext context) {
-    final first = top[0];
-    final second = top.length > 1 ? top[1] : null;
-    final third = top.length > 2 ? top[2] : null;
+    final categoryDefs = [
+      (
+        key: 'spot',
+        label: 'Top Spots',
+        icon: Iconsax.map_1,
+        color: const Color(0xFF4CAF50),
+      ),
+      (
+        key: 'cafe',
+        label: 'Top Cafés',
+        icon: Iconsax.coffee,
+        color: const Color(0xFF8D6E63),
+      ),
+      (
+        key: 'restaurant',
+        label: 'Top Restaurants',
+        icon: Iconsax.reserve,
+        color: const Color(0xFFEF5350),
+      ),
+      (
+        key: 'hotel',
+        label: 'Top Hotels',
+        icon: Iconsax.buildings,
+        color: AppColors.secondary,
+      ),
+      (
+        key: 'homestay',
+        label: 'Top Homestays',
+        icon: Iconsax.home_2,
+        color: AppColors.warning,
+      ),
+      (
+        key: 'shopping',
+        label: 'Top Shopping',
+        icon: Iconsax.bag_2,
+        color: const Color(0xFF9C27B0),
+      ),
+      (
+        key: 'event',
+        label: 'Top Events',
+        icon: Iconsax.calendar,
+        color: const Color(0xFF2196F3),
+      ),
+    ];
 
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 8),
       decoration: BoxDecoration(
-        gradient: context.col.isDark
-            ? LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  AppColors.primary.withValues(alpha: 0.10),
-                  AppColors.secondary.withValues(alpha: 0.06),
-                ],
-              )
-            : null,
-        color: context.col.isDark ? null : context.col.surfaceElevated,
+        color: context.col.surface,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: context.col.border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        crossAxisAlignment: CrossAxisAlignment.end,
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          if (second != null)
-            _PodiumItem(
-              entry: second,
-              medal: '🥈',
-              medalColor: AppColors.silverMedal,
-              catColor: _catColor(second.category),
-              height: 100,
-            ).animate().slideY(begin: 0.3, delay: 100.ms),
-          _PodiumItem(
-            entry: first,
-            medal: '🥇',
-            medalColor: AppColors.gold,
-            catColor: _catColor(first.category),
-            height: 130,
-            large: true,
-          ).animate().slideY(begin: 0.3),
-          if (third != null)
-            _PodiumItem(
-              entry: third,
-              medal: '🥉',
-              medalColor: AppColors.bronzeMedal,
-              catColor: _catColor(third.category),
-              height: 80,
-            ).animate().slideY(begin: 0.3, delay: 200.ms),
+          // ── Podium carousel ───────────────────────────────────────────
+          CarouselSlider.builder(
+            itemCount: categoryDefs.length,
+            options: CarouselOptions(
+              height: 320,
+              viewportFraction: 1.0,
+              autoPlay: true,
+              autoPlayInterval: const Duration(seconds: 4),
+              autoPlayAnimationDuration: const Duration(milliseconds: 700),
+              autoPlayCurve: Curves.easeInOut,
+              onPageChanged: (i, _) => setState(() => _current = i),
+            ),
+            itemBuilder: (context, index, _) {
+              final def = categoryDefs[index];
+              final catEntries = widget.entries
+                  .where((e) => e.category == def.key)
+                  .take(3)
+                  .toList();
+              final first = catEntries.isNotEmpty ? catEntries[0] : null;
+              final second = catEntries.length > 1 ? catEntries[1] : null;
+              final third = catEntries.length > 2 ? catEntries[2] : null;
+
+              return Padding(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
+                child: Column(
+                  children: [
+                    // ── Category label pill ───────────────────────────
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 7,
+                      ),
+                      decoration: BoxDecoration(
+                        color: def.color.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: def.color.withValues(alpha: 0.35),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(def.icon, color: def.color, size: 14),
+                          const SizedBox(width: 6),
+                          Text(
+                            def.label,
+                            style: TextStyle(
+                              color: def.color,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    // ── Podium: silver left | gold centre | bronze right
+                    Expanded(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          // #2 Silver — left
+                          _PodiumItem(
+                            entry: second,
+                            rank: 2,
+                            medalColor: second != null
+                                ? AppColors.silverMedal
+                                : Colors.grey.shade300,
+                            medalIcon: Iconsax.medal,
+                            platformHeight: 52,
+                            avatarSize: 62,
+                            accentColor: def.color,
+                          ),
+                          const SizedBox(width: 6),
+                          // #1 Gold — centre, tallest
+                          _PodiumItem(
+                            entry: first,
+                            rank: 1,
+                            medalColor: first != null
+                                ? AppColors.gold
+                                : Colors.grey.shade300,
+                            medalIcon: Iconsax.medal_star,
+                            platformHeight: 72,
+                            avatarSize: 78,
+                            accentColor: def.color,
+                            isTop: true,
+                          ),
+                          const SizedBox(width: 6),
+                          // #3 Bronze — right
+                          _PodiumItem(
+                            entry: third,
+                            rank: 3,
+                            medalColor: third != null
+                                ? AppColors.bronzeMedal
+                                : Colors.grey.shade300,
+                            medalIcon: Iconsax.medal,
+                            platformHeight: 38,
+                            avatarSize: 62,
+                            accentColor: def.color,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+
+          // ── Dot indicator ─────────────────────────────────────────────
+          Container(
+            color: context.col.surface,
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: AnimatedSmoothIndicator(
+              activeIndex: _current,
+              count: categoryDefs.length,
+              effect: ExpandingDotsEffect(
+                dotHeight: 6,
+                dotWidth: 6,
+                activeDotColor: AppColors.primary,
+                dotColor: AppColors.primary.withValues(alpha: 0.25),
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Individual podium item — circle avatar + medal icon + name + rating + platform
+// ─────────────────────────────────────────────────────────────────────────────
+
 class _PodiumItem extends StatelessWidget {
-  final PlaceLeaderboardEntry entry;
-  final String medal;
+  final PlaceLeaderboardEntry? entry;
+  final int rank;
   final Color medalColor;
-  final Color catColor;
-  final double height;
-  final bool large;
+  final IconData medalIcon;
+  final double platformHeight;
+  final double avatarSize;
+  final Color accentColor;
+  final bool isTop;
 
   const _PodiumItem({
     required this.entry,
-    required this.medal,
+    required this.rank,
     required this.medalColor,
-    required this.catColor,
-    required this.height,
-    this.large = false,
+    required this.medalIcon,
+    required this.platformHeight,
+    required this.avatarSize,
+    required this.accentColor,
+    this.isTop = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final imgSize = large ? 68.0 : 54.0;
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(medal, style: const TextStyle(fontSize: 22)),
-        const SizedBox(height: 6),
-        Container(
-          width: imgSize,
-          height: imgSize,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: medalColor, width: large ? 3 : 2),
-          ),
-          child: ClipOval(
-            child: entry.heroImage.isNotEmpty
-                ? CachedNetworkImage(
-                    imageUrl: entry.heroImage,
-                    fit: BoxFit.cover,
-                    errorWidget: (_, __, ___) =>
-                        _Placeholder(color: catColor, size: imgSize),
-                  )
-                : _Placeholder(color: catColor, size: imgSize),
-          ),
-        ),
-        const SizedBox(height: 6),
-        SizedBox(
-          width: 80,
-          child: Text(
-            entry.placeName,
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: large ? 12 : 10,
-              fontWeight: FontWeight.w700,
-              color: context.col.textPrimary,
-              height: 1.25,
+    final isEmpty = entry == null;
+    final platformColor = isEmpty
+        ? Colors.grey.shade100
+        : (rank == 1
+            ? AppColors.gold.withValues(alpha: 0.18)
+            : rank == 2
+                ? AppColors.silverMedal.withValues(alpha: 0.18)
+                : AppColors.bronzeMedal.withValues(alpha: 0.18));
+
+    return Expanded(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          // ── Circle avatar ─────────────────────────────────────────────
+          Container(
+            width: avatarSize,
+            height: avatarSize,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: isEmpty ? Colors.grey.shade300 : medalColor,
+                width: isTop ? 3 : 2,
+              ),
+              boxShadow: isEmpty
+                  ? null
+                  : [
+                      BoxShadow(
+                        color: medalColor.withValues(alpha: 0.35),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+            ),
+            child: ClipOval(
+              child: isEmpty
+                  ? Container(
+                      color: Colors.grey.shade100,
+                      alignment: Alignment.center,
+                      child: Icon(
+                        Icons.person_outline_rounded,
+                        color: Colors.grey.shade400,
+                        size: avatarSize * 0.42,
+                      ),
+                    )
+                  : entry!.heroImage.isNotEmpty
+                      ? CachedNetworkImage(
+                          imageUrl: entry!.heroImage,
+                          fit: BoxFit.cover,
+                          placeholder: (_, __) => Container(
+                            color: accentColor.withValues(alpha: 0.15),
+                            alignment: Alignment.center,
+                            child: Icon(
+                              Icons.image_outlined,
+                              color: accentColor,
+                              size: avatarSize * 0.38,
+                            ),
+                          ),
+                          errorWidget: (_, __, ___) => Container(
+                            color: accentColor.withValues(alpha: 0.15),
+                            alignment: Alignment.center,
+                            child: Icon(
+                              Icons.image_outlined,
+                              color: accentColor,
+                              size: avatarSize * 0.38,
+                            ),
+                          ),
+                        )
+                      : Container(
+                          color: accentColor.withValues(alpha: 0.15),
+                          alignment: Alignment.center,
+                          child: Icon(
+                            Icons.place_rounded,
+                            color: accentColor,
+                            size: avatarSize * 0.42,
+                          ),
+                        ),
             ),
           ),
-        ),
-        const SizedBox(height: 4),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-          decoration: BoxDecoration(
-            color: medalColor.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(10),
+          const SizedBox(height: 5),
+          // ── Medal icon ────────────────────────────────────────────────
+          Icon(medalIcon, color: medalColor, size: 18),
+          const SizedBox(height: 3),
+          // ── Place name ────────────────────────────────────────────────
+          Text(
+            isEmpty ? '—' : entry!.placeName,
+            style: TextStyle(
+              color: isEmpty ? context.col.textMuted : context.col.textPrimary,
+              fontWeight: FontWeight.w600,
+              fontSize: isTop ? 12 : 11,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.star_rounded, color: medalColor, size: 12),
-              const SizedBox(width: 2),
-              Text(
-                entry.avgRating.toStringAsFixed(1),
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                  color: medalColor,
+          const SizedBox(height: 2),
+          // ── Rating or "No ratings" ────────────────────────────────────
+          if (!isEmpty)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.star_rounded, color: medalColor, size: 11),
+                const SizedBox(width: 2),
+                Text(
+                  entry!.avgRating.toStringAsFixed(1),
+                  style: TextStyle(
+                    color: medalColor,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 11,
+                  ),
                 ),
+              ],
+            )
+          else
+            Text(
+              'No ratings',
+              style: TextStyle(color: context.col.textMuted, fontSize: 9),
+            ),
+          const SizedBox(height: 5),
+          // ── Platform base ─────────────────────────────────────────────
+          Container(
+            width: double.infinity,
+            height: platformHeight,
+            decoration: BoxDecoration(
+              color: platformColor,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(8),
+                topRight: Radius.circular(8),
               ),
-            ],
+            ),
+            alignment: Alignment.center,
+            child: isEmpty
+                ? Icon(
+                    Icons.add_circle_outline_rounded,
+                    color: Colors.grey.shade400,
+                    size: 18,
+                  )
+                : Text(
+                    '#$rank',
+                    style: TextStyle(
+                      color: medalColor,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 17,
+                    ),
+                  ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Category card
+// Category card — table/list of top places
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _CategoryCard extends StatelessWidget {
-  final String icon;
+  final IconData icon;
   final String label;
   final Color color;
   final List<PlaceLeaderboardEntry> entries;
@@ -496,7 +743,7 @@ class _CategoryCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   alignment: Alignment.center,
-                  child: Text(icon, style: const TextStyle(fontSize: 16)),
+                  child: Icon(icon, size: 16, color: color),
                 ),
                 const SizedBox(width: 10),
                 Text(
@@ -523,8 +770,8 @@ class _CategoryCard extends StatelessWidget {
           ...entries.asMap().entries.map((e) {
             final rank = e.key + 1;
             final place = e.value;
-            final medals = ['🥇', '🥈', '🥉'];
-            final medalColors = [
+            const medals = [Iconsax.medal_star, Iconsax.medal, Iconsax.medal];
+            const medalColors = [
               AppColors.gold,
               AppColors.silverMedal,
               AppColors.bronzeMedal,
@@ -554,7 +801,7 @@ class _CategoryCard extends StatelessWidget {
 class _PlaceRow extends StatelessWidget {
   final PlaceLeaderboardEntry place;
   final int rank;
-  final String medal;
+  final IconData medal;
   final Color medalColor;
   final Color accentColor;
   final bool isLast;
@@ -582,7 +829,7 @@ class _PlaceRow extends StatelessWidget {
           children: [
             SizedBox(
               width: 28,
-              child: Text(medal, style: const TextStyle(fontSize: 18)),
+              child: Icon(medal, color: medalColor, size: 20),
             ),
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
@@ -688,10 +935,10 @@ class _EmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('🏜️', style: TextStyle(fontSize: 52)),
+            Icon(Iconsax.emoji_sad, size: 52, color: context.col.textMuted),
             const SizedBox(height: 16),
             Text(
-              'Leaderboard is empty',
+              'No ratings yet',
               style: TextStyle(
                 color: context.col.textPrimary,
                 fontSize: 18,
