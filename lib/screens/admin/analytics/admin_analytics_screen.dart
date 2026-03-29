@@ -70,12 +70,9 @@ class AdminAnalyticsScreen extends ConsumerWidget {
                   counts.when(
                     loading: () => const _LoadingCard(),
                     error: (e, _) => _ErrorCard(message: e.toString()),
-                    data: (c) => _ContentBarChart(counts: c),
+                    data: (c) => _InteractiveBarChart(counts: c),
                   ),
-                  const SizedBox(height: 24),
-                  const _SectionHeader('ℹ️ Analytics Note'),
-                  const SizedBox(height: 8),
-                  const _NoteCard(),
+                  const SizedBox(height: 16),
                 ],
               ),
             ),
@@ -96,11 +93,10 @@ class _LiveStatsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final col = context.col;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SectionHeader('🔴 Live Overview'),
+        const _SectionHeader('🔴 Live Overview'),
         const SizedBox(height: 12),
         GridView.count(
           crossAxisCount: 2,
@@ -108,7 +104,7 @@ class _LiveStatsSection extends StatelessWidget {
           physics: const NeverScrollableScrollPhysics(),
           crossAxisSpacing: 12,
           mainAxisSpacing: 12,
-          childAspectRatio: 1.5,
+          childAspectRatio: 1.6,
           children: [
             _LiveStatCard(
               label: 'Total Users',
@@ -141,22 +137,14 @@ class _LiveStatsSection extends StatelessWidget {
               color: AppColors.warning,
             ),
             _LiveStatCard(
-              label: 'Points Awarded',
-              value: snap.totalPointsAwarded,
-              icon: Icons.emoji_events,
-              color: AppColors.gold,
+              label: 'Last Updated',
+              value: null,
+              icon: Icons.schedule,
+              color: AppColors.info,
+              subtitle: snap.updatedAt != null ? _fmt(snap.updatedAt!) : '—',
             ),
           ],
         ),
-        if (snap.updatedAt != null) ...[
-          const SizedBox(height: 8),
-          Center(
-            child: Text(
-              'Last updated: ${_fmt(snap.updatedAt!)}',
-              style: TextStyle(color: col.textMuted, fontSize: 11),
-            ),
-          ),
-        ],
       ],
     );
   }
@@ -167,7 +155,8 @@ class _LiveStatsSection extends StatelessWidget {
 
 class _LiveStatCard extends StatelessWidget {
   final String label;
-  final int value;
+  final int? value;
+  final String? subtitle;
   final IconData icon;
   final Color color;
   const _LiveStatCard({
@@ -175,6 +164,7 @@ class _LiveStatCard extends StatelessWidget {
     required this.value,
     required this.icon,
     required this.color,
+    this.subtitle,
   });
 
   @override
@@ -191,17 +181,29 @@ class _LiveStatCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, color: color, size: 22),
+          Icon(icon, color: color, size: 20),
           const Spacer(),
-          Text(
-            value.toString(),
-            style: TextStyle(
-              color: col.textPrimary,
-              fontSize: 24,
-              fontWeight: FontWeight.w800,
+          if (value != null)
+            Text(
+              value.toString(),
+              style: TextStyle(
+                color: col.textPrimary,
+                fontSize: 24,
+                fontWeight: FontWeight.w800,
+              ),
+            )
+          else
+            Text(
+              subtitle ?? '—',
+              style: TextStyle(
+                color: col.textSecondary,
+                fontSize: 11,
+              ),
             ),
+          Text(
+            label,
+            style: TextStyle(color: col.textSecondary, fontSize: 11),
           ),
-          Text(label, style: TextStyle(color: col.textSecondary, fontSize: 11)),
         ],
       ),
     );
@@ -209,14 +211,24 @@ class _LiveStatCard extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Simple horizontal bar chart for collection counts
+// Interactive animated bar chart
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _ContentBarChart extends StatelessWidget {
+class _InteractiveBarChart extends StatefulWidget {
   final Map<String, int> counts;
-  const _ContentBarChart({required this.counts});
+  const _InteractiveBarChart({required this.counts});
 
-  static const _order = [
+  @override
+  State<_InteractiveBarChart> createState() => _InteractiveBarChartState();
+}
+
+class _InteractiveBarChartState extends State<_InteractiveBarChart>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _anim;
+  int? _selectedIdx;
+
+  static const _entries = [
     ('spots', 'Spots', AppColors.primary),
     ('restaurants', 'Restaurants', Color(0xFFFF6B6B)),
     ('hotels', 'Hotels', Color(0xFF4ECDC4)),
@@ -230,61 +242,213 @@ class _ContentBarChart extends StatelessWidget {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
+    _anim = CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic);
+    _ctrl.forward();
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  int get _maxCount =>
+      _entries.fold(1, (prev, e) => (widget.counts[e.$1] ?? 0) > prev ? (widget.counts[e.$1] ?? 0) : prev);
+
+  int get _totalCount =>
+      _entries.fold(0, (sum, e) => sum + (widget.counts[e.$1] ?? 0));
+
+  @override
   Widget build(BuildContext context) {
     final col = context.col;
-    final maxCount = counts.values.fold(1, (a, b) => a > b ? a : b);
+    final total = _totalCount;
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: col.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: col.border),
-      ),
-      child: Column(
-        children: _order.map((meta) {
-          final (key, label, color) = meta;
-          final count = counts[key] ?? 0;
-          final ratio = maxCount == 0 ? 0.0 : count / maxCount;
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6),
-            child: Row(
-              children: [
-                SizedBox(
-                  width: 80,
-                  child: Text(
-                    label,
-                    style: TextStyle(color: col.textSecondary, fontSize: 12),
+    return AnimatedBuilder(
+      animation: _anim,
+      builder: (context, _) {
+        return Container(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+          decoration: BoxDecoration(
+            color: col.surface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: col.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Total badge
+              Row(
+                children: [
+                  Text(
+                    'Total items:',
+                    style: TextStyle(color: col.textMuted, fontSize: 12),
                   ),
-                ),
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: LinearProgressIndicator(
-                      value: ratio,
-                      minHeight: 10,
-                      backgroundColor: col.surfaceElevated,
-                      valueColor: AlwaysStoppedAnimation(color),
+                  const SizedBox(width: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      total.toString(),
+                      style: const TextStyle(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                SizedBox(
-                  width: 36,
-                  child: Text(
-                    count.toString(),
-                    textAlign: TextAlign.right,
-                    style: TextStyle(
-                      color: col.textPrimary,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
+                  if (_selectedIdx != null) ...[
+                    const Spacer(),
+                    GestureDetector(
+                      onTap: () => setState(() => _selectedIdx = null),
+                      child: Text(
+                        'Clear',
+                        style: TextStyle(
+                          color: col.textMuted,
+                          fontSize: 12,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+              const SizedBox(height: 14),
+              ...List.generate(_entries.length, (i) => _buildRow(context, i, total)),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildRow(BuildContext context, int i, int total) {
+    final col = context.col;
+    final (key, label, color) = _entries[i];
+    final count = widget.counts[key] ?? 0;
+    final maxCount = _maxCount;
+    final ratio = maxCount == 0 ? 0.0 : (count / maxCount) * _anim.value;
+    final isSelected = _selectedIdx == i;
+    final isDimmed = _selectedIdx != null && !isSelected;
+    final pct = total == 0 ? 0.0 : count / total * 100;
+
+    return GestureDetector(
+      onTap: () => setState(() => _selectedIdx = isSelected ? null : i),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        margin: const EdgeInsets.only(bottom: 4),
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? color.withValues(alpha: 0.08) : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          children: [
+            // Dot + label
+            AnimatedOpacity(
+              opacity: isDimmed ? 0.35 : 1.0,
+              duration: const Duration(milliseconds: 200),
+              child: Row(
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: color,
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(width: 6),
+                  SizedBox(
+                    width: 78,
+                    child: Text(
+                      label,
+                      style: TextStyle(
+                        color: isSelected ? col.textPrimary : col.textSecondary,
+                        fontSize: 12,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          );
-        }).toList(),
+            // Bar
+            Expanded(
+              child: AnimatedOpacity(
+                opacity: isDimmed ? 0.3 : 1.0,
+                duration: const Duration(milliseconds: 200),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: ratio,
+                    minHeight: isSelected ? 12 : 8,
+                    backgroundColor: col.surfaceElevated,
+                    valueColor: AlwaysStoppedAnimation(color),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            // Count + pct when selected
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              child: isSelected
+                  ? SizedBox(
+                      width: 72,
+                      key: ValueKey('sel_$i'),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            count.toString(),
+                            textAlign: TextAlign.right,
+                            style: TextStyle(
+                              color: col.textPrimary,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          Text(
+                            '${pct.toStringAsFixed(1)}%',
+                            textAlign: TextAlign.right,
+                            style: TextStyle(
+                              color: color,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : SizedBox(
+                      width: 36,
+                      key: ValueKey('norm_$i'),
+                      child: Text(
+                        count.toString(),
+                        textAlign: TextAlign.right,
+                        style: TextStyle(
+                          color: isDimmed ? col.textMuted : col.textPrimary,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -333,41 +497,4 @@ class _ErrorCard extends StatelessWidget {
     ),
     child: Text(message, style: const TextStyle(color: AppColors.error)),
   );
-}
-
-class _NoteCard extends StatelessWidget {
-  const _NoteCard();
-  @override
-  Widget build(BuildContext context) {
-    final col = context.col;
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.info.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.info.withValues(alpha: 0.3)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(Icons.info_outline, color: AppColors.info, size: 18),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              'The Live Overview section reads from the '
-              '`app_analytics/daily_snapshot` Firestore document. '
-              'Populate this document from a Cloud Function or '
-              'scheduled job. The Content Breakdown uses live '
-              'Firestore count aggregation queries.',
-              style: TextStyle(
-                color: col.textSecondary,
-                fontSize: 12,
-                height: 1.5,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }

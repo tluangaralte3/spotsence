@@ -114,6 +114,11 @@ class _AdminListingsScreenState extends ConsumerState<AdminListingsScreen>
             behavior: SnackBarBehavior.floating,
           ),
         );
+        // Invalidate only the affected collection so it re-fetches on
+        // next visit — no need to touch unrelated providers.
+        if (next.isSuccess) {
+          invalidateListingProvider(ref, next.affectedCollection);
+        }
         ref.read(adminListingNotifierProvider.notifier).reset();
       }
     });
@@ -297,17 +302,6 @@ class _ListingTabContent extends ConsumerWidget {
     required this.sortBy,
   });
 
-  StreamProvider<QuerySnapshot> _provider(ListingTab t) => switch (t) {
-    ListingTab.spots => adminSpotsProvider,
-    ListingTab.restaurants => adminRestaurantsProvider,
-    ListingTab.accommodations => adminAccommodationsProvider,
-    ListingTab.cafes => adminCafesProvider,
-    ListingTab.adventure => adminAdventureSpotsProvider,
-    ListingTab.shopping => adminShoppingAreasProvider,
-    ListingTab.events => adminEventsProvider,
-    ListingTab.ventures => adminVenturesProvider,
-  };
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final col = context.col;
@@ -423,8 +417,17 @@ class _ListingTabContent extends ConsumerWidget {
       );
     }
 
-    // ── All other tabs: single collection stream ──────────────────────────
-    final snapAsync = ref.watch(_provider(tab));
+    // ── All other tabs: single collection fetch ───────────────────────────
+    final snapAsync = ref.watch(switch (tab) {
+      ListingTab.spots => adminSpotsProvider,
+      ListingTab.restaurants => adminRestaurantsProvider,
+      ListingTab.accommodations => adminAccommodationsProvider,
+      ListingTab.cafes => adminCafesProvider,
+      ListingTab.adventure => adminAdventureSpotsProvider,
+      ListingTab.shopping => adminShoppingAreasProvider,
+      ListingTab.events => adminEventsProvider,
+      ListingTab.ventures => adminVenturesProvider,
+    });
 
     return snapAsync.when(
       loading: () => const Center(

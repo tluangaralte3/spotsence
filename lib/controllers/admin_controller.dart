@@ -44,8 +44,8 @@ final collectionCountsProvider = FutureProvider<Map<String, int>>((ref) async {
   return ref.read(adminServiceProvider).fetchCollectionCounts();
 });
 
-final analyticsSnapshotProvider = StreamProvider<AppAnalyticsSnapshot>((ref) {
-  return ref.read(adminServiceProvider).watchAnalyticsSnapshot();
+final analyticsSnapshotProvider = FutureProvider<AppAnalyticsSnapshot>((ref) {
+  return ref.read(adminServiceProvider).fetchLiveStats();
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -57,46 +57,76 @@ final adminUsersProvider = StreamProvider<List<UserModel>>((ref) {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Listing Collection Streams
+// Listing Collection — autoDispose FutureProviders
 // ─────────────────────────────────────────────────────────────────────────────
+//
+// FutureProvider.autoDispose means:
+//   1. One-shot GET (no persistent WebSocket = no per-change read billing)
+//   2. Auto-cancelled when no widget is watching (e.g. navigating away)
+//   3. Re-fetched only when the tab is re-visited or ref.invalidate() is called
 
-final adminSpotsProvider = StreamProvider<QuerySnapshot>(
-  (ref) => ref.read(adminServiceProvider).watchSpots(),
+final adminSpotsProvider = FutureProvider.autoDispose<QuerySnapshot>(
+  (ref) => ref.read(adminServiceProvider).fetchCollection('spots'),
 );
 
-final adminRestaurantsProvider = StreamProvider<QuerySnapshot>(
-  (ref) => ref.read(adminServiceProvider).watchRestaurants(),
+final adminRestaurantsProvider = FutureProvider.autoDispose<QuerySnapshot>(
+  (ref) => ref.read(adminServiceProvider).fetchCollection('restaurants'),
 );
 
-final adminAccommodationsProvider = StreamProvider<QuerySnapshot>(
-  (ref) => ref
-      .read(adminServiceProvider)
-      .watchHotels(), // streams 'accommodations' collection
+final adminAccommodationsProvider = FutureProvider.autoDispose<QuerySnapshot>(
+  (ref) => ref.read(adminServiceProvider).fetchCollection('accommodations'),
 );
 
-final adminCafesProvider = StreamProvider<QuerySnapshot>(
-  (ref) => ref.read(adminServiceProvider).watchCafes(),
+final adminCafesProvider = FutureProvider.autoDispose<QuerySnapshot>(
+  (ref) => ref.read(adminServiceProvider).fetchCollection('cafes'),
 );
 
-final adminHomestaysProvider = StreamProvider<QuerySnapshot>(
-  (ref) => ref.read(adminServiceProvider).watchHomestays(),
+final adminHomestaysProvider = FutureProvider.autoDispose<QuerySnapshot>(
+  (ref) => ref.read(adminServiceProvider).fetchCollection('homestays'),
 );
 
-final adminAdventureSpotsProvider = StreamProvider<QuerySnapshot>(
-  (ref) => ref.read(adminServiceProvider).watchAdventureSpots(),
+final adminAdventureSpotsProvider = FutureProvider.autoDispose<QuerySnapshot>(
+  (ref) => ref.read(adminServiceProvider).fetchCollection('adventureSpots'),
 );
 
-final adminShoppingAreasProvider = StreamProvider<QuerySnapshot>(
-  (ref) => ref.read(adminServiceProvider).watchShoppingAreas(),
+final adminShoppingAreasProvider = FutureProvider.autoDispose<QuerySnapshot>(
+  (ref) => ref.read(adminServiceProvider).fetchCollection('shoppingAreas'),
 );
 
-final adminEventsProvider = StreamProvider<QuerySnapshot>(
-  (ref) => ref.read(adminServiceProvider).watchEvents(),
+final adminEventsProvider = FutureProvider.autoDispose<QuerySnapshot>(
+  (ref) => ref.read(adminServiceProvider).fetchCollection('events'),
 );
 
-final adminVenturesProvider = StreamProvider<QuerySnapshot>(
-  (ref) => ref.read(adminServiceProvider).watchVentures(),
+final adminVenturesProvider = FutureProvider.autoDispose<QuerySnapshot>(
+  (ref) => ref.read(adminServiceProvider).fetchCollection('ventures'),
 );
+
+/// Invalidates the autoDispose FutureProvider for the given Firestore
+/// collection name, triggering a fresh GET on next watch.
+void invalidateListingProvider(WidgetRef ref, String? collection) {
+  switch (collection) {
+    case 'spots':
+      ref.invalidate(adminSpotsProvider);
+    case 'restaurants':
+      ref.invalidate(adminRestaurantsProvider);
+    case 'accommodations':
+      ref.invalidate(adminAccommodationsProvider);
+    case 'homestays':
+      ref.invalidate(adminHomestaysProvider);
+    case 'cafes':
+      ref.invalidate(adminCafesProvider);
+    case 'adventureSpots':
+      ref.invalidate(adminAdventureSpotsProvider);
+    case 'shoppingAreas':
+      ref.invalidate(adminShoppingAreasProvider);
+    case 'events':
+      ref.invalidate(adminEventsProvider);
+    case 'ventures':
+      ref.invalidate(adminVenturesProvider);
+    default:
+      break;
+  }
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Selected listing tab (for AdminListingsScreen)
@@ -153,7 +183,14 @@ enum AdminCrudStatus { idle, loading, success, error }
 class AdminCrudState {
   final AdminCrudStatus status;
   final String? message;
-  const AdminCrudState({this.status = AdminCrudStatus.idle, this.message});
+  /// The Firestore collection affected by the last CRUD operation.
+  /// Used to invalidate only the relevant FutureProvider after success.
+  final String? affectedCollection;
+  const AdminCrudState({
+    this.status = AdminCrudStatus.idle,
+    this.message,
+    this.affectedCollection,
+  });
   bool get isLoading => status == AdminCrudStatus.loading;
   bool get isSuccess => status == AdminCrudStatus.success;
   bool get isError => status == AdminCrudStatus.error;
@@ -172,9 +209,10 @@ class AdminListingNotifier extends Notifier<AdminCrudState> {
     state = const AdminCrudState(status: AdminCrudStatus.loading);
     try {
       await _service.createListing(collection, data);
-      state = const AdminCrudState(
+      state = AdminCrudState(
         status: AdminCrudStatus.success,
         message: 'Listing created!',
+        affectedCollection: collection,
       );
       return true;
     } catch (e) {
@@ -194,9 +232,10 @@ class AdminListingNotifier extends Notifier<AdminCrudState> {
     state = const AdminCrudState(status: AdminCrudStatus.loading);
     try {
       await _service.updateListing(collection, docId, data);
-      state = const AdminCrudState(
+      state = AdminCrudState(
         status: AdminCrudStatus.success,
         message: 'Listing updated!',
+        affectedCollection: collection,
       );
       return true;
     } catch (e) {
@@ -212,9 +251,10 @@ class AdminListingNotifier extends Notifier<AdminCrudState> {
     state = const AdminCrudState(status: AdminCrudStatus.loading);
     try {
       await _service.deleteListing(collection, docId);
-      state = const AdminCrudState(
+      state = AdminCrudState(
         status: AdminCrudStatus.success,
         message: 'Listing deleted.',
+        affectedCollection: collection,
       );
       return true;
     } catch (e) {

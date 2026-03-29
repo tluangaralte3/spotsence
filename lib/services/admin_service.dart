@@ -184,14 +184,45 @@ class AdminService {
     return results;
   }
 
-  Stream<AppAnalyticsSnapshot> watchAnalyticsSnapshot() => _db
-      .collection('app_analytics')
-      .doc('daily_snapshot')
-      .snapshots()
-      .map((snap) {
-        if (!snap.exists) return const AppAnalyticsSnapshot();
-        return AppAnalyticsSnapshot.fromFirestore(snap);
-      });
+  /// Fetches live aggregate stats using parallel COUNT queries.
+  /// Falls back to 0 for any collection that doesn't exist or query fails.
+  Future<AppAnalyticsSnapshot> fetchLiveStats() async {
+    final now = DateTime.now();
+    final todayStart = Timestamp.fromDate(
+      DateTime(now.year, now.month, now.day),
+    );
+
+    Future<int> safeCount(Query<Map<String, dynamic>> q) async {
+      try {
+        return (await q.count().get()).count ?? 0;
+      } catch (_) {
+        return 0;
+      }
+    }
+
+    final results = await Future.wait([
+      safeCount(_db.collection('users')),
+      safeCount(
+        _db
+            .collection('users')
+            .where('createdAt', isGreaterThanOrEqualTo: todayStart),
+      ),
+      safeCount(_db.collection('bookings')),
+      safeCount(
+        _db.collection('bookings').where('status', isEqualTo: 'pending'),
+      ),
+      safeCount(_db.collection('reviews')),
+    ]);
+
+    return AppAnalyticsSnapshot(
+      totalUsers: results[0],
+      newUsersToday: results[1],
+      totalBookingRequests: results[2],
+      pendingBookingRequests: results[3],
+      totalReviews: results[4],
+      updatedAt: now,
+    );
+  }
 
   // ── Users management ─────────────────────────────────────────────────────
 
@@ -226,6 +257,19 @@ class AdminService {
   }
 
   // ── Generic listing helpers ───────────────────────────────────────────────
+
+  /// One-shot fetch for any listing collection. Ordered by createdAt desc.
+  /// Use this instead of [watchCollection] on admin screens to avoid
+  /// persistent Firestore WebSocket listeners that bill reads on every change.
+  Future<QuerySnapshot> fetchCollection(
+    String collection, {
+    int limit = 200,
+  }) =>
+      _db
+          .collection(collection)
+          .orderBy('createdAt', descending: true)
+          .limit(limit)
+          .get();
 
   /// Create a new document in any listing collection.
   Future<String> createListing(
