@@ -6,7 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import '../../controllers/auth_controller.dart';
 import '../../controllers/bucket_list_controller.dart';
-import '../../core/router/app_router.dart';
+import '../../controllers/community_controller.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/bucket_list_models.dart';
 
@@ -116,9 +116,17 @@ class _CreateBucketListScreenState
     setState(() => _saving = false);
 
     if (result != null) {
-      // pushReplacement atomically swaps the modal for the detail screen
-      // without the pop+push race condition that caused SIGABRT
-      context.pushReplacement(AppRoutes.bucketListDetailPath(result.id));
+      ref.invalidate(bucketListsProvider);
+      if (mounted) {
+        context.pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Bucket list created!'),
+            backgroundColor: AppColors.success,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     } else {
       final errMsg = ref.read(bucketListControllerProvider).error;
       debugPrint('Create bucket list failed: $errMsg');

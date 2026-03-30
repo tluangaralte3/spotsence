@@ -2,13 +2,14 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../controllers/auth_controller.dart';
 import '../../controllers/community_controller.dart';
+import '../../core/router/app_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/community_models.dart';
 import '../../widgets/shared_widgets.dart';
-import 'create_dilemma_screen.dart';
 
 // DilemmasTab
 class DilemmasTab extends ConsumerStatefulWidget {
@@ -20,12 +21,7 @@ class DilemmasTab extends ConsumerStatefulWidget {
 
 class _DilemmasTabState extends ConsumerState<DilemmasTab> {
   void _openCreate() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        fullscreenDialog: true,
-        builder: (_) => const CreateDilemmaScreen(),
-      ),
-    );
+    context.push(AppRoutes.createDilemma);
   }
 
   @override

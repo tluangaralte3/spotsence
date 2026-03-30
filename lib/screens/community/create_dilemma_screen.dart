@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../controllers/auth_controller.dart';
 import '../../controllers/community_controller.dart';
@@ -103,7 +104,7 @@ class _CreateDilemmaScreenState extends ConsumerState<CreateDilemmaScreen> {
     if (mounted) {
       setState(() => _saving = false);
       if (error == null) {
-        Navigator.pop(context);
+        context.pop();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text('Dilemma posted! 🤔'),
@@ -151,7 +152,7 @@ class _CreateDilemmaScreenState extends ConsumerState<CreateDilemmaScreen> {
         title: const Text('New Dilemma'),
         leading: IconButton(
           icon: const Icon(Icons.close_rounded),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => context.pop(),
         ),
         actions: [
           TextButton(

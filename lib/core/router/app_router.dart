@@ -25,6 +25,7 @@ import '../../screens/community/bucket_list_detail_screen.dart';
 import '../../screens/community/create_bucket_list_screen.dart';
 import '../../screens/community/edit_bucket_list_screen.dart';
 import '../../screens/community/add_bucket_item_screen.dart';
+import '../../screens/community/create_dilemma_screen.dart';
 import '../../screens/events/event_detail_screen.dart';
 import '../../screens/listings/all_reviews_screen.dart';
 import '../../screens/packages/tour_venture_screen.dart';
@@ -58,6 +59,7 @@ abstract class AppRoutes {
 
   static const eventDetail = '/events/:id';
 
+  static const createDilemma = '/community/dilemmas/new';
   static const createBucketList = '/community/bucket-lists/new';
   static const bucketListDetail = '/community/bucket-lists/:id';
   static const editBucketList = '/community/bucket-lists/:id/edit';
@@ -339,6 +341,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.createPost,
         pageBuilder: (_, state) =>
             _bottomSheet(state, const CreatePostScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.createDilemma,
+        pageBuilder: (_, state) =>
+            _slide(state, const CreateDilemmaScreen()),
       ),
       GoRoute(
         path: AppRoutes.createBucketList,

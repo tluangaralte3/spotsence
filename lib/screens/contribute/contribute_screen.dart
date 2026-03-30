@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../core/constants/app_constants.dart';
-import '../../core/router/app_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../services/community_service.dart';
 
@@ -166,9 +165,9 @@ class _ContributeScreenState extends ConsumerState<ContributeScreen> {
               ElevatedButton(
                 onPressed: () {
                   Navigator.pop(context);
-                  context.go(AppRoutes.home);
+                  context.pop();
                 },
-                child: const Text('Back to Home'),
+                child: const Text('Done'),
               ),
             ],
           ),
