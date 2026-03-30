@@ -24,6 +24,8 @@ class FirestoreHotelsService {
     final snap = await _col.limit(limit * 2).get();
     return snap.docs
         .where((d) {
+          final type = d.data()['type']?.toString().toLowerCase();
+          if (type != null && type.isNotEmpty && type != 'hotel') return false;
           final status = d.data()['status']?.toString();
           if (status == null || status.isEmpty) return true;
           return status.toLowerCase() == 'approved' ||

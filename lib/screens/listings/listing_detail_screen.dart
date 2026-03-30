@@ -7,19 +7,45 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../models/listing_models.dart';
-import '../../services/listings_service.dart';
+import '../../services/firestore_adventure_service.dart';
+import '../../services/firestore_cafes_service.dart';
+import '../../services/firestore_events_service.dart';
+import '../../services/firestore_homestays_service.dart';
+import '../../services/firestore_hotels_service.dart';
+import '../../services/firestore_restaurants_service.dart';
+import '../../services/firestore_shopping_service.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Provider — fetches the detail JSON from /api/listings/:type/:id
+// Firestore-direct providers for all listing types
 // ─────────────────────────────────────────────────────────────────────────────
 
-final _detailProvider =
-    FutureProvider.family<Map<String, dynamic>, ({String type, String id})>(
-      (ref, args) => ref
-          .watch(listingsServiceProvider)
-          .getListingDetail(args.type, args.id)
-          .then((r) => r.when(ok: (d) => d, err: (e) => throw Exception(e))),
-    );
+final _restaurantDetailProvider =
+    FutureProvider.family<RestaurantModel?, String>((ref, id) =>
+        ref.watch(firestoreRestaurantsServiceProvider).getRestaurantById(id));
+
+final _hotelDetailProvider =
+    FutureProvider.family<HotelModel?, String>((ref, id) =>
+        ref.watch(firestoreHotelsServiceProvider).getHotelById(id));
+
+final _homestayDetailProvider =
+    FutureProvider.family<HomestayModel?, String>((ref, id) =>
+        ref.watch(firestoreHomestaysServiceProvider).getHomestayById(id));
+
+final _cafeDetailProvider =
+    FutureProvider.family<CafeModel?, String>((ref, id) =>
+        ref.watch(firestoreCafesServiceProvider).getCafeById(id));
+
+final _adventureDetailProvider =
+    FutureProvider.family<AdventureSpotModel?, String>((ref, id) =>
+        ref.watch(firestoreAdventureServiceProvider).getAdventureSpotById(id));
+
+final _shoppingDetailProvider =
+    FutureProvider.family<ShoppingAreaModel?, String>((ref, id) =>
+        ref.watch(firestoreShoppingServiceProvider).getShoppingAreaById(id));
+
+final _eventDetailProvider =
+    FutureProvider.family<EventModel?, String>((ref, id) =>
+        ref.watch(firestoreEventsServiceProvider).getEventById(id));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ListingDetailScreen
@@ -33,35 +59,68 @@ class ListingDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final async = ref.watch(_detailProvider((type: type, id: id)));
-
-    return async.when(
-      loading: () => const _LoadingScaffold(),
-      error: (e, _) => _ErrorScaffold(error: e.toString()),
-      data: (json) => _buildDetail(context, json),
-    );
-  }
-
-  Widget _buildDetail(BuildContext context, Map<String, dynamic> json) {
     switch (type) {
       case 'restaurants':
-        return _RestaurantDetail(restaurant: RestaurantModel.fromJson(json));
+        return ref.watch(_restaurantDetailProvider(id)).when(
+          loading: () => const _LoadingScaffold(),
+          error: (e, _) => _ErrorScaffold(error: e.toString()),
+          data: (v) => v == null
+              ? _ErrorScaffold(error: 'Restaurant not found')
+              : _RestaurantDetail(restaurant: v),
+        );
       case 'hotels':
-        return _HotelDetail(hotel: HotelModel.fromJson(json));
-      case 'cafes':
-        return _CafeDetail(cafe: CafeModel.fromJson(json));
+        return ref.watch(_hotelDetailProvider(id)).when(
+          loading: () => const _LoadingScaffold(),
+          error: (e, _) => _ErrorScaffold(error: e.toString()),
+          data: (v) => v == null
+              ? _ErrorScaffold(error: 'Hotel not found')
+              : _HotelDetail(hotel: v),
+        );
       case 'homestays':
-        return _HomestayDetail(homestay: HomestayModel.fromJson(json));
+        return ref.watch(_homestayDetailProvider(id)).when(
+          loading: () => const _LoadingScaffold(),
+          error: (e, _) => _ErrorScaffold(error: e.toString()),
+          data: (v) => v == null
+              ? _ErrorScaffold(error: 'Homestay not found')
+              : _HomestayDetail(homestay: v),
+        );
+      case 'cafes':
+        return ref.watch(_cafeDetailProvider(id)).when(
+          loading: () => const _LoadingScaffold(),
+          error: (e, _) => _ErrorScaffold(error: e.toString()),
+          data: (v) => v == null
+              ? _ErrorScaffold(error: 'Cafe not found')
+              : _CafeDetail(cafe: v),
+        );
       case 'adventure-spots':
-        return _AdventureDetail(adventure: AdventureSpotModel.fromJson(json));
+        return ref.watch(_adventureDetailProvider(id)).when(
+          loading: () => const _LoadingScaffold(),
+          error: (e, _) => _ErrorScaffold(error: e.toString()),
+          data: (v) => v == null
+              ? _ErrorScaffold(error: 'Adventure spot not found')
+              : _AdventureDetail(adventure: v),
+        );
       case 'shopping-areas':
-        return _ShoppingDetail(area: ShoppingAreaModel.fromJson(json));
+        return ref.watch(_shoppingDetailProvider(id)).when(
+          loading: () => const _LoadingScaffold(),
+          error: (e, _) => _ErrorScaffold(error: e.toString()),
+          data: (v) => v == null
+              ? _ErrorScaffold(error: 'Shopping area not found')
+              : _ShoppingDetail(area: v),
+        );
       case 'events':
-        return _EventDetail(event: EventModel.fromJson(json));
+        return ref.watch(_eventDetailProvider(id)).when(
+          loading: () => const _LoadingScaffold(),
+          error: (e, _) => _ErrorScaffold(error: e.toString()),
+          data: (v) => v == null
+              ? _ErrorScaffold(error: 'Event not found')
+              : _EventDetail(event: v),
+        );
       default:
-        return _GenericDetail(json: json, type: type);
+        return _ErrorScaffold(error: 'Unknown listing type: $type');
     }
   }
+
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -895,40 +954,6 @@ class _EventDetail extends StatelessWidget {
           ),
       ],
     );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Generic fallback detail
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _GenericDetail extends StatelessWidget {
-  final Map<String, dynamic> json;
-  final String type;
-  const _GenericDetail({required this.json, required this.type});
-
-  @override
-  Widget build(BuildContext context) {
-    final images = json['images'] != null
-        ? List<String>.from(json['images'] as List)
-        : (json['imageUrl'] != null
-              ? [json['imageUrl'] as String]
-              : <String>[]);
-
-    return _DetailScaffold(
-      images: images,
-      title: json['name']?.toString() ?? json['title']?.toString() ?? type,
-      rating: _toDouble(json['rating']),
-      location: json['location']?.toString() ?? '',
-      description: json['description']?.toString() ?? '',
-    );
-  }
-
-  double _toDouble(dynamic v) {
-    if (v == null) return 0.0;
-    if (v is double) return v;
-    if (v is int) return v.toDouble();
-    return double.tryParse(v.toString()) ?? 0.0;
   }
 }
 

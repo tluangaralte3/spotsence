@@ -6,7 +6,7 @@ import 'global_reviews_service.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FirestoreHomestaysService
-// Reads from the `homestays` Firestore collection.
+// Reads from the `accommodations` Firestore collection, type == "Homestay".
 // ─────────────────────────────────────────────────────────────────────────────
 
 class FirestoreHomestaysService {
@@ -16,7 +16,7 @@ class FirestoreHomestaysService {
     : _db = db ?? FirebaseFirestore.instance;
 
   CollectionReference<Map<String, dynamic>> get _col =>
-      _db.collection('homestays');
+      _db.collection('accommodations');
 
   // ── List ──────────────────────────────────────────────────────────────────
 
@@ -25,6 +25,8 @@ class FirestoreHomestaysService {
     final snap = await _col.limit(limit * 2).get();
     return snap.docs
         .where((d) {
+          final type = d.data()['type']?.toString().toLowerCase();
+          if (type != null && type.isNotEmpty && type != 'homestay') return false;
           final status = d.data()['status']?.toString();
           if (status == null || status.isEmpty) return true;
           return status.toLowerCase() == 'approved' ||
@@ -50,8 +52,13 @@ class FirestoreHomestaysService {
         .limit(limit)
         .snapshots()
         .map(
-          (snap) =>
-              snap.docs.map((d) => HomestayModel.fromFirestore(d)).toList(),
+          (snap) => snap.docs
+              .where((d) {
+                final type = d.data()['type']?.toString().toLowerCase();
+                return type == null || type.isEmpty || type == 'homestay';
+              })
+              .map((d) => HomestayModel.fromFirestore(d))
+              .toList(),
         );
   }
 
@@ -62,7 +69,7 @@ class FirestoreHomestaysService {
     int limit = 30,
   }) {
     return _db
-        .collection('homestays')
+        .collection('accommodations')
         .doc(homestayId)
         .collection('reviews')
         .orderBy('timestamp', descending: true)
@@ -82,7 +89,7 @@ class FirestoreHomestaysService {
     required String comment,
   }) async {
     await _db
-        .collection('homestays')
+        .collection('accommodations')
         .doc(homestayId)
         .collection('reviews')
         .doc()
@@ -98,7 +105,7 @@ class FirestoreHomestaysService {
     // Best-effort: update running average on the parent doc.
     try {
       await _db.runTransaction((tx) async {
-        final docRef = _db.collection('homestays').doc(homestayId);
+        final docRef = _db.collection('accommodations').doc(homestayId);
         final snap = await tx.get(docRef);
         if (!snap.exists) return;
         final data = snap.data() ?? {};
@@ -116,7 +123,7 @@ class FirestoreHomestaysService {
 
       // Rebuild the place_rankings entry for this homestay.
       final homestayDoc = await _db
-          .collection('homestays')
+          .collection('accommodations')
           .doc(homestayId)
           .get();
       if (homestayDoc.exists) {
