@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:iconsax/iconsax.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../controllers/admin_controller.dart';
 import '../../../models/admin_model.dart';
@@ -65,7 +66,7 @@ class AdminAnalyticsScreen extends ConsumerWidget {
                     data: (snap) => _LiveStatsSection(snap: snap),
                   ),
                   const SizedBox(height: 24),
-                  const _SectionHeader('📦 Content Breakdown'),
+                  const _SectionHeader('Content Breakdown', icon: Iconsax.box),
                   const SizedBox(height: 12),
                   counts.when(
                     loading: () => const _LoadingCard(),
@@ -96,7 +97,7 @@ class _LiveStatsSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const _SectionHeader('🔴 Live Overview'),
+        const _SectionHeader('Live Overview', icon: Iconsax.activity),
         const SizedBox(height: 12),
         GridView.count(
           crossAxisCount: 2,
@@ -460,17 +461,37 @@ class _InteractiveBarChartState extends State<_InteractiveBarChart>
 
 class _SectionHeader extends StatelessWidget {
   final String text;
-  const _SectionHeader(this.text);
+  final IconData? icon;
+  const _SectionHeader(this.text, {this.icon});
 
   @override
-  Widget build(BuildContext context) => Text(
-    text,
-    style: TextStyle(
-      color: context.col.textPrimary,
-      fontSize: 17,
-      fontWeight: FontWeight.w700,
-    ),
-  );
+  Widget build(BuildContext context) {
+    final col = context.col;
+    if (icon == null) {
+      return Text(
+        text,
+        style: TextStyle(
+          color: col.textPrimary,
+          fontSize: 17,
+          fontWeight: FontWeight.w700,
+        ),
+      );
+    }
+    return Row(
+      children: [
+        Icon(icon, color: AppColors.primary, size: 18),
+        const SizedBox(width: 8),
+        Text(
+          text,
+          style: TextStyle(
+            color: col.textPrimary,
+            fontSize: 17,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class _LoadingCard extends StatelessWidget {

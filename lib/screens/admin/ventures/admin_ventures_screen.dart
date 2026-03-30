@@ -217,7 +217,7 @@ class _VenturesHeader extends StatelessWidget {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Center(
-                    child: Text('🏕️', style: TextStyle(fontSize: 20)),
+                    child: Icon(Iconsax.map, color: AppColors.primary, size: 22),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -467,7 +467,7 @@ class _PackageCard extends ConsumerWidget {
                   child: Wrap(
                     spacing: 4,
                     children: [
-                      if (isFeatured) _Pill('⭐ Featured', AppColors.primary),
+                      if (isFeatured) _Pill('Featured', AppColors.primary, icon: Iconsax.star5),
                       _Pill(
                         status[0].toUpperCase() + status.substring(1),
                         statusColor,
@@ -489,7 +489,7 @@ class _PackageCard extends ConsumerWidget {
                       color: AppColors.primary, size: 22),
                   const Spacer(),
                   if (isFeatured) ...[
-                    _Pill('⭐ Featured', AppColors.primary),
+                    _Pill('Featured', AppColors.primary, icon: Iconsax.star5),
                     const SizedBox(width: 4),
                   ],
                   _Pill(
@@ -784,8 +784,8 @@ class _FeedbackTab extends ConsumerWidget {
                 _SummaryItem('Total', '${docs.length}', AppColors.primary),
                 _SummaryItem(
                     'Avg Rating', avgRating.toStringAsFixed(1), const Color(0xFFF59E0B)),
-                _SummaryItem('5 ★', '$highRated', const Color(0xFF22C55E)),
-                _SummaryItem('< 3 ★', '$lowRated', AppColors.error),
+                _SummaryItem('5 Stars', '$highRated', const Color(0xFF22C55E)),
+                _SummaryItem('Below 3', '$lowRated', AppColors.error),
               ],
             ),
             Expanded(
@@ -1094,7 +1094,8 @@ class _SummaryBanner extends StatelessWidget {
 class _Pill extends StatelessWidget {
   final String label;
   final Color color;
-  const _Pill(this.label, this.color);
+  final IconData? icon;
+  const _Pill(this.label, this.color, {this.icon});
 
   @override
   Widget build(BuildContext context) => Container(
@@ -1104,14 +1105,20 @@ class _Pill extends StatelessWidget {
       borderRadius: BorderRadius.circular(20),
       border: Border.all(color: color.withValues(alpha: 0.35)),
     ),
-    child: Text(
-      label,
-      style: TextStyle(
-        color: color,
-        fontSize: 10,
-        fontWeight: FontWeight.w700,
-        letterSpacing: 0.2,
-      ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (icon != null) ...[Icon(icon, color: color, size: 10), const SizedBox(width: 3)],
+        Text(
+          label,
+          style: TextStyle(
+            color: color,
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.2,
+          ),
+        ),
+      ],
     ),
   );
 }

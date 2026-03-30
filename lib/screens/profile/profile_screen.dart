@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:iconsax/iconsax.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import '../../controllers/auth_controller.dart';
 import '../../controllers/admin_controller.dart';
@@ -366,30 +367,30 @@ class _StatsTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final stats = [
-      {'icon': '⭐', 'label': 'Reviews', 'value': '${user.ratingsCount}'},
+      {'icon': Iconsax.star, 'label': 'Reviews', 'value': '${user.ratingsCount}'},
       {
-        'icon': '📍',
+        'icon': Iconsax.location,
         'label': 'Contributions',
         'value': '${user.contributionsCount}',
       },
       {
-        'icon': '🔖',
+        'icon': Iconsax.bookmark,
         'label': 'Saved Spots',
         'value': '${user.bookmarks.length}',
       },
-      {'icon': '🏅', 'label': 'Badges', 'value': '${user.badgesEarned.length}'},
-      {'icon': '✨', 'label': 'Total XP', 'value': '${user.points}'},
-      {'icon': '🎯', 'label': 'Level', 'value': '${user.level}'},
-      {'icon': '📷', 'label': 'Photos', 'value': '${user.photosCount}'},
-      {'icon': '🤔', 'label': 'Dilemmas', 'value': '${user.dilemmasCreated}'},
+      {'icon': Iconsax.medal, 'label': 'Badges', 'value': '${user.badgesEarned.length}'},
+      {'icon': Iconsax.flash, 'label': 'Total XP', 'value': '${user.points}'},
+      {'icon': Iconsax.ranking, 'label': 'Level', 'value': '${user.level}'},
+      {'icon': Iconsax.camera, 'label': 'Photos', 'value': '${user.photosCount}'},
+      {'icon': Iconsax.message_question, 'label': 'Dilemmas', 'value': '${user.dilemmasCreated}'},
       {
-        'icon': '✅',
+        'icon': Iconsax.tick_circle,
         'label': 'Bucket Items',
         'value': '${user.bucketItemsCompleted}',
       },
-      {'icon': '🔥', 'label': 'Streak', 'value': '${user.loginStreak} days'},
+      {'icon': Iconsax.chart, 'label': 'Streak', 'value': '${user.loginStreak} days'},
       {
-        'icon': '🏆',
+        'icon': Iconsax.cup,
         'label': 'Best Streak',
         'value': '${user.longestStreak} days',
       },
@@ -472,9 +473,9 @@ class _StatsTab extends StatelessWidget {
           itemBuilder: (_, i) {
             final s = stats[i];
             return _StatCard(
-              icon: s['icon']!,
-              label: s['label']!,
-              value: s['value']!,
+              icon: s['icon']! as IconData,
+              label: s['label']! as String,
+              value: s['value']! as String,
             );
           },
         ),
@@ -509,7 +510,7 @@ class _StatsTab extends StatelessWidget {
 }
 
 class _StatCard extends StatelessWidget {
-  final String icon;
+  final IconData icon;
   final String label;
   final String value;
 
@@ -530,7 +531,7 @@ class _StatCard extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(icon, style: const TextStyle(fontSize: 22)),
+          Icon(icon, color: AppColors.primary, size: 22),
           const SizedBox(height: 4),
           Text(
             value,
@@ -679,7 +680,7 @@ class _BadgesTab extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('🏅', style: TextStyle(fontSize: 52)),
+            const Icon(Iconsax.medal, color: AppColors.primary, size: 52),
             const SizedBox(height: 12),
             Text(
               'No badges yet',
@@ -728,7 +729,7 @@ class _SavedTab extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('🔖', style: TextStyle(fontSize: 52)),
+            const Icon(Iconsax.bookmark, color: AppColors.primary, size: 52),
             const SizedBox(height: 12),
             Text(
               'No saved spots',
@@ -821,7 +822,7 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Profile updated ✓'),
+            content: Text('Profile updated'),
             backgroundColor: AppColors.success,
           ),
         );
