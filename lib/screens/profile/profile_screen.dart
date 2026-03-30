@@ -218,20 +218,41 @@ class _AuthenticatedProfileState extends ConsumerState<_AuthenticatedProfile>
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: context.col.surfaceElevated,
-        title: const Text('Sign Out'),
-        content: const Text('Are you sure you want to sign out?'),
+        title: Text('Sign Out', style: TextStyle(color: ctx.col.textPrimary)),
+        content: Text(
+          'Are you sure you want to sign out?',
+          style: TextStyle(color: ctx.col.textSecondary),
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
-            onPressed: () {
-              Navigator.pop(ctx);
-              ref.read(authControllerProvider.notifier).signOut();
-            },
-            child: const Text('Sign Out'),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: Text(
+                    'Cancel',
+                    style: TextStyle(color: ctx.col.textPrimary),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.error,
+                  ),
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    ref.read(authControllerProvider.notifier).signOut();
+                  },
+                  child: const Text(
+                    'Sign Out',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),

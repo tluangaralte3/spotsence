@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:iconsax/iconsax.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -87,7 +88,7 @@ class _ListingsScreenState extends ConsumerState<ListingsScreen>
                     (t) => Tab(
                       child: Row(
                         children: [
-                          Text(t.emoji, style: const TextStyle(fontSize: 14)),
+                          Icon(t.icon, size: 15),
                           const SizedBox(width: 6),
                           Text(t.label),
                         ],
@@ -103,9 +104,8 @@ class _ListingsScreenState extends ConsumerState<ListingsScreen>
           children: const [
             _TouristSpotsTab(),
             _RestaurantsTab(),
-            _HotelsTab(),
+            _AccommodationTab(),
             _CafesTab(),
-            _HomestaysTab(),
             _AdventureTab(),
             _ShoppingTab(),
             _EventsTab(),
@@ -336,7 +336,8 @@ class _DistrictPickerSheet extends ConsumerWidget {
 
           // "All Mizoram" chip
           _DistrictChip(
-            label: '🗺️  All Mizoram',
+            label: 'All Mizoram',
+            icon: Iconsax.map,
             subtitle: 'Show every district',
             selected: currentFilter == null,
             isNearest: false,
@@ -395,6 +396,7 @@ class _DistrictChip extends StatelessWidget {
   final bool selected;
   final bool isNearest;
   final VoidCallback onTap;
+  final IconData? icon;
 
   const _DistrictChip({
     required this.label,
@@ -402,6 +404,7 @@ class _DistrictChip extends StatelessWidget {
     required this.isNearest,
     required this.onTap,
     this.subtitle,
+    this.icon,
   });
 
   @override
@@ -443,6 +446,15 @@ class _DistrictChip extends StatelessWidget {
                 child: Icon(
                   Icons.my_location_rounded,
                   size: 13,
+                  color: AppColors.primary,
+                ),
+              )
+            else if (icon != null)
+              Padding(
+                padding: const EdgeInsets.only(right: 6),
+                child: Icon(
+                  icon,
+                  size: 14,
                   color: AppColors.primary,
                 ),
               ),
@@ -922,11 +934,70 @@ class _RestaurantsTab extends ConsumerWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Tab: Accommodation (Hotels + Homestays)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _AccommodationTab extends ConsumerStatefulWidget {
+  const _AccommodationTab();
+
+  @override
+  ConsumerState<_AccommodationTab> createState() => _AccommodationTabState();
+}
+
+class _AccommodationTabState extends ConsumerState<_AccommodationTab>
+    with SingleTickerProviderStateMixin {
+  late TabController _inner;
+
+  @override
+  void initState() {
+    super.initState();
+    _inner = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _inner.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          color: context.col.bg,
+          child: TabBar(
+            controller: _inner,
+            labelColor: AppColors.primary,
+            unselectedLabelColor: context.col.textSecondary,
+            indicatorColor: AppColors.primary,
+            indicatorSize: TabBarIndicatorSize.label,
+            tabs: const [
+              Tab(icon: Icon(Iconsax.buildings, size: 16), text: 'Hotels'),
+              Tab(icon: Icon(Iconsax.home_2, size: 16), text: 'Homestays'),
+            ],
+          ),
+        ),
+        Expanded(
+          child: TabBarView(
+            controller: _inner,
+            children: const [
+              _HotelsTabContent(),
+              _HomestaysTabContent(),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Tab: Hotels
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _HotelsTab extends ConsumerWidget {
-  const _HotelsTab();
+class _HotelsTabContent extends ConsumerWidget {
+  const _HotelsTabContent();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -1020,8 +1091,8 @@ class _CafesTab extends ConsumerWidget {
 // Tab: Homestays
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _HomestaysTab extends ConsumerWidget {
-  const _HomestaysTab();
+class _HomestaysTabContent extends ConsumerWidget {
+  const _HomestaysTabContent();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

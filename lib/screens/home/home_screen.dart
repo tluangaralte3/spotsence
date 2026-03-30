@@ -561,12 +561,11 @@ class _ListingCategoryGrid extends StatelessWidget {
   static const _items = [
     (icon: Iconsax.map_1, label: 'Tourist\nSpots', tab: 0),
     (icon: Iconsax.cup, label: 'Restaurants', tab: 1),
-    (icon: Iconsax.buildings, label: 'Hotels', tab: 2),
+    (icon: Iconsax.buildings, label: 'Stay', tab: 2),
     (icon: Iconsax.coffee, label: 'Cafes', tab: 3),
-    (icon: Iconsax.home_2, label: 'Homestays', tab: 4),
-    (icon: Iconsax.activity, label: 'Adventure', tab: 5),
-    (icon: Iconsax.bag_2, label: 'Shopping', tab: 6),
-    (icon: Iconsax.calendar, label: 'Events', tab: 7),
+    (icon: Iconsax.activity, label: 'Adventure', tab: 4),
+    (icon: Iconsax.bag_2, label: 'Shopping', tab: 5),
+    (icon: Iconsax.calendar, label: 'Events', tab: 6),
   ];
 
   @override

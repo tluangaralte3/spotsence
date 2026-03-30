@@ -3,6 +3,8 @@
 //              shoppingAreas, events
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
+import 'package:iconsax/iconsax.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Shared helpers
@@ -713,9 +715,8 @@ class EventModel {
 enum ListingCategory {
   touristSpots,
   restaurants,
-  hotels,
+  accommodation,
   cafes,
-  homestays,
   adventure,
   shopping,
   events;
@@ -726,12 +727,10 @@ enum ListingCategory {
         return 'Tourist Spots';
       case restaurants:
         return 'Restaurants';
-      case hotels:
-        return 'Hotels';
+      case accommodation:
+        return 'Stay';
       case cafes:
         return 'Cafes';
-      case homestays:
-        return 'Homestays';
       case adventure:
         return 'Adventure';
       case shopping:
@@ -741,24 +740,22 @@ enum ListingCategory {
     }
   }
 
-  String get emoji {
+  IconData get icon {
     switch (this) {
       case touristSpots:
-        return '🗺️';
+        return Iconsax.map_1;
       case restaurants:
-        return '🍽️';
-      case hotels:
-        return '🏨';
+        return Iconsax.cup;
+      case accommodation:
+        return Iconsax.buildings;
       case cafes:
-        return '☕';
-      case homestays:
-        return '🏡';
+        return Iconsax.coffee;
       case adventure:
-        return '🧗';
+        return Iconsax.activity;
       case shopping:
-        return '🛍️';
+        return Iconsax.bag_2;
       case events:
-        return '📅';
+        return Iconsax.calendar;
     }
   }
 }

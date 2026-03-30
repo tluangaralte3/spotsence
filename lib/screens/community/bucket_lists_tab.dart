@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:iconsax/iconsax.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -60,8 +61,8 @@ class _BucketListsTabState extends ConsumerState<BucketListsTab>
             indicatorColor: AppColors.primary,
             indicatorSize: TabBarIndicatorSize.label,
             tabs: const [
-              Tab(text: 'My Lists'),
-              Tab(text: '🌐 Discover'),
+              Tab(icon: Icon(Iconsax.task_square), text: 'My Lists'),
+              Tab(icon: Icon(Iconsax.global), text: 'Discover'),
             ],
           ),
         ),
