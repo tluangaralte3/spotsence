@@ -212,9 +212,9 @@ class _HeroSection extends StatelessWidget {
             ? CachedNetworkImage(
                 imageUrl: event.imageUrl,
                 fit: BoxFit.cover,
-                placeholder: (_, __) =>
+                placeholder: (_, _) =>
                     _PlaceholderHero(typeColor: typeColor, event: event),
-                errorWidget: (_, __, ___) =>
+                errorWidget: (_, _, _) =>
                     _PlaceholderHero(typeColor: typeColor, event: event),
               )
             : _PlaceholderHero(typeColor: typeColor, event: event),

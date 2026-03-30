@@ -692,8 +692,9 @@ class TourVentureModel {
 
   String get durationLabel {
     if (durationDays == 0) return 'Half Day';
-    if (durationNights == 0)
+    if (durationNights == 0) {
       return '$durationDays Day${durationDays > 1 ? 's' : ''}';
+    }
     return '$durationDays Day${durationDays > 1 ? 's' : ''} / '
         '$durationNights Night${durationNights > 1 ? 's' : ''}';
   }

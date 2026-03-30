@@ -162,9 +162,9 @@ class _DetailScaffold extends StatelessWidget {
                   : CachedNetworkImage(
                       imageUrl: heroUrl,
                       fit: BoxFit.cover,
-                      placeholder: (_, __) =>
+                      placeholder: (_, _) =>
                           Container(color: context.col.surfaceElevated),
-                      errorWidget: (_, __, ___) =>
+                      errorWidget: (_, _, _) =>
                           Container(color: context.col.surfaceElevated),
                     ),
             ),
@@ -378,7 +378,7 @@ class _ImageGallery extends StatelessWidget {
     child: ListView.separated(
       scrollDirection: Axis.horizontal,
       itemCount: images.length,
-      separatorBuilder: (_, __) => const SizedBox(width: 8),
+      separatorBuilder: (_, _) => const SizedBox(width: 8),
       itemBuilder: (_, i) => ClipRRect(
         borderRadius: BorderRadius.circular(10),
         child: CachedNetworkImage(
@@ -386,9 +386,9 @@ class _ImageGallery extends StatelessWidget {
           width: 90,
           height: 90,
           fit: BoxFit.cover,
-          placeholder: (_, __) =>
+          placeholder: (_, _) =>
               Container(color: context.col.surfaceElevated, width: 90),
-          errorWidget: (_, __, ___) =>
+          errorWidget: (_, _, _) =>
               Container(color: context.col.surfaceElevated, width: 90),
         ),
       ),

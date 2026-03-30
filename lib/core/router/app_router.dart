@@ -117,59 +117,95 @@ abstract class AppRoutes {
       '/community/bucket-lists/$listId/add-item';
 }
 
-final appRouterProvider = Provider<GoRouter>((ref) {
-  // Watch both auth state AND the super admin claim so the router
-  // re-evaluates its redirect whenever either of them changes.
-  final authState = ref.watch(authControllerProvider);
-  final isSuperAdminAsync = ref.watch(isSuperAdminProvider);
+// ── Router notifier (module-level singleton) ─────────────────────────────────
+// Caches the latest auth / admin state so GoRouter's redirect can use it
+// without any Riverpod subscription in the provider body.  Avoiding
+// ref.watch inside appRouterProvider ensures the GoRouter is NEVER recreated
+// when user state updates (XP from votes, ratings, photo uploads, etc.).
+class _RouterNotifier extends ChangeNotifier {
+  AsyncValue<AuthState> _auth = const AsyncLoading();
+  AsyncValue<bool> _admin = const AsyncLoading();
 
-  return GoRouter(
+  void setAuth(AsyncValue<AuthState> value) {
+    _auth = value;
+    notifyListeners();
+  }
+
+  void setAdmin(AsyncValue<bool> value) {
+    _admin = value;
+    notifyListeners();
+  }
+
+  String? redirect(BuildContext context, GoRouterState state) {
+    if (_auth.isLoading) return null;
+
+    final isAuthenticated = _auth.value?.isAuthenticated ?? false;
+    final isAuthRoute = [
+      AppRoutes.login,
+      AppRoutes.register,
+      AppRoutes.forgotPassword,
+      AppRoutes.onboarding,
+    ].contains(state.matchedLocation);
+
+    final protectedRoutes = [
+      AppRoutes.profile,
+      AppRoutes.editProfile,
+      AppRoutes.createPost,
+      AppRoutes.contribute,
+    ];
+    final isProtected = protectedRoutes.any(
+      (r) => state.matchedLocation.startsWith(r),
+    );
+
+    if (!isAuthenticated && isProtected) return AppRoutes.login;
+    if (isAuthenticated && isAuthRoute) return AppRoutes.home;
+
+    // ── Admin gate ─────────────────────────────────────────────────────────
+    if (state.matchedLocation.startsWith('/admin')) {
+      if (!isAuthenticated) return AppRoutes.login;
+      if (_admin.isLoading) return null;
+      final isSuperAdmin = _admin.asData?.value ?? false;
+      if (!isSuperAdmin) return AppRoutes.home;
+    }
+
+    return null;
+  }
+}
+
+// Single notifier instance — lives for the entire app lifecycle.
+final _routerNotifier = _RouterNotifier();
+
+// Wires Riverpod auth/admin listeners into _routerNotifier.
+// Contains ONLY ref.listen (no ref.watch), so this provider never invalidates
+// its dependents — appRouterProvider is therefore also never invalidated.
+final _routerListenerProvider = Provider<void>((ref) {
+  ref.listen<AsyncValue<AuthState>>(
+    authControllerProvider,
+    (_, next) => _routerNotifier.setAuth(next),
+    fireImmediately: true,
+  );
+  ref.listen<AsyncValue<bool>>(
+    isSuperAdminProvider,
+    (_, next) => _routerNotifier.setAdmin(next),
+    fireImmediately: true,
+  );
+});
+
+final appRouterProvider = Provider<GoRouter>((ref) {
+  // Watch the listener provider to keep it alive.
+  // Because _routerListenerProvider has no ref.watch inside, its value never
+  // changes — so this watch never causes appRouterProvider to rebuild.
+  ref.watch(_routerListenerProvider);
+
+  final router = GoRouter(
     initialLocation: AppRoutes.home,
     debugLogDiagnostics: true,
-    redirect: (context, state) {
-      final isLoading = authState.isLoading;
-      if (isLoading) return null;
-
-      final isAuthenticated = authState.value?.isAuthenticated ?? false;
-      final isAuthRoute = [
-        AppRoutes.login,
-        AppRoutes.register,
-        AppRoutes.forgotPassword,
-        AppRoutes.onboarding,
-      ].contains(state.matchedLocation);
-
-      // If not authenticated and trying to access a protected route → login
-      final protectedRoutes = [
-        AppRoutes.profile,
-        AppRoutes.editProfile,
-        AppRoutes.createPost,
-        AppRoutes.contribute,
-      ];
-      final isProtected = protectedRoutes.any(
-        (r) => state.matchedLocation.startsWith(r),
-      );
-
-      if (!isAuthenticated && isProtected) return AppRoutes.login;
-      // If authenticated and on auth screen → home
-      if (isAuthenticated && isAuthRoute) return AppRoutes.home;
-
-      // ── Admin gate ───────────────────────────────────────────────────────
-      if (state.matchedLocation.startsWith('/admin')) {
-        // Must be signed in
-        if (!isAuthenticated) return AppRoutes.login;
-        // Claim still loading — let AdminShell show its own spinner
-        if (isSuperAdminAsync.isLoading) return null;
-        // Claim resolved — kick out non-admins
-        final isSuperAdmin = isSuperAdminAsync.asData?.value ?? false;
-        if (!isSuperAdmin) return AppRoutes.home;
-      }
-
-      return null;
-    },
+    refreshListenable: _routerNotifier,
+    redirect: _routerNotifier.redirect,
     routes: [
       GoRoute(
         path: AppRoutes.onboarding,
-        builder: (_, __) => const OnboardingScreen(),
+        builder: (_, _) => const OnboardingScreen(),
       ),
       GoRoute(
         path: AppRoutes.login,
@@ -188,10 +224,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ShellRoute(
         builder: (context, state, child) => MainShell(child: child),
         routes: [
-          GoRoute(path: AppRoutes.home, builder: (_, __) => const HomeScreen()),
+          GoRoute(path: AppRoutes.home, builder: (_, _) => const HomeScreen()),
           GoRoute(
             path: AppRoutes.spots,
-            builder: (_, __) => const ListingsScreen(initialTab: 0),
+            builder: (_, _) => const ListingsScreen(initialTab: 0),
             routes: [
               GoRoute(
                 path: ':id',
@@ -231,11 +267,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: AppRoutes.search,
-            builder: (_, __) => const SearchScreen(),
+            builder: (_, _) => const SearchScreen(),
           ),
           GoRoute(
             path: AppRoutes.tourPackages,
-            builder: (_, __) => const TourPackagesScreen(),
+            builder: (_, _) => const TourPackagesScreen(),
             routes: [
               GoRoute(
                 path: ':id',
@@ -248,15 +284,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: AppRoutes.community,
-            builder: (_, __) => const CommunityScreen(),
+            builder: (_, _) => const CommunityScreen(),
           ),
           GoRoute(
             path: AppRoutes.leaderboard,
-            builder: (_, __) => const LeaderboardScreen(),
+            builder: (_, _) => const LeaderboardScreen(),
           ),
           GoRoute(
             path: AppRoutes.profile,
-            builder: (_, __) => const ProfileScreen(),
+            builder: (_, _) => const ProfileScreen(),
           ),
         ],
       ),
@@ -295,7 +331,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             child: const AdminShell(),
           ),
           transitionDuration: const Duration(milliseconds: 300),
-          transitionsBuilder: (_, animation, __, child) => FadeTransition(
+          transitionsBuilder: (_, animation, _, child) => FadeTransition(
             opacity: CurvedAnimation(
               parent: animation,
               curve: Curves.easeInOut,
@@ -412,6 +448,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
     ],
   );
+  ref.onDispose(router.dispose);
+  return router;
 });
 
 // ── Page transition helpers ───────────────────────────────────────────────────
@@ -420,7 +458,7 @@ CustomTransitionPage<void> _slide(GoRouterState state, Widget child) =>
     CustomTransitionPage(
       key: state.pageKey,
       child: child,
-      transitionsBuilder: (_, animation, __, c) => SlideTransition(
+      transitionsBuilder: (_, animation, _, c) => SlideTransition(
         position: animation.drive(
           Tween(
             begin: const Offset(1, 0),
@@ -435,7 +473,7 @@ CustomTransitionPage<void> _fade(GoRouterState state, Widget child) =>
     CustomTransitionPage(
       key: state.pageKey,
       child: child,
-      transitionsBuilder: (_, animation, __, c) =>
+      transitionsBuilder: (_, animation, _, c) =>
           FadeTransition(opacity: animation, child: c),
     );
 
@@ -444,7 +482,7 @@ CustomTransitionPage<void> _bottomSheet(GoRouterState state, Widget child) =>
       key: state.pageKey,
       child: child,
       opaque: false,
-      transitionsBuilder: (_, animation, __, c) => SlideTransition(
+      transitionsBuilder: (_, animation, _, c) => SlideTransition(
         position: animation.drive(
           Tween(
             begin: const Offset(0, 1),

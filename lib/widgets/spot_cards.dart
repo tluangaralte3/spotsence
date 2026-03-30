@@ -32,7 +32,7 @@ class FeaturedSpotCard extends StatelessWidget {
               CachedNetworkImage(
                 imageUrl: spot.heroImage,
                 fit: BoxFit.cover,
-                errorWidget: (_, __, ___) => const _PlaceholderBg(),
+                errorWidget: (_, _, _) => const _PlaceholderBg(),
               )
             else
               const _PlaceholderBg(),
@@ -155,7 +155,7 @@ class SpotCard extends StatelessWidget {
                   ? CachedNetworkImage(
                       imageUrl: spot.heroImage,
                       fit: BoxFit.cover,
-                      errorWidget: (_, __, ___) => const _PlaceholderBg(),
+                      errorWidget: (_, _, _) => const _PlaceholderBg(),
                     )
                   : const _PlaceholderBg(),
             ),

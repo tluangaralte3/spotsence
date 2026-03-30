@@ -216,14 +216,14 @@ class _CommunityMapState extends ConsumerState<CommunityMap> {
           // ── Map ────────────────────────────────────────────────────────────
           async.when(
             loading: () => const _MapPlaceholder(),
-            error: (_, __) => const _MapPlaceholder(),
+            error: (_, _) => const _MapPlaceholder(),
             data: (allPlaces) {
               final filtered = _filtered(allPlaces);
               final spotsAsync = ref.watch(mapSpotsProvider);
               final spots = spotsAsync.when(
                 data: (s) => s,
                 loading: () => <SpotModel>[],
-                error: (_, __) => <SpotModel>[],
+                error: (_, _) => <SpotModel>[],
               );
               return FlutterMap(
                 mapController: _mapController,
@@ -280,7 +280,7 @@ class _CommunityMapState extends ConsumerState<CommunityMap> {
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     itemCount: _kMapCategories.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 8),
+                    separatorBuilder: (_, _) => const SizedBox(width: 8),
                     itemBuilder: (_, i) {
                       final cat = _kMapCategories[i];
                       final selected = cat == _selectedCategory;
@@ -400,7 +400,7 @@ class _SpotPinState extends State<_SpotPin>
             // Pulsing outer ring
             AnimatedBuilder(
               animation: _pulse,
-              builder: (_, __) => Transform.scale(
+              builder: (_, _) => Transform.scale(
                 scale: _scale.value,
                 child: Container(
                   width: 24,
@@ -537,8 +537,8 @@ class _CirclePin extends StatelessWidget {
                       width: 56,
                       height: 56,
                       fit: BoxFit.cover,
-                      errorWidget: (_, __, ___) => _fallback(),
-                      placeholder: (_, __) => _fallback(),
+                      errorWidget: (_, _, _) => _fallback(),
+                      placeholder: (_, _) => _fallback(),
                     )
                   : _fallback(),
             ),

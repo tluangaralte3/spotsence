@@ -286,7 +286,7 @@ class _BookingReviewScreenState extends ConsumerState<BookingReviewScreen> {
                           width: 72,
                           height: 72,
                           fit: BoxFit.cover,
-                          errorWidget: (_, __, ___) =>
+                          errorWidget: (_, _, _) =>
                               _imgBox(const Color(0xFF4CAF50)),
                         )
                       : _imgBox(AppColors.primary),

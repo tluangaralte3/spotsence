@@ -25,8 +25,8 @@ class ListingsService extends BaseApiService {
           'page': page,
           'limit': limit,
           'status': 'Approved',
-          if (district != null) 'district': district,
-          if (category != null) 'category': category,
+          'district': ?district,
+          'category': ?category,
         },
       );
       return unwrap(response, (json) {
@@ -52,8 +52,8 @@ class ListingsService extends BaseApiService {
         queryParameters: {
           'page': page,
           'limit': limit,
-          if (district != null) 'district': district,
-          if (priceRange != null) 'priceRange': priceRange,
+          'district': ?district,
+          'priceRange': ?priceRange,
         },
       );
       return unwrap(response, (json) {
@@ -78,7 +78,7 @@ class ListingsService extends BaseApiService {
         queryParameters: {
           'page': page,
           'limit': limit,
-          if (district != null) 'district': district,
+          'district': ?district,
         },
       );
       return unwrap(response, (json) {
@@ -103,7 +103,7 @@ class ListingsService extends BaseApiService {
         queryParameters: {
           'page': page,
           'limit': limit,
-          if (district != null) 'district': district,
+          'district': ?district,
         },
       );
       return unwrap(response, (json) {
@@ -128,7 +128,7 @@ class ListingsService extends BaseApiService {
         queryParameters: {
           'page': page,
           'limit': limit,
-          if (district != null) 'district': district,
+          'district': ?district,
         },
       );
       return unwrap(response, (json) {
@@ -154,8 +154,8 @@ class ListingsService extends BaseApiService {
         queryParameters: {
           'page': page,
           'limit': limit,
-          if (district != null) 'district': district,
-          if (difficulty != null) 'difficulty': difficulty,
+          'district': ?district,
+          'difficulty': ?difficulty,
         },
       );
       return unwrap(response, (json) {
@@ -181,8 +181,8 @@ class ListingsService extends BaseApiService {
         queryParameters: {
           'page': page,
           'limit': limit,
-          if (district != null) 'district': district,
-          if (type != null) 'type': type,
+          'district': ?district,
+          'type': ?type,
         },
       );
       return unwrap(response, (json) {
@@ -208,7 +208,7 @@ class ListingsService extends BaseApiService {
         queryParameters: {
           'page': page,
           'limit': limit,
-          if (type != null) 'type': type,
+          'type': ?type,
           if (upcomingOnly == true) 'upcoming': 'true',
         },
       );

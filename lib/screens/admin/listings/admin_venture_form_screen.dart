@@ -175,12 +175,24 @@ class _AdminVentureFormScreenState
     _opEmailCtrl.dispose();
     _opWhatsappCtrl.dispose();
     _opWebsiteCtrl.dispose();
-    for (final t in _tiers) t.dispose();
-    for (final a in _addons) a.dispose();
-    for (final r in _rentals) r.dispose();
-    for (final s in _slots) s.dispose();
-    for (final c in _challenges) c.dispose();
-    for (final m in _medals) m.dispose();
+    for (final t in _tiers) {
+      t.dispose();
+    }
+    for (final a in _addons) {
+      a.dispose();
+    }
+    for (final r in _rentals) {
+      r.dispose();
+    }
+    for (final s in _slots) {
+      s.dispose();
+    }
+    for (final c in _challenges) {
+      c.dispose();
+    }
+    for (final m in _medals) {
+      m.dispose();
+    }
     super.dispose();
   }
 
@@ -238,14 +250,24 @@ class _AdminVentureFormScreenState
         _opWebsiteCtrl.text = model.operator!.website;
         _opVerified = model.operator!.isVerified;
       }
-      for (final t in model.pricingTiers) _tiers.add(_TierEntry.fromModel(t));
-      for (final a in model.addons) _addons.add(_AddonEntry.fromModel(a));
-      for (final r in model.rentalPartners)
+      for (final t in model.pricingTiers) {
+        _tiers.add(_TierEntry.fromModel(t));
+      }
+      for (final a in model.addons) {
+        _addons.add(_AddonEntry.fromModel(a));
+      }
+      for (final r in model.rentalPartners) {
         _rentals.add(_RentalEntry.fromModel(r));
-      for (final s in model.scheduleSlots) _slots.add(_SlotEntry.fromModel(s));
-      for (final c in model.challenges)
+      }
+      for (final s in model.scheduleSlots) {
+        _slots.add(_SlotEntry.fromModel(s));
+      }
+      for (final c in model.challenges) {
         _challenges.add(_ChallengeEntry.fromModel(c));
-      for (final m in model.medals) _medals.add(_MedalEntry.fromModel(m));
+      }
+      for (final m in model.medals) {
+        _medals.add(_MedalEntry.fromModel(m));
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -458,9 +480,9 @@ class _AdminVentureFormScreenState
       ).toJson();
     }
 
-    _split(String v) =>
+    split(String v) =>
         v.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
-    _splitNl(String v) =>
+    splitNl(String v) =>
         v.split('\n').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
 
     final data = <String, dynamic>{
@@ -494,14 +516,14 @@ class _AdminVentureFormScreenState
       'challenges': challengesData,
       'medals': medalsData,
       'totalPointsPossible': totalPoints,
-      'highlights': _splitNl(_highlightsCtrl.text),
-      'whatToExpect': _splitNl(_expectCtrl.text),
-      'whatToBring': _splitNl(_bringCtrl.text),
+      'highlights': splitNl(_highlightsCtrl.text),
+      'whatToExpect': splitNl(_expectCtrl.text),
+      'whatToBring': splitNl(_bringCtrl.text),
       'safetyNotes': _safetyCtrl.text.trim(),
       'cancellationPolicy': _cancelCtrl.text.trim(),
-      'tags': _split(_tagsCtrl.text),
-      'languages': _split(_langCtrl.text),
-      if (operatorData != null) 'operator': operatorData,
+      'tags': split(_tagsCtrl.text),
+      'languages': split(_langCtrl.text),
+      'operator': ?operatorData,
       'isFeatured': _isFeatured,
       'isAvailable': _isAvailable,
       'status': _status,
@@ -1541,7 +1563,7 @@ class _SlotEntry {
     e.maxCtrl.text = s.maxGroupSize.toString();
     e.spotsCtrl.text = s.spotsLeft.toString();
     // parse HH:mm
-    TimeOfDay? _parse(String t) {
+    TimeOfDay? parse(String t) {
       final parts = t.split(':');
       if (parts.length != 2) return null;
       final h = int.tryParse(parts[0]);
@@ -1550,8 +1572,8 @@ class _SlotEntry {
       return TimeOfDay(hour: h, minute: m);
     }
 
-    e.startTime = _parse(s.startTime);
-    e.endTime = _parse(s.endTime);
+    e.startTime = parse(s.startTime);
+    e.endTime = parse(s.endTime);
     return e;
   }
 
@@ -1832,7 +1854,7 @@ class _AddonCardState extends State<_AddonCard> {
               const SizedBox(width: 8),
               Expanded(
                 child: DropdownButtonFormField<String>(
-                  value: e.unit,
+                  initialValue: e.unit,
                   decoration: _sfDeco(context, 'Per unit'),
                   items: _AddonEntry.units
                       .map(
@@ -2171,7 +2193,7 @@ class _ChallengeCardState extends State<_ChallengeCard> {
               const SizedBox(width: 8),
               Expanded(
                 child: DropdownButtonFormField<DifficultyLevel>(
-                  value: e.difficulty,
+                  initialValue: e.difficulty,
                   decoration: _sfDeco(context, 'Difficulty'),
                   items: DifficultyLevel.values
                       .map(
@@ -2196,7 +2218,7 @@ class _ChallengeCardState extends State<_ChallengeCard> {
           const SizedBox(height: 8),
           // Medal link
           DropdownButtonFormField<String>(
-            value: validLinked,
+            initialValue: validLinked,
             decoration: _sfDeco(context, '🥇  Awards Medal (optional)'),
             items: allMedals
                 .map(
@@ -2315,7 +2337,7 @@ class _MedalCardState extends State<_MedalCard> {
               const SizedBox(width: 8),
               Expanded(
                 child: DropdownButtonFormField<MedalTier>(
-                  value: e.tier,
+                  initialValue: e.tier,
                   decoration: _sfDeco(context, 'Tier'),
                   items: MedalTier.values
                       .map(
@@ -2429,7 +2451,7 @@ class _BadgeImagePicker extends StatelessWidget {
                   Image.file(
                     File(pickedFile!.path),
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => _placeholder(col),
+                    errorBuilder: (_, _, _) => _placeholder(col),
                   ),
                   Positioned(top: 2, right: 2, child: _clearBtn(col)),
                 ],
@@ -2441,7 +2463,7 @@ class _BadgeImagePicker extends StatelessWidget {
                   Image.network(
                     entry.imageUrlCtrl.text.trim(),
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => _placeholder(col),
+                    errorBuilder: (_, _, _) => _placeholder(col),
                   ),
                   Positioned(top: 2, right: 2, child: _clearBtn(col)),
                 ],
@@ -2805,7 +2827,7 @@ Widget _miniSwitch(String label, bool value, ValueChanged<bool> onChanged) =>
           child: Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: AppColors.primary,
+            activeThumbColor: AppColors.primary,
           ),
         ),
         Text(label, style: const TextStyle(fontSize: 12)),
@@ -2843,7 +2865,7 @@ class _DropdownField<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DropdownButtonFormField<T>(
-      value: value,
+      initialValue: value,
       decoration: InputDecoration(
         filled: true,
         fillColor: context.col.surfaceElevated,
@@ -2918,7 +2940,7 @@ class _SwitchRow extends StatelessWidget {
       Switch(
         value: value,
         onChanged: onChanged,
-        activeColor: AppColors.primary,
+        activeThumbColor: AppColors.primary,
       ),
     ],
   );
@@ -3055,7 +3077,7 @@ class _ImgThumb extends StatelessWidget {
       width: 72,
       height: 72,
       fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => const SizedBox(width: 72, height: 72),
+      errorBuilder: (_, _, _) => const SizedBox(width: 72, height: 72),
     ),
     onRemove: onRemove,
   );
@@ -3072,7 +3094,7 @@ class _ImgThumbFile extends StatelessWidget {
       width: 72,
       height: 72,
       fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => Container(
+      errorBuilder: (_, _, _) => Container(
         width: 72,
         height: 72,
         color: context.col.surfaceElevated,

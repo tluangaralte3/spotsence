@@ -9,7 +9,7 @@ final spotsServiceProvider = Provider<SpotsService>((ref) {
 });
 
 class SpotsService extends BaseApiService {
-  SpotsService(Dio dio) : super(dio);
+  SpotsService(super.dio);
 
   Future<ApiResult<List<SpotModel>>> getSpots({
     String? category,
@@ -21,7 +21,7 @@ class SpotsService extends BaseApiService {
       final response = await dio.get(
         '/api/spots',
         queryParameters: {
-          if (category != null) 'category': category,
+          'category': ?category,
           'page': page,
           'pageSize': pageSize,
           'sortBy': sortBy,
@@ -81,7 +81,7 @@ class SpotsService extends BaseApiService {
         '/api/search',
         queryParameters: {
           'q': query,
-          if (category != null) 'category': category,
+          'category': ?category,
           'page': page,
         },
       );

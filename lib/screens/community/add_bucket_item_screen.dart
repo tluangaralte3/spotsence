@@ -596,7 +596,7 @@ class _ListingTab extends ConsumerWidget {
               return ListView.separated(
                 padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
                 itemCount: filtered.length,
-                separatorBuilder: (_, __) =>
+                separatorBuilder: (_, _) =>
                     Divider(color: context.col.border, height: 1),
                 itemBuilder: (_, i) =>
                     _ListingTile(listing: filtered[i], onTap: onSelect),
@@ -723,7 +723,7 @@ class _ListingThumb extends StatelessWidget {
               width: size,
               height: size,
               fit: BoxFit.cover,
-              errorBuilder: (ctx, __, ___) => _placeholder(ctx),
+              errorBuilder: (ctx, _, _) => _placeholder(ctx),
             )
           : _placeholder(context),
     );

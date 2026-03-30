@@ -144,7 +144,7 @@ class GamificationService {
           'action': action.name,
           'xpEarned': xpAwarded + badgeXp,
           'createdAt': FieldValue.serverTimestamp(),
-          if (relatedId != null) 'relatedId': relatedId,
+          'relatedId': ?relatedId,
         });
 
         result = GamificationResult(

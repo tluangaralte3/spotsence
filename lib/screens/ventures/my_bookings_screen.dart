@@ -192,7 +192,7 @@ class _BookingCard extends ConsumerWidget {
                               width: 58,
                               height: 58,
                               fit: BoxFit.cover,
-                              errorWidget: (_, __, ___) =>
+                              errorWidget: (_, _, _) =>
                                   _imgPlaceholder(statusColor),
                             )
                           : _imgPlaceholder(statusColor),
@@ -930,7 +930,7 @@ class _BookingDetailSheetState extends ConsumerState<_BookingDetailSheet> {
                                   width: 56,
                                   height: 56,
                                   fit: BoxFit.cover,
-                                  errorWidget: (_, __, ___) => Container(
+                                  errorWidget: (_, _, _) => Container(
                                     width: 56,
                                     height: 56,
                                     color: statusColor

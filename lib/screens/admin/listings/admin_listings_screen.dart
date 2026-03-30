@@ -405,7 +405,7 @@ class _ListingTabContent extends ConsumerWidget {
       return ListView.separated(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
         itemCount: tagged.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 8),
+        separatorBuilder: (_, _) => const SizedBox(height: 8),
         itemBuilder: (ctx, i) {
           final item = tagged[i];
           return _ListRow(
@@ -508,7 +508,7 @@ class _ListingTabContent extends ConsumerWidget {
         return ListView.separated(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
           itemCount: docs.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 8),
+          separatorBuilder: (_, _) => const SizedBox(height: 8),
           itemBuilder: (ctx, i) {
             final doc = docs[i];
             final data = doc.data() as Map<String, dynamic>;
@@ -874,7 +874,7 @@ class _Thumb extends StatelessWidget {
       width: isExpanded ? double.infinity : size,
       height: isExpanded ? double.infinity : size,
       fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => placeholder,
+      errorBuilder: (_, _, _) => placeholder,
       loadingBuilder: (_, child, progress) {
         if (progress == null) return child;
         return Container(

@@ -29,7 +29,7 @@ class HotelDetailScreen extends ConsumerWidget {
           child: CircularProgressIndicator(color: AppColors.primary),
         ),
       ),
-      error: (_, __) => Scaffold(
+      error: (_, _) => Scaffold(
         backgroundColor: context.col.bg,
         appBar: AppBar(backgroundColor: context.col.bg),
         body: const EmptyState(emoji: '😕', title: 'Could not load hotel'),
@@ -99,9 +99,9 @@ class _HotelBodyState extends ConsumerState<_HotelBody> {
                       ? CachedNetworkImage(
                           imageUrl: images[_imageIndex],
                           fit: BoxFit.cover,
-                          placeholder: (_, __) =>
+                          placeholder: (_, _) =>
                               Container(color: context.col.surfaceElevated),
-                          errorWidget: (_, __, ___) => Container(
+                          errorWidget: (_, _, _) => Container(
                             color: context.col.surfaceElevated,
                             child: Center(
                               child: Icon(
@@ -383,7 +383,7 @@ class _HotelBodyState extends ConsumerState<_HotelBody> {
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
                         itemCount: images.length,
-                        separatorBuilder: (_, __) => const SizedBox(width: 8),
+                        separatorBuilder: (_, _) => const SizedBox(width: 8),
                         itemBuilder: (_, i) => GestureDetector(
                           onTap: () => setState(() => _imageIndex = i),
                           child: ClipRRect(
@@ -393,7 +393,7 @@ class _HotelBodyState extends ConsumerState<_HotelBody> {
                               width: 90,
                               height: 90,
                               fit: BoxFit.cover,
-                              errorWidget: (_, __, ___) => Container(
+                              errorWidget: (_, _, _) => Container(
                                 width: 90,
                                 color: context.col.surfaceElevated,
                               ),
@@ -680,7 +680,7 @@ class _ReviewSectionState extends ConsumerState<_ReviewSection> {
               child: CircularProgressIndicator(color: AppColors.primary),
             ),
           ),
-          error: (_, __) => Padding(
+          error: (_, _) => Padding(
             padding: EdgeInsets.all(8),
             child: Text(
               'Could not load reviews',
@@ -710,7 +710,7 @@ class _ReviewSectionState extends ConsumerState<_ReviewSection> {
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         itemCount: reviews.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 10),
+                        separatorBuilder: (_, _) => const SizedBox(height: 10),
                         itemBuilder: (_, i) => _ReviewCard(review: reviews[i]),
                       ),
                       const SizedBox(height: 14),

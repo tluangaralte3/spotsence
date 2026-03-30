@@ -824,7 +824,7 @@ class _FeaturedSpotsSectionState extends ConsumerState<_FeaturedSpotsSection> {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 20),
               itemCount: _tabs.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              separatorBuilder: (_, _) => const SizedBox(width: 8),
               itemBuilder: (_, i) {
                 final tab = _tabs[i];
                 final selected = _selectedCategory == tab.id;
@@ -895,11 +895,11 @@ class _FeaturedSpotsSectionState extends ConsumerState<_FeaturedSpotsSection> {
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     itemCount: 3,
-                    separatorBuilder: (_, __) => const SizedBox(width: 12),
-                    itemBuilder: (_, __) =>
+                    separatorBuilder: (_, _) => const SizedBox(width: 12),
+                    itemBuilder: (_, _) =>
                         const ShimmerBox(width: 260, height: 330, radius: 20),
                   ),
-                  error: (_, __) => const Center(
+                  error: (_, _) => const Center(
                     child: EmptyState(
                       icon: Iconsax.warning_2,
                       iconColor: AppColors.error,
@@ -928,7 +928,7 @@ class _FeaturedSpotsSectionState extends ConsumerState<_FeaturedSpotsSection> {
                             scrollDirection: Axis.horizontal,
                             padding: const EdgeInsets.symmetric(horizontal: 20),
                             itemCount: spots.length,
-                            separatorBuilder: (_, __) =>
+                            separatorBuilder: (_, _) =>
                                 const SizedBox(width: 14),
                             itemBuilder: (ctx, i) => _FeaturedCard(
                               spot: spots[i],
@@ -986,8 +986,8 @@ class _FeaturedCard extends StatelessWidget {
                       ? CachedNetworkImage(
                           imageUrl: spot.heroImage,
                           fit: BoxFit.cover,
-                          placeholder: (_, __) => const _CardImagePlaceholder(),
-                          errorWidget: (_, __, ___) =>
+                          placeholder: (_, _) => const _CardImagePlaceholder(),
+                          errorWidget: (_, _, _) =>
                               const _CardImagePlaceholder(),
                         )
                       : const _CardImagePlaceholder(),
@@ -1257,8 +1257,8 @@ class _TourVentureSection extends ConsumerWidget {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 20),
               itemCount: 3,
-              separatorBuilder: (_, __) => const SizedBox(width: 14),
-              itemBuilder: (_, __) => const _VentureCardShimmer(),
+              separatorBuilder: (_, _) => const SizedBox(width: 14),
+              itemBuilder: (_, _) => const _VentureCardShimmer(),
             ),
           ),
           error: (err, _) => Padding(
@@ -1329,7 +1329,7 @@ class _TourVentureSection extends ConsumerWidget {
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 itemCount: ventures.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 14),
+                separatorBuilder: (_, _) => const SizedBox(width: 14),
                 itemBuilder: (ctx, i) => _VentureCard(data: ventures[i]),
               ),
             );
@@ -1476,9 +1476,9 @@ class _VentureCard extends StatelessWidget {
                         ? CachedNetworkImage(
                             imageUrl: imageUrl,
                             fit: BoxFit.cover,
-                            errorWidget: (_, __, ___) =>
+                            errorWidget: (_, _, _) =>
                                 const _EmojiHero(),
-                            placeholder: (_, __) =>
+                            placeholder: (_, _) =>
                                 const _EmojiHero(),
                           )
                         : const _EmojiHero(),
@@ -1786,7 +1786,7 @@ class _HomeBannerCarouselState
 
     return bannersAsync.when(
       loading: () => _BannerSkeleton(),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
       data: (banners) {
         if (banners.isEmpty) return const SizedBox.shrink();
         return Column(
@@ -1805,7 +1805,7 @@ class _HomeBannerCarouselState
                 onPageChanged: (index, _) =>
                     setState(() => _currentIndex = index),
               ),
-              itemBuilder: (_, i, __) {
+              itemBuilder: (_, i, _) {
                 final banner = banners[i];
                 return GestureDetector(
                   onTap: () => _handleTap(context, banner),
@@ -1860,7 +1860,7 @@ class _BannerCard extends StatelessWidget {
             CachedNetworkImage(
               imageUrl: banner.imageUrl,
               fit: BoxFit.cover,
-              errorWidget: (_, __, ___) => const SizedBox.shrink(),
+              errorWidget: (_, _, _) => const SizedBox.shrink(),
             ),
 
           // ── Gradient overlay for readability ─────────────────────────

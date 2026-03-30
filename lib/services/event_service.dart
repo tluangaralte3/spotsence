@@ -55,9 +55,9 @@ class EventService {
           if (rawDate == null) return true;
           try {
             DateTime? dt;
-            if (rawDate is Timestamp)
+            if (rawDate is Timestamp) {
               dt = rawDate.toDate();
-            else if (rawDate is int) {
+            } else if (rawDate is int) {
               dt = DateTime.fromMillisecondsSinceEpoch(rawDate);
             } else {
               dt = DateTime.parse(rawDate.toString());

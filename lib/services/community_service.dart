@@ -10,7 +10,7 @@ final communityServiceProvider = Provider<CommunityService>((ref) {
 });
 
 class CommunityService extends BaseApiService {
-  CommunityService(Dio dio) : super(dio);
+  CommunityService(super.dio);
 
   // ── Posts ─────────────────────────────────────────────────────────────
 
@@ -46,10 +46,10 @@ class CommunityService extends BaseApiService {
         data: {
           'content': content,
           'type': type,
-          if (images != null) 'images': images,
-          if (spotId != null) 'spotId': spotId,
-          if (spotName != null) 'spotName': spotName,
-          if (location != null) 'location': location,
+          'images': ?images,
+          'spotId': ?spotId,
+          'spotName': ?spotName,
+          'location': ?location,
         },
       );
       return unwrap(
@@ -69,7 +69,7 @@ class CommunityService extends BaseApiService {
   Future<ApiResult<void>> deletePost(String postId) async {
     return safeCall(() async {
       final response = await dio.delete('/api/community/posts/$postId');
-      return unwrap(response, (_) => null);
+      return unwrap(response, (_) {});
     });
   }
 
@@ -117,7 +117,7 @@ class CommunityService extends BaseApiService {
         '/api/community/posts/$postId/comment',
         data: {'comment': comment},
       );
-      return unwrap(response, (_) => null);
+      return unwrap(response, (_) {});
     });
   }
 
@@ -153,10 +153,10 @@ class CommunityService extends BaseApiService {
         '/api/community/bucket-lists',
         data: {
           'title': title,
-          if (description != null) 'description': description,
+          'description': ?description,
           'maxParticipants': maxParticipants,
-          if (startDate != null) 'startDate': startDate,
-          if (endDate != null) 'endDate': endDate,
+          'startDate': ?startDate,
+          'endDate': ?endDate,
         },
       );
       return unwrap(

@@ -144,7 +144,7 @@ class _FlaggedReviewsTab extends ConsumerWidget {
         return ListView.separated(
           padding: const EdgeInsets.all(16),
           itemCount: snap.docs.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 8),
+          separatorBuilder: (_, _) => const SizedBox(height: 8),
           itemBuilder: (ctx, i) =>
               _ModerationCard(doc: snap.docs[i], collection: 'reviews'),
         );
@@ -191,7 +191,7 @@ class _RecentPostsTab extends ConsumerWidget {
         return ListView.separated(
           padding: const EdgeInsets.all(16),
           itemCount: snap.docs.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 8),
+          separatorBuilder: (_, _) => const SizedBox(height: 8),
           itemBuilder: (ctx, i) =>
               _ModerationCard(doc: snap.docs[i], collection: 'community_posts'),
         );

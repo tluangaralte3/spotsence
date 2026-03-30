@@ -265,7 +265,7 @@ class CompactSpotCard extends StatelessWidget {
                   ? CachedNetworkImage(
                       imageUrl: spot.heroImage,
                       fit: BoxFit.cover,
-                      errorWidget: (_, __, ___) => Container(
+                      errorWidget: (_, _, _) => Container(
                         color: context.col.surface,
                         child: Icon(
                           Icons.image_outlined,

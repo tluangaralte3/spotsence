@@ -167,7 +167,7 @@ class _DetailBody extends ConsumerWidget {
                       ? Image.network(
                           list.bannerUrl,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) =>
+                          errorBuilder: (_, _, _) =>
                               Container(color: context.col.surfaceElevated),
                         )
                       : Container(color: context.col.surfaceElevated),
@@ -1019,7 +1019,7 @@ class _BucketItemTile extends ConsumerWidget {
                     width: 48,
                     height: 48,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => const SizedBox(),
+                    errorBuilder: (_, _, _) => const SizedBox(),
                   ),
                 )
               : null,

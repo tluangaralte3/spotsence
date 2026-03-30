@@ -114,8 +114,9 @@ class EventModel {
   bool get canBookTicket {
     if (!ticketingEnabled) return false;
     if (isSoldOut) return false;
-    if (ticketingDeadline != null && DateTime.now().isAfter(ticketingDeadline!))
+    if (ticketingDeadline != null && DateTime.now().isAfter(ticketingDeadline!)) {
       return false;
+    }
     return isUpcoming || isOngoing;
   }
 

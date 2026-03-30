@@ -578,9 +578,9 @@ class _HeroImage extends StatelessWidget {
               height: height,
               width: double.infinity,
               fit: BoxFit.cover,
-              placeholder: (_, __) =>
+              placeholder: (_, _) =>
                   Container(height: height, color: context.col.surfaceElevated),
-              errorWidget: (_, __, ___) => Container(
+              errorWidget: (_, _, _) => Container(
                 height: height,
                 color: context.col.surfaceElevated,
                 child: Center(
@@ -694,7 +694,7 @@ class _ListingListState<T> extends State<_ListingList<T>> {
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
         itemCount:
             widget.state.items.length + (widget.state.isLoadingMore ? 1 : 0),
-        separatorBuilder: (_, __) => const SizedBox(height: 12),
+        separatorBuilder: (_, _) => const SizedBox(height: 12),
         itemBuilder: (context, i) {
           if (i >= widget.state.items.length) {
             return const Center(
@@ -1508,7 +1508,7 @@ class _EventsTabState extends ConsumerState<_EventsTab> {
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
               sliver: SliverList.separated(
                 itemCount: displayEvents.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                separatorBuilder: (_, _) => const SizedBox(height: 12),
                 itemBuilder: (context, i) => _EventCard(
                   event: displayEvents[i],
                   onTap: () => context.push(
@@ -1823,7 +1823,7 @@ class _EventGridCard extends StatelessWidget {
                       height: 110,
                       width: double.infinity,
                       fit: BoxFit.cover,
-                      placeholder: (_, __) => Container(
+                      placeholder: (_, _) => Container(
                         height: 110,
                         color: typeColor.withValues(alpha: 0.18),
                         child: Center(
@@ -1833,7 +1833,7 @@ class _EventGridCard extends StatelessWidget {
                           ),
                         ),
                       ),
-                      errorWidget: (_, __, ___) => Container(
+                      errorWidget: (_, _, _) => Container(
                         height: 110,
                         color: typeColor.withValues(alpha: 0.18),
                         child: Center(

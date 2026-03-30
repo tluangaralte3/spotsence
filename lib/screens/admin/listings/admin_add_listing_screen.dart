@@ -282,9 +282,9 @@ class _AdminAddListingScreenState extends ConsumerState<AdminAddListingScreen> {
             if (parsed != null && _startDate == null) _startDate = parsed;
           }
           final rawEnd = d['endDate'];
-          if (rawEnd is Timestamp)
+          if (rawEnd is Timestamp) {
             _endDate = rawEnd.toDate();
-          else if (rawEnd is String && rawEnd.isNotEmpty)
+          } else if (rawEnd is String && rawEnd.isNotEmpty)
             _endDate = DateTime.tryParse(rawEnd);
         } else if (_isAccommodations) {
           // accommodations fields
@@ -485,9 +485,9 @@ class _AdminAddListingScreenState extends ConsumerState<AdminAddListingScreen> {
             if (key == 'startDate' || key == 'endDate') {
               final rawDate = d[key];
               DateTime? parsed;
-              if (rawDate is Timestamp)
+              if (rawDate is Timestamp) {
                 parsed = rawDate.toDate();
-              else if (rawDate is String && rawDate.isNotEmpty)
+              } else if (rawDate is String && rawDate.isNotEmpty)
                 parsed = DateTime.tryParse(rawDate);
               if (parsed != null) {
                 if (key == 'startDate') _startDate = parsed;
@@ -589,7 +589,9 @@ class _AdminAddListingScreenState extends ConsumerState<AdminAddListingScreen> {
     _specialtiesCafeCtrl.dispose();
     _latCafeCtrl.dispose();
     _lngCafeCtrl.dispose();
-    for (final c in _extraControllers.values) c.dispose();
+    for (final c in _extraControllers.values) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -1205,7 +1207,7 @@ class _AdminAddListingScreenState extends ConsumerState<AdminAddListingScreen> {
                             ),
                           ),
                           value: _eventFeatured,
-                          activeColor: AppColors.primary,
+                          activeThumbColor: AppColors.primary,
                           onChanged: (v) => setState(() => _eventFeatured = v),
                         ),
                         const SizedBox(height: 4),
@@ -1392,7 +1394,7 @@ class _AdminAddListingScreenState extends ConsumerState<AdminAddListingScreen> {
                             ),
                           ),
                           value: _spotFeatured,
-                          activeColor: AppColors.primary,
+                          activeThumbColor: AppColors.primary,
                           onChanged: (v) => setState(() => _spotFeatured = v),
                         ),
                         SwitchListTile(
@@ -1405,7 +1407,7 @@ class _AdminAddListingScreenState extends ConsumerState<AdminAddListingScreen> {
                             ),
                           ),
                           value: _spotIsRateable,
-                          activeColor: AppColors.primary,
+                          activeThumbColor: AppColors.primary,
                           onChanged: (v) => setState(() => _spotIsRateable = v),
                         ),
                       ],
@@ -1670,7 +1672,7 @@ class _AdminAddListingScreenState extends ConsumerState<AdminAddListingScreen> {
                             ),
                           ),
                           value: _accHasBreakfast,
-                          activeColor: AppColors.primary,
+                          activeThumbColor: AppColors.primary,
                           onChanged: (v) =>
                               setState(() => _accHasBreakfast = v),
                         ),
@@ -1684,7 +1686,7 @@ class _AdminAddListingScreenState extends ConsumerState<AdminAddListingScreen> {
                             ),
                           ),
                           value: _accHasWifi,
-                          activeColor: AppColors.primary,
+                          activeThumbColor: AppColors.primary,
                           onChanged: (v) => setState(() => _accHasWifi = v),
                         ),
                         SwitchListTile(
@@ -1697,7 +1699,7 @@ class _AdminAddListingScreenState extends ConsumerState<AdminAddListingScreen> {
                             ),
                           ),
                           value: _accHasParking,
-                          activeColor: AppColors.primary,
+                          activeThumbColor: AppColors.primary,
                           onChanged: (v) => setState(() => _accHasParking = v),
                         ),
                         SwitchListTile(
@@ -1710,7 +1712,7 @@ class _AdminAddListingScreenState extends ConsumerState<AdminAddListingScreen> {
                             ),
                           ),
                           value: _accIsVerified,
-                          activeColor: AppColors.primary,
+                          activeThumbColor: AppColors.primary,
                           onChanged: (v) => setState(() => _accIsVerified = v),
                         ),
                       ],
@@ -1824,7 +1826,7 @@ class _AdminAddListingScreenState extends ConsumerState<AdminAddListingScreen> {
                             ),
                           ),
                           value: _hasDelivery,
-                          activeColor: AppColors.primary,
+                          activeThumbColor: AppColors.primary,
                           onChanged: (v) => setState(() => _hasDelivery = v),
                         ),
                         SwitchListTile(
@@ -1837,7 +1839,7 @@ class _AdminAddListingScreenState extends ConsumerState<AdminAddListingScreen> {
                             ),
                           ),
                           value: _hasParking,
-                          activeColor: AppColors.primary,
+                          activeThumbColor: AppColors.primary,
                           onChanged: (v) => setState(() => _hasParking = v),
                         ),
                         SwitchListTile(
@@ -1850,7 +1852,7 @@ class _AdminAddListingScreenState extends ConsumerState<AdminAddListingScreen> {
                             ),
                           ),
                           value: _hasReservation,
-                          activeColor: AppColors.primary,
+                          activeThumbColor: AppColors.primary,
                           onChanged: (v) => setState(() => _hasReservation = v),
                         ),
                         SwitchListTile(
@@ -1863,7 +1865,7 @@ class _AdminAddListingScreenState extends ConsumerState<AdminAddListingScreen> {
                             ),
                           ),
                           value: _isVerified,
-                          activeColor: AppColors.primary,
+                          activeThumbColor: AppColors.primary,
                           onChanged: (v) => setState(() => _isVerified = v),
                         ),
                       ],
@@ -1973,7 +1975,7 @@ class _AdminAddListingScreenState extends ConsumerState<AdminAddListingScreen> {
                             ),
                           ),
                           value: _cafeHasWifi,
-                          activeColor: AppColors.primary,
+                          activeThumbColor: AppColors.primary,
                           onChanged: (v) => setState(() => _cafeHasWifi = v),
                         ),
                         SwitchListTile(
@@ -1986,7 +1988,7 @@ class _AdminAddListingScreenState extends ConsumerState<AdminAddListingScreen> {
                             ),
                           ),
                           value: _cafeHasParking,
-                          activeColor: AppColors.primary,
+                          activeThumbColor: AppColors.primary,
                           onChanged: (v) => setState(() => _cafeHasParking = v),
                         ),
                         SwitchListTile(
@@ -1999,7 +2001,7 @@ class _AdminAddListingScreenState extends ConsumerState<AdminAddListingScreen> {
                             ),
                           ),
                           value: _cafeIsSundayOpen,
-                          activeColor: AppColors.primary,
+                          activeThumbColor: AppColors.primary,
                           onChanged: (v) =>
                               setState(() => _cafeIsSundayOpen = v),
                         ),
@@ -2013,7 +2015,7 @@ class _AdminAddListingScreenState extends ConsumerState<AdminAddListingScreen> {
                             ),
                           ),
                           value: _cafeIsVerified,
-                          activeColor: AppColors.primary,
+                          activeThumbColor: AppColors.primary,
                           onChanged: (v) =>
                               setState(() => _cafeIsVerified = v),
                         ),
@@ -2134,7 +2136,7 @@ class _AdminAddListingScreenState extends ConsumerState<AdminAddListingScreen> {
                             ),
                           ),
                           value: _shopHasDelivery,
-                          activeColor: AppColors.primary,
+                          activeThumbColor: AppColors.primary,
                           onChanged: (v) => setState(() => _shopHasDelivery = v),
                         ),
                         SwitchListTile(
@@ -2147,7 +2149,7 @@ class _AdminAddListingScreenState extends ConsumerState<AdminAddListingScreen> {
                             ),
                           ),
                           value: _shopHasParking,
-                          activeColor: AppColors.primary,
+                          activeThumbColor: AppColors.primary,
                           onChanged: (v) => setState(() => _shopHasParking = v),
                         ),
                         SwitchListTile(
@@ -2160,7 +2162,7 @@ class _AdminAddListingScreenState extends ConsumerState<AdminAddListingScreen> {
                             ),
                           ),
                           value: _shopAcceptsCards,
-                          activeColor: AppColors.primary,
+                          activeThumbColor: AppColors.primary,
                           onChanged: (v) =>
                               setState(() => _shopAcceptsCards = v),
                         ),
@@ -2174,7 +2176,7 @@ class _AdminAddListingScreenState extends ConsumerState<AdminAddListingScreen> {
                             ),
                           ),
                           value: _shopIsPopular,
-                          activeColor: AppColors.primary,
+                          activeThumbColor: AppColors.primary,
                           onChanged: (v) => setState(() => _shopIsPopular = v),
                         ),
                         SwitchListTile(
@@ -2187,7 +2189,7 @@ class _AdminAddListingScreenState extends ConsumerState<AdminAddListingScreen> {
                             ),
                           ),
                           value: _shopIsVerified,
-                          activeColor: AppColors.primary,
+                          activeThumbColor: AppColors.primary,
                           onChanged: (v) =>
                               setState(() => _shopIsVerified = v),
                         ),
@@ -2449,8 +2451,7 @@ class _DateTimePickerTile extends StatelessWidget {
             onPrimary: Colors.black,
             surface: col.surface,
             onSurface: col.textPrimary,
-          ),
-          dialogBackgroundColor: col.surface,
+          ), dialogTheme: DialogThemeData(backgroundColor: col.surface),
         ),
         child: child!,
       ),
@@ -2471,8 +2472,7 @@ class _DateTimePickerTile extends StatelessWidget {
             onPrimary: Colors.black,
             surface: col.surface,
             onSurface: col.textPrimary,
-          ),
-          dialogBackgroundColor: col.surface,
+          ), dialogTheme: DialogThemeData(backgroundColor: col.surface),
         ),
         child: child!,
       ),
@@ -2576,7 +2576,7 @@ class _ImagePickerField extends StatelessWidget {
                   child: Image.network(
                     existingUrls[i],
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Icon(
+                    errorBuilder: (_, _, _) => Icon(
                       Icons.broken_image_outlined,
                       color: col.textMuted,
                       size: 28,
@@ -2587,9 +2587,9 @@ class _ImagePickerField extends StatelessWidget {
               // Newly picked (not yet uploaded)
               for (int i = 0; i < newImages.length; i++)
                 _ImageThumb(
-                  child: Image.file(File(newImages[i].path), fit: BoxFit.cover),
                   onRemove: () => onRemoveNew(i),
                   badge: uploading ? null : const _UploadBadge(),
+                  child: Image.file(File(newImages[i].path), fit: BoxFit.cover),
                 ),
             ],
           ),
@@ -2744,7 +2744,7 @@ class _DropdownField<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     final col = context.col;
     return DropdownButtonFormField<T>(
-      value: value,
+      initialValue: value,
       onChanged: onChanged,
       dropdownColor: col.surface,
       style: TextStyle(color: col.textPrimary, fontSize: 14),
@@ -2827,7 +2827,7 @@ class _CafeLogoPicker extends StatelessWidget {
                       ? Image.network(
                           newImage!.path,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Icon(
+                          errorBuilder: (_, _, _) => Icon(
                             Icons.broken_image_outlined,
                             color: col.textMuted,
                           ),
@@ -2835,7 +2835,7 @@ class _CafeLogoPicker extends StatelessWidget {
                       : Image.network(
                           existingUrl!,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Icon(
+                          errorBuilder: (_, _, _) => Icon(
                             Icons.broken_image_outlined,
                             color: col.textMuted,
                           ),

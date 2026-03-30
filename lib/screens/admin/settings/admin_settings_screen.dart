@@ -419,7 +419,7 @@ class _ProfileCard extends StatelessWidget {
                     child: Image.network(
                       photoUrl,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Center(
+                      errorBuilder: (_, _, _) => Center(
                         child: Text(
                           initials,
                           style: const TextStyle(
@@ -889,7 +889,7 @@ class _SwitchTile extends StatelessWidget {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: AppColors.primary,
+            activeThumbColor: AppColors.primary,
             activeTrackColor: AppColors.primary.withValues(alpha: 0.3),
             inactiveThumbColor: col.textMuted,
             inactiveTrackColor: col.surfaceElevated,

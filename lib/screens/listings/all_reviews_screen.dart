@@ -264,7 +264,7 @@ class _AllReviewsScreenState extends ConsumerState<AllReviewsScreen> {
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
                 sliver: SliverList.separated(
                   itemCount: filtered.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  separatorBuilder: (_, _) => const SizedBox(height: 10),
                   itemBuilder: (_, i) => _ReviewCard(review: filtered[i]),
                 ),
               ),
@@ -477,7 +477,7 @@ class _StarFilterBar extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 20),
         itemCount: 5,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
         itemBuilder: (context, idx) {
           final star = 5 - idx;
           final isSelected = selected == star;

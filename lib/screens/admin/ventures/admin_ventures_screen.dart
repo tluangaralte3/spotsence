@@ -365,7 +365,7 @@ class _PackagesTab extends ConsumerWidget {
         return ListView.separated(
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 100),
           itemCount: snap.docs.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 10),
+          separatorBuilder: (_, _) => const SizedBox(height: 10),
           itemBuilder: (_, i) {
             try {
               final doc = snap.docs[i];
@@ -444,7 +444,7 @@ class _PackageCard extends ConsumerWidget {
                   height: 150,
                   width: double.infinity,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                  errorBuilder: (_, _, _) => const SizedBox.shrink(),
                 ),
                 Positioned.fill(
                   child: DecoratedBox(
@@ -792,7 +792,7 @@ class _FeedbackTab extends ConsumerWidget {
               child: ListView.separated(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
                 itemCount: docs.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 10),
+                separatorBuilder: (_, _) => const SizedBox(height: 10),
                 itemBuilder: (_, i) {
                   try {
                     return _FeedbackCard(data: _safeMap(docs[i].data()));
@@ -1472,7 +1472,7 @@ class _BookingsTabState extends ConsumerState<_BookingsTab> {
                       padding:
                           const EdgeInsets.fromLTRB(16, 8, 16, 24),
                       itemCount: filtered.length,
-                      separatorBuilder: (_, __) =>
+                      separatorBuilder: (_, _) =>
                           const SizedBox(height: 10),
                       itemBuilder: (_, i) =>
                           _AdminBookingCard(booking: filtered[i]),

@@ -611,7 +611,7 @@ class _PodiumItem extends StatelessWidget {
                       ? CachedNetworkImage(
                           imageUrl: entry!.heroImage,
                           fit: BoxFit.cover,
-                          placeholder: (_, __) => Container(
+                          placeholder: (_, _) => Container(
                             color: accentColor.withValues(alpha: 0.15),
                             alignment: Alignment.center,
                             child: Icon(
@@ -620,7 +620,7 @@ class _PodiumItem extends StatelessWidget {
                               size: avatarSize * 0.38,
                             ),
                           ),
-                          errorWidget: (_, __, ___) => Container(
+                          errorWidget: (_, _, _) => Container(
                             color: accentColor.withValues(alpha: 0.15),
                             alignment: Alignment.center,
                             child: Icon(
@@ -852,7 +852,7 @@ class _PlaceRow extends StatelessWidget {
                       width: 48,
                       height: 48,
                       fit: BoxFit.cover,
-                      errorWidget: (_, __, ___) =>
+                      errorWidget: (_, _, _) =>
                           _Placeholder(color: accentColor, size: 48),
                     )
                   : _Placeholder(color: accentColor, size: 48),

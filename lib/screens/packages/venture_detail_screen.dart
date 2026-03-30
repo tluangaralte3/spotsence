@@ -217,9 +217,9 @@ class _HeroSliver extends StatelessWidget {
                     itemBuilder: (_, i) => CachedNetworkImage(
                       imageUrl: images[i],
                       fit: BoxFit.cover,
-                      placeholder: (_, __) =>
+                      placeholder: (_, _) =>
                           Container(color: context.col.surfaceElevated),
-                      errorWidget: (_, __, ___) => Container(
+                      errorWidget: (_, _, _) => Container(
                         color: context.col.surfaceElevated,
                         child: Center(
                           child: Text(
@@ -730,7 +730,7 @@ class _PricingTierCard extends StatelessWidget {
 
               // Person range
               Text(
-                '${tier.minPersons == tier.maxPersons ? '${tier.minPersons} person${tier.minPersons > 1 ? 's' : ''}' : '${tier.minPersons}–${tier.maxPersons} persons'}',
+                tier.minPersons == tier.maxPersons ? '${tier.minPersons} person${tier.minPersons > 1 ? 's' : ''}' : '${tier.minPersons}–${tier.maxPersons} persons',
                 style: TextStyle(
                   fontSize: 12,
                   color: context.col.textSecondary,
@@ -1288,7 +1288,7 @@ class _BookingBar extends StatelessWidget {
               ),
               if (selectedTier != null)
                 Text(
-                  '${personCount} person${personCount > 1 ? 's' : ''} × ₹${selectedTier!.pricePerPerson.toStringAsFixed(0)}',
+                  '$personCount person${personCount > 1 ? 's' : ''} × ₹${selectedTier!.pricePerPerson.toStringAsFixed(0)}',
                   style: TextStyle(fontSize: 11, color: context.col.textMuted),
                 ),
             ],

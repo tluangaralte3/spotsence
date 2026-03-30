@@ -77,7 +77,7 @@ class AdminBannersScreen extends ConsumerWidget {
                   // ── Section visibility toggle ──────────────────────
                   configAsync.when(
                     loading: () => const SizedBox.shrink(),
-                    error: (_, __) => const SizedBox.shrink(),
+                    error: (_, _) => const SizedBox.shrink(),
                     data: (cfg) => _SectionVisibilityCard(
                       visible: cfg.sectionVisible,
                       onToggle: (v) => ref
@@ -233,7 +233,7 @@ class _SectionVisibilityCard extends StatelessWidget {
           Switch(
             value: visible,
             onChanged: onToggle,
-            activeColor: AppColors.primary,
+            activeThumbColor: AppColors.primary,
           ),
         ],
       ),
@@ -285,7 +285,7 @@ class _BannerListTile extends StatelessWidget {
                       ? CachedNetworkImage(
                           imageUrl: banner.imageUrl,
                           fit: BoxFit.cover,
-                          errorWidget: (_, __, ___) =>
+                          errorWidget: (_, _, _) =>
                               _PlaceholderThumb(),
                         )
                       : _PlaceholderThumb(),
@@ -340,7 +340,7 @@ class _BannerListTile extends StatelessWidget {
               Switch(
                 value: banner.isActive,
                 onChanged: (_) => onToggle(),
-                activeColor: AppColors.primary,
+                activeThumbColor: AppColors.primary,
               ),
               // Delete
               IconButton(
@@ -645,7 +645,7 @@ class _BannerEditorSheetState extends State<_BannerEditorSheet> {
                                   CachedNetworkImage(
                                     imageUrl: _existingImageUrl,
                                     fit: BoxFit.cover,
-                                    errorWidget: (_, __, ___) =>
+                                    errorWidget: (_, _, _) =>
                                         _PickerPlaceholder(),
                                   ),
                                   Positioned(
@@ -737,7 +737,7 @@ class _BannerEditorSheetState extends State<_BannerEditorSheet> {
                 Switch(
                   value: _isActive,
                   onChanged: (v) => setState(() => _isActive = v),
-                  activeColor: AppColors.primary,
+                  activeThumbColor: AppColors.primary,
                 ),
               ],
             ),

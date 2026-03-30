@@ -382,11 +382,12 @@ class _PlaceDetailSheetState extends ConsumerState<_PlaceDetailSheet> {
     } catch (e) {
       _showSnack('Upload failed: $e');
     } finally {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _isUploadingPhoto = false;
           _uploadProgress = 0;
         });
+      }
     }
   }
 

@@ -155,7 +155,7 @@ class AuthService {
       final updates = <String, dynamic>{
         'updatedAt': DateTime.now().toIso8601String(),
         if (displayName != null) 'displayName': displayName.trim(),
-        if (photoURL != null) 'photoURL': photoURL,
+        'photoURL': ?photoURL,
         if (bio != null) 'bio': bio.trim(),
         if (location != null) 'location': location.trim(),
       };

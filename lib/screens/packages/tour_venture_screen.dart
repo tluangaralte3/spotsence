@@ -156,7 +156,7 @@ class _TourPackagesScreenState extends ConsumerState<TourPackagesScreen> {
               padding: const EdgeInsets.all(16),
               sliver: SliverGrid(
                 delegate: SliverChildBuilderDelegate(
-                  (_, __) => const ShimmerBox(
+                  (_, _) => const ShimmerBox(
                     width: double.infinity,
                     height: 280,
                     radius: 16,
@@ -639,9 +639,9 @@ class PackageCard extends StatelessWidget {
                       ? CachedNetworkImage(
                           imageUrl: package.heroImage,
                           fit: BoxFit.cover,
-                          placeholder: (_, __) =>
+                          placeholder: (_, _) =>
                               _ImagePlaceholder(category: package.category),
-                          errorWidget: (_, __, ___) =>
+                          errorWidget: (_, _, _) =>
                               _ImagePlaceholder(category: package.category),
                         )
                       : _ImagePlaceholder(category: package.category),

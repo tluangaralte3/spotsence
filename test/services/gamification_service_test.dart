@@ -48,7 +48,7 @@ Future<void> seedUser(
     'bucketItemsCompleted': bucketItemsCompleted,
     'badgesEarned': badgesEarned,
     'badges': badgesEarned,
-    if (lastLogin != null) 'lastLogin': lastLogin,
+    'lastLogin': ?lastLogin,
   });
 }
 
