@@ -61,7 +61,7 @@ class _BucketListsTabState extends ConsumerState<BucketListsTab>
             indicatorColor: AppColors.primary,
             indicatorSize: TabBarIndicatorSize.label,
             tabs: const [
-              Tab(icon: Icon(Iconsax.task_square), text: 'My Lists'),
+              Tab(icon: Icon(Iconsax.people), text: 'My Rooms'),
               Tab(icon: Icon(Iconsax.global), text: 'Discover'),
             ],
           ),
@@ -72,7 +72,7 @@ class _BucketListsTabState extends ConsumerState<BucketListsTab>
           child: TabBarView(
             controller: _inner,
             children: [
-              _MyListsView(userId: user?.id),
+              _MyRoomsView(userId: user?.id),
               const _DiscoverView(),
             ],
           ),
@@ -82,11 +82,11 @@ class _BucketListsTabState extends ConsumerState<BucketListsTab>
   }
 }
 
-// ── My Lists ──────────────────────────────────────────────────────────────────
+// ── My Rooms ──────────────────────────────────────────────────────────────────
 
-class _MyListsView extends ConsumerWidget {
+class _MyRoomsView extends ConsumerWidget {
   final String? userId;
-  const _MyListsView({this.userId});
+  const _MyRoomsView({this.userId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -102,8 +102,11 @@ class _MyListsView extends ConsumerWidget {
       );
     }
 
-    if (state.myLists.isEmpty) {
-      return _EmptyMyLists(
+    final myRooms = state.myLists;
+    final hostedCount = myRooms.where((r) => r.isHost(userId!)).length;
+
+    if (myRooms.isEmpty) {
+      return _EmptyMyRooms(
         onCreate: () => context.push(AppRoutes.createBucketList),
         onJoin: () => _showJoinDialog(context, ref),
       );
@@ -114,15 +117,22 @@ class _MyListsView extends ConsumerWidget {
       onRefresh: () =>
           ref.read(bucketListControllerProvider.notifier).loadMyLists(userId!),
       child: ListView.separated(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-        itemCount: state.myLists.length,
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
+        itemCount: myRooms.length + 1, // +1 for cap banner
         separatorBuilder: (context, _) => const SizedBox(height: 14),
-        itemBuilder: (context, i) => _BucketListCard(
-          list: state.myLists[i],
-          currentUserId: userId!,
-          onTap: () =>
-              context.push(AppRoutes.bucketListDetailPath(state.myLists[i].id)),
-        ),
+        itemBuilder: (context, i) {
+          if (i == 0) {
+            return _RoomCapBanner(hostedCount: hostedCount);
+          }
+          final room = myRooms[i - 1];
+          return _RoomCard(
+            list: room,
+            currentUserId: userId!,
+            onTap: () => context.push(
+              AppRoutes.bucketListDetailPath(room.id),
+            ),
+          );
+        },
       ),
     );
   }
@@ -136,6 +146,70 @@ class _MyListsView extends ConsumerWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (_) => _JoinByCodeSheet(userId: userId!),
+    );
+  }
+}
+
+// ── Room cap banner ───────────────────────────────────────────────────────────
+
+class _RoomCapBanner extends StatelessWidget {
+  final int hostedCount;
+  const _RoomCapBanner({required this.hostedCount});
+
+  @override
+  Widget build(BuildContext context) {
+    final isFull = hostedCount >= kFreeRoomCap;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: isFull
+            ? AppColors.warning.withValues(alpha: 0.1)
+            : AppColors.primary.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isFull
+              ? AppColors.warning.withValues(alpha: 0.4)
+              : AppColors.primary.withValues(alpha: 0.2),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            isFull ? Iconsax.lock : Iconsax.element_4,
+            size: 18,
+            color: isFull ? AppColors.warning : AppColors.primary,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              isFull
+                  ? 'Room limit reached ($kFreeRoomCap/$kFreeRoomCap). Upgrade to MezoPro for more.'
+                  : 'Free rooms: $hostedCount / $kFreeRoomCap hosted',
+              style: TextStyle(
+                color: isFull ? AppColors.warning : AppColors.primary,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          if (isFull)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.warning,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                'Upgrade',
+                style: TextStyle(
+                  color: context.col.bg,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
@@ -161,10 +235,22 @@ class _DiscoverView extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('🌍', style: TextStyle(fontSize: 48)),
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Iconsax.global,
+                size: 32,
+                color: AppColors.primary,
+              ),
+            ),
             const SizedBox(height: 12),
             Text(
-              'No public bucket lists yet',
+              'No public rooms yet',
               style: TextStyle(color: context.col.textSecondary, fontSize: 15),
             ),
             const SizedBox(height: 6),
@@ -181,7 +267,7 @@ class _DiscoverView extends ConsumerWidget {
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
       itemCount: state.publicLists.length,
       separatorBuilder: (context, _) => const SizedBox(height: 14),
-      itemBuilder: (context, i) => _BucketListCard(
+      itemBuilder: (context, i) => _RoomCard(
         list: state.publicLists[i],
         currentUserId: user?.id ?? '',
         onTap: () => context.push(
@@ -193,15 +279,15 @@ class _DiscoverView extends ConsumerWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// _BucketListCard
+// _RoomCard
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _BucketListCard extends StatelessWidget {
+class _RoomCard extends StatelessWidget {
   final BucketListModel list;
   final String currentUserId;
   final VoidCallback onTap;
 
-  const _BucketListCard({
+  const _RoomCard({
     required this.list,
     required this.currentUserId,
     required this.onTap,
@@ -234,8 +320,9 @@ class _BucketListCard extends StatelessWidget {
                 Positioned(
                   top: 10,
                   left: 12,
-                  child: _Badge(
-                    '${list.category.emoji}  ${list.displayCategory}',
+                  child: _StatusBadge(
+                    icon: Iconsax.location,
+                    label: list.displayCategory,
                     color: context.col.surfaceElevated.withValues(alpha: 0.92),
                     textColor: context.col.textPrimary,
                   ),
@@ -245,10 +332,13 @@ class _BucketListCard extends StatelessWidget {
                 Positioned(
                   top: 10,
                   right: 12,
-                  child: _Badge(
-                    list.visibility == BucketVisibility.public
-                        ? '🌐 Public'
-                        : '🔒 Private',
+                  child: _StatusBadge(
+                    icon: list.visibility == BucketVisibility.public
+                        ? Iconsax.global
+                        : Iconsax.lock,
+                    label: list.visibility == BucketVisibility.public
+                        ? 'Public'
+                        : 'Private',
                     color: context.col.surfaceElevated.withValues(alpha: 0.92),
                     textColor: list.visibility == BucketVisibility.public
                         ? AppColors.primary
@@ -265,14 +355,25 @@ class _BucketListCard extends StatelessWidget {
                     child: Container(
                       color: AppColors.primary.withValues(alpha: 0.85),
                       padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: Text(
-                        '🎉  Adventure Complete!',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: context.col.bg,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 12,
-                        ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Iconsax.tick_circle,
+                            size: 13,
+                            color: Colors.white,
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            'Challenge Complete!',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: context.col.bg,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -310,13 +411,24 @@ class _BucketListCard extends StatelessWidget {
                             color: AppColors.warning.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: Text(
-                            '$pending pending',
-                            style: const TextStyle(
-                              color: AppColors.warning,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                            ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Iconsax.notification,
+                                size: 11,
+                                color: AppColors.warning,
+                              ),
+                              const SizedBox(width: 3),
+                              Text(
+                                '$pending pending',
+                                style: const TextStyle(
+                                  color: AppColors.warning,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                     ],
@@ -355,8 +467,14 @@ class _BucketListCard extends StatelessWidget {
 
                   Row(
                     children: [
+                      Icon(
+                        Iconsax.tick_square,
+                        size: 12,
+                        color: context.col.textMuted,
+                      ),
+                      const SizedBox(width: 4),
                       Text(
-                        '${list.checkedCount}/${list.items.length} done · $pct%',
+                        '${list.checkedCount}/${list.items.length} · $pct%',
                         style: TextStyle(
                           color: context.col.textSecondary,
                           fontSize: 12,
@@ -364,7 +482,7 @@ class _BucketListCard extends StatelessWidget {
                       ),
                       const Spacer(),
                       Icon(
-                        Icons.people_outline,
+                        Iconsax.people,
                         size: 13,
                         color: context.col.textMuted,
                       ),
@@ -378,6 +496,12 @@ class _BucketListCard extends StatelessWidget {
                       ),
                       if (list.xpReward > 0) ...[
                         const SizedBox(width: 10),
+                        const Icon(
+                          Iconsax.flash,
+                          size: 12,
+                          color: AppColors.accent,
+                        ),
+                        const SizedBox(width: 2),
                         Text(
                           '+${list.xpReward} XP',
                           style: const TextStyle(
@@ -441,7 +565,7 @@ class _JoinByCodeSheetState extends ConsumerState<_JoinByCodeSheet> {
     if (result == null) {
       setState(() {
         _loading = false;
-        _error = 'No bucket list found with that code';
+        _error = 'No room found with that code';
       });
     } else {
       setState(() {
@@ -470,8 +594,8 @@ class _JoinByCodeSheetState extends ConsumerState<_JoinByCodeSheet> {
       SnackBar(
         content: Text(
           _found!.visibility == BucketVisibility.public
-              ? 'Join request sent! Waiting for host approval 🙌'
-              : 'Join request sent! Waiting for host approval 🔒',
+              ? 'Join request sent! Waiting for host approval.'
+              : 'Join request sent! Waiting for host approval.',
         ),
         backgroundColor: AppColors.primary,
       ),
@@ -500,107 +624,104 @@ class _JoinByCodeSheetState extends ConsumerState<_JoinByCodeSheet> {
             ),
           ),
           const SizedBox(height: 20),
-
-          Text(
-            'Join by Code',
-            style: TextStyle(
-              color: context.col.textPrimary,
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Enter the 6-character join code shared by the bucket list host.',
-            style: TextStyle(color: context.col.textSecondary, fontSize: 13),
-          ),
-          const SizedBox(height: 20),
-
-          // Code input
-          TextField(
-            controller: _ctrl,
-            textCapitalization: TextCapitalization.characters,
-            maxLength: 6,
-            style: TextStyle(
-              color: context.col.textPrimary,
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 8,
-            ),
-            textAlign: TextAlign.center,
-            decoration: InputDecoration(
-              counterText: '',
-              hintText: 'ABC123',
-              hintStyle: TextStyle(
-                color: context.col.textMuted,
-                letterSpacing: 8,
-                fontSize: 22,
-              ),
-              filled: true,
-              fillColor: context.col.surfaceElevated,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide.none,
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: const BorderSide(color: AppColors.primary),
-              ),
-              errorText: _error,
-            ),
-            onSubmitted: (_) => _lookup(),
-          ),
-
-          const SizedBox(height: 16),
-
-          // Found preview
-          if (_found != null) _FoundPreview(list: _found!),
-
-          const SizedBox(height: 16),
-
           Row(
             children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: context.col.textSecondary,
-                    side: BorderSide(color: context.col.border),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text('Cancel'),
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Iconsax.link_2,
+                  size: 18,
+                  color: AppColors.primary,
                 ),
               ),
               const SizedBox(width: 12),
-              Expanded(
-                child: FilledButton(
-                  onPressed: _loading
-                      ? null
-                      : (_found != null ? _join : _lookup),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: context.col.bg,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: _loading
-                      ? SizedBox(
-                          height: 18,
-                          width: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: context.col.bg,
-                          ),
-                        )
-                      : Text(_found != null ? 'Send Request' : 'Look Up'),
+              Text(
+                'Join a Room',
+                style: TextStyle(
+                  color: context.col.textPrimary,
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _ctrl,
+            textCapitalization: TextCapitalization.characters,
+            decoration: InputDecoration(
+              hintText: 'Enter 6-character room code',
+              hintStyle: TextStyle(color: context.col.textMuted),
+              prefixIcon: Icon(Iconsax.key, color: context.col.textMuted, size: 19),
+              filled: true,
+              fillColor: context.col.surfaceElevated,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: context.col.border),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: context.col.border),
+              ),
+            ),
+            style: TextStyle(
+              color: context.col.textPrimary,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 3,
+            ),
+          ),
+          if (_error != null) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Icon(Iconsax.danger, size: 14, color: AppColors.error),
+                const SizedBox(width: 6),
+                Text(
+                  _error!,
+                  style: const TextStyle(
+                    color: AppColors.error,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ],
+          if (_found != null) ...[
+            const SizedBox(height: 12),
+            _FoundPreview(list: _found!),
+          ],
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: _loading
+                  ? null
+                  : (_found != null ? _join : _lookup),
+              icon: _loading
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : Icon(_found != null ? Iconsax.login : Iconsax.search_normal),
+              label: Text(_found != null ? 'Send Request' : 'Look Up'),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: context.col.bg,
+                minimumSize: const Size(double.infinity, 48),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -643,21 +764,21 @@ class _FoundPreview extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
-                  '${list.category.emoji} ${list.displayCategory} · by ${list.hostName}',
+                  '${list.displayCategory} · by ${list.hostName}',
                   style: TextStyle(
                     color: context.col.textSecondary,
                     fontSize: 11,
                   ),
                 ),
                 Text(
-                  '${list.approvedCount}/${list.maxMembers} members · ${list.items.length} stops',
+                  '${list.approvedCount}/${list.maxMembers} members · ${list.items.length} tasks',
                   style: TextStyle(color: context.col.textMuted, fontSize: 11),
                 ),
               ],
             ),
           ),
           const Icon(
-            Icons.check_circle_outline,
+            Iconsax.tick_circle,
             color: AppColors.primary,
             size: 20,
           ),
@@ -668,14 +789,14 @@ class _FoundPreview extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// _EmptyMyLists
+// _EmptyMyRooms
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _EmptyMyLists extends StatelessWidget {
+class _EmptyMyRooms extends StatelessWidget {
   final VoidCallback onCreate;
   final VoidCallback onJoin;
 
-  const _EmptyMyLists({required this.onCreate, required this.onJoin});
+  const _EmptyMyRooms({required this.onCreate, required this.onJoin});
 
   @override
   Widget build(BuildContext context) {
@@ -684,10 +805,22 @@ class _EmptyMyLists extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text('📋', style: TextStyle(fontSize: 56)),
+          Container(
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Iconsax.people,
+              size: 36,
+              color: AppColors.primary,
+            ),
+          ),
           const SizedBox(height: 16),
           Text(
-            'No Bucket Lists Yet',
+            'No Rooms Yet',
             style: TextStyle(
               color: context.col.textPrimary,
               fontSize: 18,
@@ -696,15 +829,15 @@ class _EmptyMyLists extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Create your ultimate Mizoram adventure list\nor join one from a friend\'s code!',
+            'Create a challenge room and invite friends\nto complete activities together.',
             textAlign: TextAlign.center,
             style: TextStyle(color: context.col.textSecondary, fontSize: 13),
           ),
           const SizedBox(height: 28),
           FilledButton.icon(
             onPressed: onCreate,
-            icon: const Icon(Icons.add_rounded),
-            label: const Text('Create Bucket List'),
+            icon: const Icon(Iconsax.add_circle),
+            label: const Text('Create a Room'),
             style: FilledButton.styleFrom(
               backgroundColor: AppColors.primary,
               foregroundColor: context.col.bg,
@@ -717,7 +850,7 @@ class _EmptyMyLists extends StatelessWidget {
           const SizedBox(height: 12),
           OutlinedButton.icon(
             onPressed: onJoin,
-            icon: const Icon(Icons.link_rounded),
+            icon: const Icon(Iconsax.link_2),
             label: const Text('Join with Code'),
             style: OutlinedButton.styleFrom(
               foregroundColor: AppColors.primary,
@@ -749,7 +882,19 @@ class _UnauthCta extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text('🗺️', style: TextStyle(fontSize: 56)),
+          Container(
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.10),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Iconsax.people,
+              size: 36,
+              color: AppColors.primary,
+            ),
+          ),
           const SizedBox(height: 16),
           Text(
             'Plan adventures together!',
@@ -761,7 +906,7 @@ class _UnauthCta extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Sign in to create and share bucket lists with friends.',
+            'Sign in to create and join challenge rooms with friends.',
             textAlign: TextAlign.center,
             style: TextStyle(color: context.col.textSecondary, fontSize: 13),
           ),
@@ -813,7 +958,6 @@ class _BannerImage extends StatelessWidget {
       imageBuilder: (ctx, imageProvider) => Stack(
         fit: StackFit.passthrough,
         children: [
-          // The image itself
           Container(
             height: height,
             width: w,
@@ -821,7 +965,6 @@ class _BannerImage extends StatelessWidget {
               image: DecorationImage(image: imageProvider, fit: BoxFit.cover),
             ),
           ),
-          // Subtle bottom gradient so badges stay readable
           Positioned(
             bottom: 0,
             left: 0,
@@ -842,9 +985,7 @@ class _BannerImage extends StatelessWidget {
     );
   }
 
-  Widget _shimmer(double w) {
-    return _AnimatedShimmer(height: height, width: w);
-  }
+  Widget _shimmer(double w) => _AnimatedShimmer(height: height, width: w);
 
   Widget _placeholder(BuildContext context, double w) {
     return Container(
@@ -862,7 +1003,7 @@ class _BannerImage extends StatelessWidget {
       ),
       child: Center(
         child: Icon(
-          Icons.photo_camera_outlined,
+          Iconsax.image,
           color: context.col.textMuted,
           size: 28,
         ),
@@ -871,7 +1012,10 @@ class _BannerImage extends StatelessWidget {
   }
 }
 
-// Animated shimmer loading placeholder
+// ─────────────────────────────────────────────────────────────────────────────
+// _AnimatedShimmer
+// ─────────────────────────────────────────────────────────────────────────────
+
 class _AnimatedShimmer extends StatefulWidget {
   final double height;
   final double width;
@@ -929,15 +1073,21 @@ class _AnimatedShimmerState extends State<_AnimatedShimmer>
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// _Badge helper
+// _StatusBadge helper (no emojis)
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _Badge extends StatelessWidget {
+class _StatusBadge extends StatelessWidget {
+  final IconData icon;
   final String label;
   final Color color;
   final Color textColor;
 
-  const _Badge(this.label, {required this.color, required this.textColor});
+  const _StatusBadge({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.textColor,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -947,13 +1097,20 @@ class _Badge extends StatelessWidget {
         color: color,
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: textColor,
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 11, color: textColor),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: textColor,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -974,3 +1131,8 @@ void showJoinCodeSheet(BuildContext context, String userId) {
     builder: (_) => _JoinByCodeSheet(userId: userId),
   );
 }
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BucketListsTab — shown inside CommunityScreen
+// ─────────────────────────────────────────────────────────────────────────────

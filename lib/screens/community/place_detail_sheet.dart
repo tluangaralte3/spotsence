@@ -239,9 +239,10 @@ class _PlaceDetailSheetState extends ConsumerState<_PlaceDetailSheet> {
     try {
       final comment = _reviewCtrl.text.trim();
       final rating = _selectedStar.toDouble();
+      bool isNewReview;
 
       if (widget.collection == 'restaurants') {
-        await ref
+        isNewReview = await ref
             .read(firestoreRestaurantsServiceProvider)
             .submitReview(
               restaurantId: widget.id,
@@ -252,7 +253,7 @@ class _PlaceDetailSheetState extends ConsumerState<_PlaceDetailSheet> {
               comment: comment,
             );
       } else if (widget.collection == 'cafes') {
-        await ref
+        isNewReview = await ref
             .read(firestoreCafesServiceProvider)
             .submitReview(
               cafeId: widget.id,
@@ -264,7 +265,7 @@ class _PlaceDetailSheetState extends ConsumerState<_PlaceDetailSheet> {
             );
       } else {
         // spots
-        await ref
+        isNewReview = await ref
             .read(firestoreSpotsServiceProvider)
             .submitReview(
               spotId: widget.id,
@@ -282,14 +283,18 @@ class _PlaceDetailSheetState extends ConsumerState<_PlaceDetailSheet> {
         _selectedStar = 0;
         _reviewCtrl.clear();
       });
-      // ── Gamification ──────────────────────────────────────────────────────
-      await ref
-          .read(gamificationControllerProvider.notifier)
-          .award(XpAction.writeReview, relatedId: widget.id);
-      await ref
-          .read(gamificationControllerProvider.notifier)
-          .incrementCounter('ratingsCount');
-      _showSnack('Rating submitted! Thanks ✨');
+      // ── Gamification — only award XP for new reviews, not updates ─────────
+      if (isNewReview) {
+        await ref
+            .read(gamificationControllerProvider.notifier)
+            .award(XpAction.writeReview, relatedId: widget.id);
+        await ref
+            .read(gamificationControllerProvider.notifier)
+            .incrementCounter('ratingsCount');
+        _showSnack('Rating submitted! Thanks ✨');
+      } else {
+        _showSnack('Review updated!');
+      }
     } catch (e) {
       _showSnack('Failed to submit: $e');
     } finally {

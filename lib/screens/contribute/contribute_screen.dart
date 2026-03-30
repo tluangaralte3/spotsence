@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../controllers/gamification_controller.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
+import '../../models/gamification_models.dart';
 import '../../services/community_service.dart';
 
 /// Multi-step form to submit a new tourist spot.
@@ -117,6 +119,15 @@ class _ContributeScreenState extends ConsumerState<ContributeScreen> {
     if (mounted) {
       setState(() => _submitting = false);
       if (error == null) {
+        // Award XP and increment contribution counter
+        await ref
+            .read(gamificationControllerProvider.notifier)
+            .award(XpAction.submitContribution);
+        await ref
+            .read(gamificationControllerProvider.notifier)
+            .incrementCounter('contributionsCount');
+
+        if (!mounted) return;
         showDialog(
           context: context,
           barrierDismissible: false,
@@ -128,7 +139,7 @@ class _ContributeScreenState extends ConsumerState<ContributeScreen> {
               children: [
                 Text(
                   'Your contribution is under review. '
-                  'You\'ll earn +100 XP when it\'s approved!',
+                  'Thank you for helping grow the map!',
                   style: TextStyle(color: context.col.textSecondary),
                 ),
                 const SizedBox(height: 12),
@@ -150,7 +161,7 @@ class _ContributeScreenState extends ConsumerState<ContributeScreen> {
                       Text('✨', style: TextStyle(fontSize: 18)),
                       SizedBox(width: 8),
                       Text(
-                        '+10 XP Earned',
+                        '+20 XP Earned',
                         style: TextStyle(
                           color: AppColors.primary,
                           fontWeight: FontWeight.w700,

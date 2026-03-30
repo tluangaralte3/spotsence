@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:iconsax/iconsax.dart';
 import '../../controllers/auth_controller.dart';
 import '../../controllers/bucket_list_controller.dart';
 import '../../core/router/app_router.dart';
@@ -201,13 +202,20 @@ class _DetailBody extends ConsumerWidget {
                                 color: AppColors.accent.withValues(alpha: 0.5),
                               ),
                             ),
-                            child: Text(
-                              '⚡ ${list.challengeTitle}',
-                              style: const TextStyle(
-                                color: AppColors.accent,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                              ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Iconsax.flash, size: 11, color: AppColors.accent),
+                                const SizedBox(width: 4),
+                                Text(
+                                  list.challengeTitle!,
+                                  style: const TextStyle(
+                                    color: AppColors.accent,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         Text(
@@ -219,7 +227,7 @@ class _DetailBody extends ConsumerWidget {
                           ),
                         ),
                         Text(
-                          '${list.category.emoji} ${list.displayCategory} · by ${list.hostName}',
+                          '${list.displayCategory} · by ${list.hostName}',
                           style: const TextStyle(
                             color: Colors.white70,
                             fontSize: 13,
@@ -262,8 +270,13 @@ class _DetailBody extends ConsumerWidget {
                     const SizedBox(height: 16),
                   ],
 
-                  // ── Members ──────────────────────────────────────
-                  _MembersRow(list: list),
+                  // ── Members + Room interactions ──────────────────
+                  _RoomMembersSection(
+                    list: list,
+                    currentUserId: currentUserId,
+                    isHost: isHost,
+                    isMember: isMember,
+                  ),
                   const SizedBox(height: 20),
 
                   // ── Bucket Items ─────────────────────────────────
@@ -374,9 +387,7 @@ class _DetailBody extends ConsumerWidget {
       Clipboard.setData(ClipboardData(text: list.joinCode));
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            'Join code "${list.joinCode}" copied! Share it with friends 🎉',
-          ),
+          content: Text('Join code "${list.joinCode}" copied to clipboard!'),
           backgroundColor: AppColors.primary,
         ),
       );
@@ -469,7 +480,7 @@ class _DetailBody extends ConsumerWidget {
     if (list.isFull) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('This list is full 😔'),
+          content: Text('This room is full.'),
           backgroundColor: AppColors.error,
         ),
       );
@@ -640,7 +651,7 @@ class _JoinCodeCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.vpn_key_rounded, color: AppColors.primary, size: 20),
+          const Icon(Iconsax.key, color: AppColors.primary, size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -671,12 +682,12 @@ class _JoinCodeCard extends StatelessWidget {
               Clipboard.setData(ClipboardData(text: list.joinCode));
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('Code copied to clipboard! 🎉'),
+                  content: Text('Code copied to clipboard!'),
                   backgroundColor: AppColors.primary,
                 ),
               );
             },
-            icon: const Icon(Icons.copy_rounded, color: AppColors.primary),
+            icon: const Icon(Iconsax.copy, color: AppColors.primary),
           ),
         ],
       ),
@@ -711,13 +722,19 @@ class _PendingRequestsCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '🔔 ${list.joinRequests.length} Join Request${list.joinRequests.length > 1 ? 's' : ''}',
-            style: const TextStyle(
-              color: AppColors.warning,
-              fontWeight: FontWeight.w700,
-              fontSize: 14,
-            ),
+          Row(
+            children: [
+              const Icon(Iconsax.notification, size: 16, color: AppColors.warning),
+              const SizedBox(width: 8),
+              Text(
+                '${list.joinRequests.length} Join Request${list.joinRequests.length > 1 ? 's' : ''}',
+                style: const TextStyle(
+                  color: AppColors.warning,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 10),
           ...list.joinRequests.map(
@@ -788,13 +805,17 @@ class _PendingRequestsCard extends StatelessWidget {
                         color: AppColors.primary.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Text(
-                        'Approve ✓',
-                        style: TextStyle(
-                          color: AppColors.primary,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Iconsax.tick_circle, size: 12, color: AppColors.primary),
+                          SizedBox(width: 4),
+                          Text('Approve', style: TextStyle(
+                            color: AppColors.primary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          )),
+                        ],
                       ),
                     ),
                   ),
@@ -809,7 +830,882 @@ class _PendingRequestsCard extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// _MembersRow
+// _RoomMembersSection — members list with time-based interaction controls
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _RoomMembersSection extends ConsumerWidget {
+  final BucketListModel list;
+  final String currentUserId;
+  final bool isHost;
+  final bool isMember;
+
+  const _RoomMembersSection({
+    required this.list,
+    required this.currentUserId,
+    required this.isHost,
+    required this.isMember,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final approved = list.approvedMembers;
+    final now = DateTime.now();
+
+    // Find current user's member record
+    final myMember = approved.cast<BucketMember?>().firstWhere(
+      (m) => m?.userId == currentUserId,
+      orElse: () => null,
+    );
+    final myDays = myMember?.daysInRoom(now) ?? 0;
+    final canConnect = myMember?.canConnect(now) ?? false;
+    final canPoke = myMember?.canPoke(now) ?? false;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ── Section header ───────────────────────────────────────────
+        Row(
+          children: [
+            const Icon(Iconsax.people, size: 16, color: AppColors.primary),
+            const SizedBox(width: 6),
+            Text(
+              '${approved.length} Member${approved.length != 1 ? 's' : ''}',
+              style: TextStyle(
+                color: context.col.textPrimary,
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+
+        // ── Time-unlock status bar (only for joined members) ─────────
+        if (isMember || isHost) ...[
+          const SizedBox(height: 10),
+          _TimeUnlockBar(daysInRoom: myDays),
+        ],
+
+        const SizedBox(height: 12),
+
+        // ── Member avatars row ───────────────────────────────────────
+        _MembersRow(list: list),
+
+        // ── Connect section (unlock at 10 days) ──────────────────────
+        if ((isMember || isHost) && canConnect) ...[
+          const SizedBox(height: 16),
+          _ConnectSection(
+            list: list,
+            currentUserId: currentUserId,
+            isHost: isHost,
+            ref: ref,
+          ),
+        ] else if ((isMember || isHost) && !canConnect) ...[
+          const SizedBox(height: 12),
+          _LockedFeatureHint(
+            icon: Iconsax.link_2,
+            label: 'Connect',
+            description: 'Exchange social links with members',
+            daysRequired: kConnectUnlockDays,
+            currentDays: myDays,
+          ),
+        ],
+
+        // ── Member action tiles (poke / report / strike) ─────────────
+        if (isMember || isHost) ...[
+          const SizedBox(height: 16),
+          ...approved
+              .where((m) => m.userId != currentUserId)
+              .map(
+                (member) => _MemberActionTile(
+                  member: member,
+                  currentUserId: currentUserId,
+                  listId: list.id,
+                  isHost: isHost,
+                  canPoke: canPoke,
+                  ref: ref,
+                ),
+              ),
+        ],
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// _TimeUnlockBar
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _TimeUnlockBar extends StatelessWidget {
+  final int daysInRoom;
+  const _TimeUnlockBar({required this.daysInRoom});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: context.col.surfaceElevated,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: context.col.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Iconsax.clock, size: 14, color: AppColors.primary),
+              const SizedBox(width: 6),
+              Text(
+                'Day $daysInRoom in this room',
+                style: TextStyle(
+                  color: context.col.textPrimary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              _UnlockDot(
+                icon: Iconsax.link_2,
+                label: 'Connect',
+                unlockDay: kConnectUnlockDays,
+                currentDay: daysInRoom,
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: (daysInRoom / kPokeUnlockDays).clamp(0.0, 1.0),
+                    backgroundColor: context.col.border,
+                    valueColor:
+                        const AlwaysStoppedAnimation<Color>(AppColors.primary),
+                    minHeight: 4,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              _UnlockDot(
+                icon: Iconsax.finger_cricle,
+                label: 'Poke',
+                unlockDay: kPokeUnlockDays,
+                currentDay: daysInRoom,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _UnlockDot extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final int unlockDay;
+  final int currentDay;
+
+  const _UnlockDot({
+    required this.icon,
+    required this.label,
+    required this.unlockDay,
+    required this.currentDay,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final unlocked = currentDay >= unlockDay;
+    return Column(
+      children: [
+        Container(
+          width: 28,
+          height: 28,
+          decoration: BoxDecoration(
+            color: unlocked
+                ? AppColors.primary.withValues(alpha: 0.15)
+                : context.col.border,
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            icon,
+            size: 14,
+            color: unlocked ? AppColors.primary : context.col.textMuted,
+          ),
+        ),
+        const SizedBox(height: 3),
+        Text(
+          unlocked ? label : 'Day $unlockDay',
+          style: TextStyle(
+            color: unlocked ? AppColors.primary : context.col.textMuted,
+            fontSize: 9,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// _LockedFeatureHint
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _LockedFeatureHint extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String description;
+  final int daysRequired;
+  final int currentDays;
+
+  const _LockedFeatureHint({
+    required this.icon,
+    required this.label,
+    required this.description,
+    required this.daysRequired,
+    required this.currentDays,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final daysLeft = daysRequired - currentDays;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: context.col.surfaceElevated,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: context.col.border),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: context.col.border,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 16, color: context.col.textMuted),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: context.col.textPrimary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  description,
+                  style: TextStyle(
+                    color: context.col.textSecondary,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: context.col.border,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              '$daysLeft days left',
+              style: TextStyle(
+                color: context.col.textMuted,
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// _ConnectSection — shows members who have opted to share contact
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _ConnectSection extends StatelessWidget {
+  final BucketListModel list;
+  final String currentUserId;
+  final bool isHost;
+  final WidgetRef ref;
+
+  const _ConnectSection({
+    required this.list,
+    required this.currentUserId,
+    required this.isHost,
+    required this.ref,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final myMember = list.approvedMembers.cast<BucketMember?>().firstWhere(
+      (m) => m?.userId == currentUserId,
+      orElse: () => null,
+    );
+    final myContactShared = myMember?.contactShared ?? false;
+    final sharingMembers = list.approvedMembers
+        .where((m) => m.contactShared && m.userId != currentUserId)
+        .toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(Iconsax.link_2, size: 16, color: AppColors.primary),
+            const SizedBox(width: 6),
+            Text(
+              'Connect',
+              style: TextStyle(
+                color: context.col.textPrimary,
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const Spacer(),
+            GestureDetector(
+              onTap: () => ref
+                  .read(bucketListControllerProvider.notifier)
+                  .setContactShared(
+                    listId: list.id,
+                    userId: currentUserId,
+                    shared: !myContactShared,
+                  ),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: myContactShared
+                      ? AppColors.primary.withValues(alpha: 0.15)
+                      : context.col.surfaceElevated,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: myContactShared
+                        ? AppColors.primary.withValues(alpha: 0.4)
+                        : context.col.border,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      myContactShared ? Iconsax.eye : Iconsax.eye_slash,
+                      size: 12,
+                      color: myContactShared
+                          ? AppColors.primary
+                          : context.col.textMuted,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      myContactShared ? 'Sharing' : 'Share mine',
+                      style: TextStyle(
+                        color: myContactShared
+                            ? AppColors.primary
+                            : context.col.textMuted,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        if (sharingMembers.isEmpty)
+          Text(
+            'No members are sharing their contact yet. Be the first!',
+            style: TextStyle(
+              color: context.col.textMuted,
+              fontSize: 12,
+              fontStyle: FontStyle.italic,
+            ),
+          )
+        else
+          ...sharingMembers.map(
+            (m) => _ConnectMemberTile(member: m),
+          ),
+      ],
+    );
+  }
+}
+
+class _ConnectMemberTile extends StatelessWidget {
+  final BucketMember member;
+  const _ConnectMemberTile({required this.member});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: context.col.surfaceElevated,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: context.col.border),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 18,
+            backgroundColor: AppColors.primary.withValues(alpha: 0.12),
+            backgroundImage: member.userPhoto != null
+                ? NetworkImage(member.userPhoto!)
+                : null,
+            child: member.userPhoto == null
+                ? Text(
+                    member.userName.isNotEmpty
+                        ? member.userName[0].toUpperCase()
+                        : '?',
+                    style: const TextStyle(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  )
+                : null,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  member.userName,
+                  style: TextStyle(
+                    color: context.col.textPrimary,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
+                ),
+                Text(
+                  'Member · ${member.daysInRoom(DateTime.now())} days in room',
+                  style: TextStyle(
+                    color: context.col.textMuted,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Icon(Iconsax.link_2, size: 16, color: AppColors.primary),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// _MemberActionTile — poke / report / strike per member
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _MemberActionTile extends ConsumerWidget {
+  final BucketMember member;
+  final String currentUserId;
+  final String listId;
+  final bool isHost;
+  final bool canPoke;
+  final WidgetRef ref;
+
+  const _MemberActionTile({
+    required this.member,
+    required this.currentUserId,
+    required this.listId,
+    required this.isHost,
+    required this.canPoke,
+    required this.ref,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef widgetRef) {
+    final now = DateTime.now();
+    final days = member.daysInRoom(now);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: context.col.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: context.col.border),
+      ),
+      child: Row(
+        children: [
+          // Avatar
+          Stack(
+            children: [
+              CircleAvatar(
+                radius: 18,
+                backgroundColor: context.col.surfaceElevated,
+                backgroundImage: member.userPhoto != null
+                    ? NetworkImage(member.userPhoto!)
+                    : null,
+                child: member.userPhoto == null
+                    ? Text(
+                        member.userName.isNotEmpty
+                            ? member.userName[0].toUpperCase()
+                            : '?',
+                        style: const TextStyle(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12,
+                        ),
+                      )
+                    : null,
+              ),
+              if (member.isHost)
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: AppColors.accent,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: context.col.bg, width: 1),
+                    ),
+                    child: Icon(Iconsax.crown, size: 8, color: context.col.bg),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  member.userName,
+                  style: TextStyle(
+                    color: context.col.textPrimary,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
+                ),
+                Row(
+                  children: [
+                    const Icon(Iconsax.clock, size: 11, color: AppColors.primary),
+                    const SizedBox(width: 3),
+                    Text(
+                      '$days day${days != 1 ? 's' : ''} in room',
+                      style: TextStyle(
+                        color: context.col.textMuted,
+                        fontSize: 11,
+                      ),
+                    ),
+                    if (member.strikes > 0) ...[
+                      const SizedBox(width: 8),
+                      ...List.generate(
+                        member.strikes,
+                        (_) => const Padding(
+                          padding: EdgeInsets.only(right: 2),
+                          child: Icon(
+                            Iconsax.warning_2,
+                            size: 11,
+                            color: AppColors.error,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          ),
+          // Action buttons
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (canPoke)
+                _IconActionButton(
+                  icon: Iconsax.finger_cricle,
+                  tooltip: 'Poke',
+                  color: AppColors.primary,
+                  onTap: () => _poke(context, widgetRef),
+                ),
+              const SizedBox(width: 6),
+              _IconActionButton(
+                icon: Iconsax.flag,
+                tooltip: 'Report',
+                color: AppColors.warning,
+                onTap: () => _report(context, widgetRef),
+              ),
+              if (isHost) ...[
+                const SizedBox(width: 6),
+                _IconActionButton(
+                  icon: Iconsax.warning_2,
+                  tooltip: 'Strike',
+                  color: AppColors.error,
+                  onTap: () => _strike(context, widgetRef),
+                ),
+                const SizedBox(width: 6),
+                _IconActionButton(
+                  icon: Iconsax.user_remove,
+                  tooltip: 'Remove',
+                  color: AppColors.error,
+                  onTap: () => _remove(context, widgetRef),
+                ),
+              ],
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _poke(BuildContext context, WidgetRef ref) async {
+    final me = ref.read(currentUserProvider);
+    if (me == null) return;
+    final err = await ref.read(bucketListControllerProvider.notifier).poke(
+      listId: listId,
+      fromId: me.id,
+      fromName: me.displayName,
+      toId: member.userId,
+      toName: member.userName,
+    );
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          err != null ? err : 'You poked ${member.userName}!',
+        ),
+        backgroundColor: err != null ? AppColors.error : AppColors.primary,
+      ),
+    );
+  }
+
+  void _report(BuildContext context, WidgetRef ref) {
+    final me = ref.read(currentUserProvider);
+    if (me == null) return;
+    showDialog(
+      context: context,
+      builder: (_) => _ReportDialog(
+        targetName: member.userName,
+        onConfirm: (reason) => ref
+            .read(bucketListControllerProvider.notifier)
+            .reportMember(
+              listId: listId,
+              reporterId: me.id,
+              reporterName: me.displayName,
+              targetId: member.userId,
+              targetName: member.userName,
+              reason: reason,
+            ),
+      ),
+    );
+  }
+
+  void _strike(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: context.col.surface,
+        title: Row(
+          children: [
+            const Icon(Iconsax.warning_2, color: AppColors.error, size: 20),
+            const SizedBox(width: 8),
+            Text(
+              'Issue Strike?',
+              style: TextStyle(color: context.col.textPrimary),
+            ),
+          ],
+        ),
+        content: Text(
+          'Issue a strike to ${member.userName}? '
+          '${member.strikes + 1 >= 3 ? 'This is the 3rd strike — they will be automatically removed.' : '${2 - member.strikes} strike(s) will remain before auto-removal.'}',
+          style: TextStyle(color: context.col.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text('Cancel', style: TextStyle(color: context.col.textSecondary)),
+          ),
+          FilledButton.icon(
+            icon: const Icon(Iconsax.warning_2, size: 16),
+            label: const Text('Strike'),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+            onPressed: () async {
+              Navigator.of(context).pop();
+              await ref.read(bucketListControllerProvider.notifier).strikeMember(
+                listId: listId,
+                targetUserId: member.userId,
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _remove(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: context.col.surface,
+        title: Row(
+          children: [
+            const Icon(Iconsax.user_remove, color: AppColors.error, size: 20),
+            const SizedBox(width: 8),
+            Text('Remove Member?', style: TextStyle(color: context.col.textPrimary)),
+          ],
+        ),
+        content: Text(
+          'Remove ${member.userName} from this room? They will not be able to rejoin.',
+          style: TextStyle(color: context.col.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text('Cancel', style: TextStyle(color: context.col.textSecondary)),
+          ),
+          FilledButton.icon(
+            icon: const Icon(Iconsax.user_remove, size: 16),
+            label: const Text('Remove'),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+            onPressed: () async {
+              Navigator.of(context).pop();
+              await ref.read(bucketListControllerProvider.notifier).removeMember(
+                listId: listId,
+                targetUserId: member.userId,
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _IconActionButton extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _IconActionButton({
+    required this.icon,
+    required this.tooltip,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: 30,
+          height: 30,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, size: 15, color: color),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// _ReportDialog
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _ReportDialog extends StatefulWidget {
+  final String targetName;
+  final Future<void> Function(String reason) onConfirm;
+
+  const _ReportDialog({required this.targetName, required this.onConfirm});
+
+  @override
+  State<_ReportDialog> createState() => _ReportDialogState();
+}
+
+class _ReportDialogState extends State<_ReportDialog> {
+  final _reasons = [
+    'Inappropriate behaviour',
+    'Spam or fake activity',
+    'Harassment',
+    'Sharing harmful content',
+    'Other',
+  ];
+  String? _selected;
+  bool _submitting = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: context.col.surface,
+      title: Row(
+        children: [
+          const Icon(Iconsax.flag, color: AppColors.warning, size: 20),
+          const SizedBox(width: 8),
+          Text(
+            'Report ${widget.targetName}',
+            style: TextStyle(color: context.col.textPrimary),
+          ),
+        ],
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: _reasons
+            .map(
+              (r) => RadioListTile<String>(
+                title: Text(r, style: TextStyle(color: context.col.textPrimary, fontSize: 13)),
+                value: r,
+                groupValue: _selected,
+                activeColor: AppColors.primary,
+                dense: true,
+                onChanged: (v) => setState(() => _selected = v),
+              ),
+            )
+            .toList(),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text('Cancel', style: TextStyle(color: context.col.textSecondary)),
+        ),
+        FilledButton.icon(
+          icon: _submitting
+              ? const SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                )
+              : const Icon(Iconsax.send_1, size: 14),
+          label: const Text('Submit'),
+          style: FilledButton.styleFrom(backgroundColor: AppColors.warning),
+          onPressed: _selected == null || _submitting
+              ? null
+              : () async {
+                  setState(() => _submitting = true);
+                  await widget.onConfirm(_selected!);
+                  if (context.mounted) Navigator.of(context).pop();
+                },
+        ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// _MembersRow (compact avatar row, used inside _RoomMembersSection)
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _MembersRow extends StatelessWidget {
@@ -865,7 +1761,7 @@ class _MembersRow extends StatelessWidget {
                               ),
                             ),
                             child: Icon(
-                              Icons.star_rounded,
+                              Iconsax.crown,
                               size: 8,
                               color: context.col.bg,
                             ),
@@ -887,7 +1783,7 @@ class _MembersRow extends StatelessWidget {
           ),
         const SizedBox(width: 8),
         Text(
-          '${approved.length} traveler${approved.length != 1 ? 's' : ''}',
+          '${approved.length} member${approved.length != 1 ? 's' : ''}',
           style: TextStyle(color: context.col.textSecondary, fontSize: 12),
         ),
       ],
@@ -985,28 +1881,45 @@ class _BucketItemTile extends ConsumerWidget {
           subtitle: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                '${item.category.emoji} ${item.displayCategory}',
-                style: TextStyle(color: context.col.textMuted, fontSize: 11),
+              Row(
+                children: [
+                  Icon(item.category.icon, size: 11, color: context.col.textMuted),
+                  const SizedBox(width: 4),
+                  Text(
+                    item.displayCategory,
+                    style: TextStyle(color: context.col.textMuted, fontSize: 11),
+                  ),
+                ],
               ),
               if (item.isChecked && item.checkedByUserName != null)
-                Text(
-                  '✓ by ${item.checkedByUserName}',
-                  style: const TextStyle(
-                    color: AppColors.primary,
-                    fontSize: 11,
-                  ),
+                Row(
+                  children: [
+                    const Icon(Iconsax.tick_circle, size: 11, color: AppColors.primary),
+                    const SizedBox(width: 3),
+                    Text(
+                      'by ${item.checkedByUserName}',
+                      style: const TextStyle(color: AppColors.primary, fontSize: 11),
+                    ),
+                  ],
                 ),
               if (item.note != null && item.note!.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(top: 2),
-                  child: Text(
-                    '📝 ${item.note}',
-                    style: TextStyle(
-                      color: context.col.textSecondary,
-                      fontSize: 11,
-                      fontStyle: FontStyle.italic,
-                    ),
+                  child: Row(
+                    children: [
+                      Icon(Iconsax.note_text, size: 11, color: context.col.textSecondary),
+                      const SizedBox(width: 3),
+                      Expanded(
+                        child: Text(
+                          item.note!,
+                          style: TextStyle(
+                            color: context.col.textSecondary,
+                            fontSize: 11,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
             ],
@@ -1050,10 +1963,18 @@ class _EmptyItems extends StatelessWidget {
       ),
       child: Column(
         children: [
-          const Text('📍', style: TextStyle(fontSize: 36)),
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Iconsax.location, size: 26, color: AppColors.primary),
+          ),
           const SizedBox(height: 10),
           Text(
-            'No items yet',
+            'No tasks yet',
             style: TextStyle(
               color: context.col.textPrimary,
               fontWeight: FontWeight.w600,
@@ -1061,7 +1982,7 @@ class _EmptyItems extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Add places, restaurants, cafés and more!',
+            'Add places, activities, and more to this room!',
             textAlign: TextAlign.center,
             style: TextStyle(color: context.col.textSecondary, fontSize: 12),
           ),
@@ -1110,10 +2031,18 @@ class _CompletionBanner extends StatelessWidget {
       ),
       child: Column(
         children: [
-          const Text('🎉', style: TextStyle(fontSize: 40)),
+          Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Iconsax.cup, size: 32, color: AppColors.primary),
+          ),
           const SizedBox(height: 8),
           Text(
-            'Adventure Complete!',
+            'Challenge Complete!',
             style: TextStyle(
               color: context.col.textPrimary,
               fontSize: 18,
@@ -1122,7 +2051,7 @@ class _CompletionBanner extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'You\'ve conquered every stop on this bucket list!',
+            'Your group completed every task in this room!',
             textAlign: TextAlign.center,
             style: TextStyle(color: context.col.textSecondary, fontSize: 13),
           ),
@@ -1136,13 +2065,20 @@ class _CompletionBanner extends StatelessWidget {
                 color: AppColors.accent.withValues(alpha: 0.5),
               ),
             ),
-            child: Text(
-              '+$xpReward XP Earned! 🏆',
-              style: const TextStyle(
-                color: AppColors.accent,
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-              ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Iconsax.flash, size: 16, color: AppColors.accent),
+                const SizedBox(width: 6),
+                Text(
+                  '+$xpReward XP Earned!',
+                  style: const TextStyle(
+                    color: AppColors.accent,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
             ),
           ),
         ],

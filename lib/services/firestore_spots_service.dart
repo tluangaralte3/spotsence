@@ -107,7 +107,8 @@ class FirestoreSpotsService {
   }
 
   /// Write a review to `spots/{id}/reviews` and update the running average.
-  Future<void> submitReview({
+  /// Returns `true` if this is a new review, `false` if it is an update.
+  Future<bool> submitReview({
     required String spotId,
     required String userId,
     required String userName,
@@ -115,12 +116,16 @@ class FirestoreSpotsService {
     required double rating,
     required String comment,
   }) async {
-    await _db
+    final reviewRef = _db
         .collection(_collection)
         .doc(spotId)
         .collection('reviews')
-        .doc()
-        .set({
+        .doc(userId); // deterministic ID — one review per user per place
+
+    final existing = await reviewRef.get();
+    final isNew = !existing.exists;
+
+    await reviewRef.set({
           'userId': userId,
           'userName': userName,
           'userAvatar': userAvatar,
@@ -140,12 +145,24 @@ class FirestoreSpotsService {
         final oldRating =
             (data['averageRating'] ?? data['rating'] as num?)?.toDouble() ??
             0.0;
-        final newCount = oldCount + 1;
-        final newRating = ((oldRating * oldCount) + rating) / newCount;
-        tx.update(docRef, {
-          'averageRating': double.parse(newRating.toStringAsFixed(1)),
-          'ratingsCount': newCount,
-        });
+        if (isNew) {
+          final newCount = oldCount + 1;
+          final newRating = ((oldRating * oldCount) + rating) / newCount;
+          tx.update(docRef, {
+            'averageRating': double.parse(newRating.toStringAsFixed(1)),
+            'ratingsCount': newCount,
+          });
+        } else {
+          // Update the running average in place without changing ratingsCount.
+          // Recalculate by replacing the old rating with the new one.
+          final oldUserRating = (existing.data()?['rating'] as num?)?.toDouble() ?? rating;
+          final newRating = oldCount > 0
+              ? ((oldRating * oldCount) - oldUserRating + rating) / oldCount
+              : rating;
+          tx.update(docRef, {
+            'averageRating': double.parse(newRating.toStringAsFixed(1)),
+          });
+        }
       });
 
       // Rebuild the place_rankings entry for this spot.
@@ -180,5 +197,6 @@ class FirestoreSpotsService {
     } catch (_) {
       // Non-critical — ignore if transaction fails.
     }
+    return isNew;
   }
 }

@@ -73,7 +73,7 @@ class FirestoreHotelsService {
         );
   }
 
-  Future<void> submitReview({
+  Future<bool> submitReview({
     required String hotelId,
     required String userId,
     required String userName,
@@ -85,7 +85,10 @@ class FirestoreHotelsService {
         .collection('accommodations')
         .doc(hotelId)
         .collection('reviews')
-        .doc();
+        .doc(userId); // deterministic ID — one review per user per place
+
+    final existing = await reviewRef.get();
+    final isNew = !existing.exists;
 
     await reviewRef.set({
       'userId': userId,
@@ -107,12 +110,22 @@ class FirestoreHotelsService {
         final oldRating =
             (data['rating'] ?? data['averageRating'] as num?)?.toDouble() ??
             0.0;
-        final newCount = oldCount + 1;
-        final newRating = ((oldRating * oldCount) + rating) / newCount;
-        tx.update(docRef, {
-          'rating': double.parse(newRating.toStringAsFixed(1)),
-          'ratingsCount': newCount,
-        });
+        if (isNew) {
+          final newCount = oldCount + 1;
+          final newRating = ((oldRating * oldCount) + rating) / newCount;
+          tx.update(docRef, {
+            'rating': double.parse(newRating.toStringAsFixed(1)),
+            'ratingsCount': newCount,
+          });
+        } else {
+          final oldUserRating = (existing.data()?['rating'] as num?)?.toDouble() ?? rating;
+          final newRating = oldCount > 0
+              ? ((oldRating * oldCount) - oldUserRating + rating) / oldCount
+              : rating;
+          tx.update(docRef, {
+            'rating': double.parse(newRating.toStringAsFixed(1)),
+          });
+        }
       });
 
       // Rebuild the place_rankings entry for this hotel.
@@ -148,6 +161,7 @@ class FirestoreHotelsService {
         );
       }
     } catch (_) {}
+    return isNew;
   }
 }
 

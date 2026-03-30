@@ -8,14 +8,26 @@ import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../controllers/auth_controller.dart';
 import '../../controllers/banner_controller.dart';
+import '../../controllers/gamification_controller.dart';
 import '../../controllers/spots_controller.dart';
 import '../../controllers/tour_venture_controller.dart';
+import '../../models/gamification_models.dart';
 import '../../core/router/app_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/banner_model.dart';
 import '../../models/spot_model.dart';
 import '../../models/tour_venture_models.dart';
 import '../../widgets/shared_widgets.dart';
+
+/// Tracks which NE state the user has selected from the state picker.
+class _NeStateNotifier extends Notifier<String> {
+  @override
+  String build() => 'Mizoram';
+  void select(String stateName) => state = stateName;
+}
+
+final selectedNeStateProvider =
+    NotifierProvider<_NeStateNotifier, String>(_NeStateNotifier.new);
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -99,7 +111,7 @@ class HomeScreen extends ConsumerWidget {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Text(
-                                      'Discover Northeast India',
+                                      'Discover ${ref.watch(selectedNeStateProvider)}',
                                       style: Theme.of(context)
                                           .textTheme
                                           .bodyMedium
@@ -121,7 +133,9 @@ class HomeScreen extends ConsumerWidget {
                           ),
                         ),
                         // XP chip
-                        Container(
+                        GestureDetector(
+                          onTap: () => _showXpPerksSheet(context, user),
+                          child: Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 12,
                             vertical: 6,
@@ -152,6 +166,7 @@ class HomeScreen extends ConsumerWidget {
                               ),
                             ],
                           ),
+                        ),
                         ),
                       ],
                     ),
@@ -264,11 +279,11 @@ void _showStatePicker(BuildContext context) {
   );
 }
 
-class _StatePickerSheet extends StatelessWidget {
+class _StatePickerSheet extends ConsumerWidget {
   const _StatePickerSheet();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       decoration: BoxDecoration(
         color: context.col.bg,
@@ -349,7 +364,12 @@ class _StatePickerSheet extends StatelessWidget {
               return _StateListTile(
                 item: s,
                 onTap: s.available
-                    ? () => Navigator.pop(context)
+                    ? () {
+                        ref
+                            .read(selectedNeStateProvider.notifier)
+                            .select(s.name);
+                        Navigator.pop(context);
+                      }
                     : () {
                         // Capture navigator BEFORE popping to avoid
                         // using a deactivated context after pop.
@@ -578,9 +598,50 @@ class _ListingCategoryGrid extends StatelessWidget {
       mainAxisSpacing: 10,
       crossAxisSpacing: 10,
       childAspectRatio: 0.9,
-      children: _items.map((item) {
-        return GestureDetector(
-          onTap: () => context.go('${AppRoutes.listings}?tab=${item.tab}'),
+      children: [
+        ..._items.map((item) {
+          return GestureDetector(
+            onTap: () => context.go('${AppRoutes.listings}?tab=${item.tab}'),
+            child: Container(
+              decoration: BoxDecoration(
+                color: context.col.surface,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: context.col.border),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      item.icon,
+                      size: 20,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    item.label,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: context.col.textSecondary,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                      height: 1.3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }),
+        GestureDetector(
+          onTap: () => context.go(AppRoutes.community),
           child: Container(
             decoration: BoxDecoration(
               color: context.col.surface,
@@ -597,15 +658,15 @@ class _ListingCategoryGrid extends StatelessWidget {
                     color: AppColors.primary.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(
-                    item.icon,
+                  child: const Icon(
+                    Iconsax.people,
                     size: 20,
                     color: AppColors.primary,
                   ),
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  item.label,
+                  'Community',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: context.col.textSecondary,
@@ -617,8 +678,8 @@ class _ListingCategoryGrid extends StatelessWidget {
               ],
             ),
           ),
-        );
-      }).toList(),
+        ),
+      ],
     );
   }
 }
@@ -772,7 +833,7 @@ class _FeaturedSpotsSectionState extends ConsumerState<_FeaturedSpotsSection> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Explore and unwind at\nMizoram\'s top spots',
+                        'Explore and unwind at\n${ref.watch(selectedNeStateProvider)}\'s top spots',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontSize: 20,
                           fontWeight: FontWeight.w800,
@@ -1960,5 +2021,436 @@ class _BannerSkeleton extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
       ),
     );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// XP Perks Sheet — opens when tapping the XP chip on the home screen
+// ─────────────────────────────────────────────────────────────────────────────
+
+void _showXpPerksSheet(BuildContext context, dynamic user) {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    useRootNavigator: true,
+    builder: (_) => _XpPerksSheet(user: user),
+  );
+}
+
+class _XpPerksSheet extends ConsumerWidget {
+  final dynamic user;
+  const _XpPerksSheet({required this.user});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final eventsAsync = ref.watch(xpEventsProvider);
+    final isDark = context.col.isDark;
+
+    // Level progress
+    final currentLevelPts = LevelInfo.levels
+        .firstWhere((l) => l.level == user.level,
+            orElse: () => LevelInfo.levels.first)
+        .minPoints;
+    final nextLevelPts = user.level < 10
+        ? LevelInfo.levels[user.level].minPoints
+        : user.points;
+    final progress = nextLevelPts > currentLevelPts
+        ? ((user.points - currentLevelPts) /
+                (nextLevelPts - currentLevelPts))
+            .clamp(0.0, 1.0)
+        : 1.0;
+
+    return DraggableScrollableSheet(
+      initialChildSize: 0.82,
+      maxChildSize: 0.95,
+      minChildSize: 0.5,
+      builder: (_, scrollCtrl) => Container(
+        decoration: BoxDecoration(
+          color: context.col.bg,
+          borderRadius:
+              const BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        child: Column(
+          children: [
+            // ── Drag handle ─────────────────────────────────────────────
+            const SizedBox(height: 12),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: context.col.border,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // ── XP Balance header ────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Row(
+                children: [
+                  Container(
+                    width: 52,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFFFB300), Color(0xFFFF8C00)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: const Icon(Icons.bolt,
+                        color: Colors.white, size: 28),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${user.points} XP',
+                          style: const TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w900,
+                            color: AppColors.accent,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        Text(
+                          '${user.levelTitle} · Level ${user.level}',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: context.col.textSecondary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                          color:
+                              AppColors.primary.withValues(alpha: 0.3)),
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          'LVL',
+                          style: TextStyle(
+                            fontSize: 9,
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        Text(
+                          '${user.level}',
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w900,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // ── Level progress bar ────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
+                    child: LinearProgressIndicator(
+                      value: progress,
+                      minHeight: 10,
+                      backgroundColor:
+                          context.col.surfaceElevated,
+                      valueColor: const AlwaysStoppedAnimation(
+                          AppColors.accent),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        '${user.points} XP earned',
+                        style: TextStyle(
+                            fontSize: 11,
+                            color: context.col.textSecondary),
+                      ),
+                      if (user.level < 10)
+                        Text(
+                          '${user.xpToNextLevel} XP to Level ${user.level + 1}',
+                          style: TextStyle(
+                              fontSize: 11,
+                              color: context.col.textSecondary),
+                        )
+                      else
+                        const Text(
+                          'MAX LEVEL 🏆',
+                          style: TextStyle(
+                              fontSize: 11, color: AppColors.gold),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // ── MezoPerks Banner ─────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: isDark
+                        ? [
+                            const Color(0xFF1A0A2E),
+                            const Color(0xFF0D1B4B),
+                          ]
+                        : [
+                            const Color(0xFF6C63FF),
+                            const Color(0xFF3B82F6),
+                          ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: AppColors.secondary.withValues(alpha: 0.4),
+                    width: 1.2,
+                  ),
+                ),
+                padding: const EdgeInsets.all(20),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(Iconsax.gift,
+                                  color: Colors.white, size: 16),
+                              const SizedBox(width: 6),
+                              const Text(
+                                'MezoPerks',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 16,
+                                  letterSpacing: 0.3,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            'Where Loyalty Gets Smart',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          const Text(
+                            'Your XP is more than a score — it\'s your\npassport to real-world rewards. Redeem\npoints for exclusive discounts, loyalty\ncoupons & local experiences.',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              height: 1.55,
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Text(
+                              'Coming Soon — Stay Tuned!',
+                              style: TextStyle(
+                                color: AppColors.secondary,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Column(
+                      children: [
+                        Container(
+                          width: 56,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.15),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Iconsax.ticket_discount,
+                              color: Colors.white, size: 28),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          '${user.points}\nXP',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 14,
+                            height: 1.2,
+                          ),
+                        ),
+                        const Text(
+                          'ready',
+                          style: TextStyle(
+                              color: Colors.white60, fontSize: 10),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // ── Recent Earnings header ────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Row(
+                children: [
+                  const Icon(Iconsax.activity,
+                      size: 16, color: AppColors.primary),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Recent Earnings',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                      color: context.col.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 8),
+            Divider(height: 1, color: context.col.border),
+
+            // ── Events list ───────────────────────────────────────────────
+            Expanded(
+              child: eventsAsync.when(
+                loading: () =>
+                    const Center(child: CircularProgressIndicator()),
+                error: (e, _) =>
+                    Center(child: Text('Error: $e')),
+                data: (events) {
+                  if (events.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Iconsax.activity,
+                              size: 40,
+                              color: context.col.textMuted),
+                          const SizedBox(height: 12),
+                          Text(
+                            'No earnings yet',
+                            style: TextStyle(
+                                color: context.col.textSecondary),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Start exploring to earn XP!',
+                            style: TextStyle(
+                                color: context.col.textMuted,
+                                fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+                  return ListView.separated(
+                    controller: scrollCtrl,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 8),
+                    itemCount: events.length,
+                    separatorBuilder: (_, _) =>
+                        const SizedBox(height: 2),
+                    itemBuilder: (ctx, i) {
+                      final e = events[i];
+                      return ListTile(
+                        dense: true,
+                        leading: Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: AppColors.accent
+                                .withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(e.action.icon,
+                              size: 18,
+                              color: AppColors.accent),
+                        ),
+                        title: Text(e.action.label,
+                            style: Theme.of(ctx).textTheme.bodyMedium),
+                        trailing: Text(
+                          '+${e.xpEarned} XP',
+                          style: const TextStyle(
+                            color: AppColors.accent,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                        subtitle: Text(
+                          _fmtDate(e.createdAt),
+                          style: Theme.of(ctx).textTheme.bodySmall,
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+
+            SizedBox(
+                height: MediaQuery.of(context).padding.bottom + 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _fmtDate(DateTime dt) {
+    final diff = DateTime.now().difference(dt);
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    if (diff.inDays < 7) return '${diff.inDays}d ago';
+    return '${dt.day}/${dt.month}/${dt.year}';
   }
 }

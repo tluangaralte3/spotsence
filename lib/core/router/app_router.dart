@@ -33,6 +33,7 @@ import '../../screens/packages/venture_detail_screen.dart';
 import '../../screens/ventures/venture_public_detail_screen.dart';
 import '../../screens/ventures/booking_review_screen.dart';
 import '../../screens/ventures/my_bookings_screen.dart';
+import '../../screens/community/room_management_screen.dart';
 import '../../screens/admin/admin_shell.dart';
 import '../../screens/admin/listings/admin_add_listing_screen.dart';
 import '../../screens/admin/listings/admin_venture_form_screen.dart';
@@ -75,6 +76,7 @@ abstract class AppRoutes {
   static String bookingReviewPath(String id) => '/ventures/$id/booking-review';
 
   static const myBookings = '/my-bookings';
+  static const myRooms = '/community/my-rooms';
 
   // ── Super Admin ──────────────────────────────────────────────────────────
   static const admin = '/admin';
@@ -316,6 +318,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.myBookings,
         pageBuilder: (_, state) =>
             _fade(state, const MyBookingsScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.myRooms,
+        pageBuilder: (_, state) =>
+            _slide(state, const RoomManagementScreen()),
       ),
 
       // ── Admin (outside shell — own navigation) ─────────────────────────

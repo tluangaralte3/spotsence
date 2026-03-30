@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:iconsax/iconsax.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
@@ -59,10 +60,10 @@ class _ListingResult {
 
 class _TabConfig {
   final String label;
-  final String emoji;
+  final IconData icon;
   final String collection;
   final BucketCategory category;
-  const _TabConfig(this.label, this.emoji, this.collection, this.category);
+  const _TabConfig(this.label, this.icon, this.collection, this.category);
 
   @override
   bool operator ==(Object other) =>
@@ -73,29 +74,29 @@ class _TabConfig {
 }
 
 const _tabs = [
-  _TabConfig('Spots', '\u{1F5FA}\uFE0F', 'spots', BucketCategory.spot),
+  _TabConfig('Spots', Iconsax.location, 'spots', BucketCategory.spot),
   _TabConfig(
     'Restaurants',
-    '\u{1F37D}\uFE0F',
+    Iconsax.coffee,
     'restaurants',
     BucketCategory.restaurant,
   ),
-  _TabConfig('Caf\u00E9s', '\u2615', 'cafes', BucketCategory.cafe),
-  _TabConfig('Hotels', '\u{1F3E8}', 'hotels', BucketCategory.hotel),
-  _TabConfig('Homestays', '\u{1F3E1}', 'homestays', BucketCategory.homestay),
+  _TabConfig('Cafés', Iconsax.coffee, 'cafes', BucketCategory.cafe),
+  _TabConfig('Hotels', Iconsax.building, 'hotels', BucketCategory.hotel),
+  _TabConfig('Homestays', Iconsax.home, 'homestays', BucketCategory.homestay),
   _TabConfig(
     'Adventure',
-    '\u{1F9D7}',
+    Iconsax.flash,
     'adventureSpots',
     BucketCategory.adventure,
   ),
   _TabConfig(
     'Shopping',
-    '\u{1F6CD}\uFE0F',
+    Iconsax.bag,
     'shoppingAreas',
     BucketCategory.shopping,
   ),
-  _TabConfig('Custom', '\u270F\uFE0F', '', BucketCategory.other),
+  _TabConfig('Custom', Iconsax.edit, '', BucketCategory.other),
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -422,7 +423,20 @@ class _AddBucketItemScreenState extends ConsumerState<AddBucketItemScreen>
             ),
             unselectedLabelStyle: const TextStyle(fontSize: 12),
             dividerColor: context.col.border,
-            tabs: _tabs.map((t) => Tab(text: '${t.emoji} ${t.label}')).toList(),
+            tabs: _tabs
+                .map(
+                  (t) => Tab(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(t.icon, size: 13),
+                        const SizedBox(width: 5),
+                        Text(t.label),
+                      ],
+                    ),
+                  ),
+                )
+                .toList(),
           ),
         ),
       ),
@@ -577,7 +591,15 @@ class _ListingTab extends ConsumerWidget {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(tab.emoji, style: const TextStyle(fontSize: 40)),
+                      Container(
+                        width: 64,
+                        height: 64,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(tab.icon, size: 30, color: AppColors.primary),
+                      ),
                       const SizedBox(height: 12),
                       Text(
                         query.isEmpty
@@ -817,15 +839,26 @@ class _CustomItemTab extends StatelessWidget {
                       width: sel ? 1.5 : 1,
                     ),
                   ),
-                  child: Text(
-                    '${cat.emoji}  ${cat.label}',
-                    style: TextStyle(
-                      color: sel
-                          ? AppColors.primary
-                          : context.col.textSecondary,
-                      fontSize: 12,
-                      fontWeight: sel ? FontWeight.w600 : FontWeight.normal,
-                    ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        cat.icon,
+                        size: 13,
+                        color: sel ? AppColors.primary : context.col.textMuted,
+                      ),
+                      const SizedBox(width: 5),
+                      Text(
+                        cat.label,
+                        style: TextStyle(
+                          color: sel
+                              ? AppColors.primary
+                              : context.col.textSecondary,
+                          fontSize: 12,
+                          fontWeight: sel ? FontWeight.w600 : FontWeight.normal,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               );

@@ -199,13 +199,17 @@ class GamificationService {
     // Award daily login XP
     final result = await award(userId: userId, action: XpAction.dailyLogin);
 
-    // Check streak milestones and award bonus XP
+    // Check streak milestones and award bonus XP.
+    // Exact-match thresholds are correct: the streak increments by exactly 1
+    // per calendar day, so == 7 fires once when the user reaches day 7, and
+    // == 30 fires once when they reach day 30. Check higher milestones first
+    // so both bonuses are not awarded on the same day if the data is unusual.
     if (result != null) {
       final s = result.streak.currentStreak;
-      if (s == 7) {
-        await award(userId: userId, action: XpAction.weeklyStreak);
-      } else if (s == 30) {
+      if (s == 30) {
         await award(userId: userId, action: XpAction.monthlyStreak);
+      } else if (s == 7) {
+        await award(userId: userId, action: XpAction.weeklyStreak);
       } else if (s >= 3) {
         await award(userId: userId, action: XpAction.streakBonus);
       }

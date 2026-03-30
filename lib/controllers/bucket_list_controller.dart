@@ -91,6 +91,16 @@ class BucketListController extends Notifier<BucketListState> {
     String? challengeTitle,
   }) async {
     try {
+      // ── Cap check (free limit = kFreeRoomCap) ─────────────────────
+      final hostedCount = await _svc.countHostedRooms(hostId);
+      if (hostedCount >= kFreeRoomCap) {
+        state = state.copyWith(
+          error: 'You have reached the free room limit ($kFreeRoomCap rooms). '
+              'Upgrade to MezoPro to create more.',
+        );
+        return null;
+      }
+
       final joinCode = _svc.generateJoinCode();
       final hostMember = BucketMember(
         userId: hostId,
@@ -99,6 +109,7 @@ class BucketListController extends Notifier<BucketListState> {
         role: MemberRole.host,
         status: MemberStatus.approved,
         joinedAt: DateTime.now(),
+        approvedAt: DateTime.now(),
       );
       final model = BucketListModel(
         id: '',
@@ -362,6 +373,122 @@ class BucketListController extends Notifier<BucketListState> {
   }
 
   void clearError() => state = state.copyWith(error: null);
+
+  // ── Room cap check ────────────────────────────────────────────────────────
+
+  Future<bool> canCreateRoom(String userId) async {
+    try {
+      final count = await _svc.countHostedRooms(userId);
+      return count < kFreeRoomCap;
+    } catch (_) {
+      return true;
+    }
+  }
+
+  // ── Strike member ─────────────────────────────────────────────────────────
+
+  Future<void> strikeMember({
+    required String listId,
+    required String targetUserId,
+  }) async {
+    try {
+      final autoRemoved = await _svc.strikeMember(
+        listId: listId,
+        targetUserId: targetUserId,
+      );
+      final fresh = await _svc.getById(listId);
+      if (fresh != null) _updateLocal(listId, (_) => fresh);
+      if (autoRemoved) {
+        state = state.copyWith(
+          error: 'Member reached 3 strikes and was automatically removed.',
+        );
+      }
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
+    }
+  }
+
+  // ── Remove member ─────────────────────────────────────────────────────────
+
+  Future<void> removeMember({
+    required String listId,
+    required String targetUserId,
+  }) async {
+    try {
+      await _svc.removeMember(listId: listId, targetUserId: targetUserId);
+      final fresh = await _svc.getById(listId);
+      if (fresh != null) _updateLocal(listId, (_) => fresh);
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
+    }
+  }
+
+  // ── Contact sharing ───────────────────────────────────────────────────────
+
+  Future<void> setContactShared({
+    required String listId,
+    required String userId,
+    required bool shared,
+  }) async {
+    try {
+      await _svc.setContactShared(
+        listId: listId,
+        userId: userId,
+        shared: shared,
+      );
+      final fresh = await _svc.getById(listId);
+      if (fresh != null) _updateLocal(listId, (_) => fresh);
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
+    }
+  }
+
+  // ── Poke ─────────────────────────────────────────────────────────────────
+
+  Future<String?> poke({
+    required String listId,
+    required String fromId,
+    required String fromName,
+    required String toId,
+    required String toName,
+  }) async {
+    try {
+      await _svc.poke(
+        listId: listId,
+        fromId: fromId,
+        fromName: fromName,
+        toId: toId,
+        toName: toName,
+      );
+      return null; // success
+    } catch (e) {
+      return e.toString();
+    }
+  }
+
+  // ── Report member ─────────────────────────────────────────────────────────
+
+  Future<void> reportMember({
+    required String listId,
+    required String reporterId,
+    required String reporterName,
+    required String targetId,
+    required String targetName,
+    required String reason,
+  }) async {
+    try {
+      await _svc.reportMember(
+        listId: listId,
+        reporterId: reporterId,
+        reporterName: reporterName,
+        targetId: targetId,
+        targetName: targetName,
+        reason: reason,
+      );
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
+    }
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -377,4 +504,31 @@ final bucketListControllerProvider =
 final bucketListDetailProvider =
     StreamProvider.family<BucketListModel?, String>((ref, id) {
       return ref.read(firestoreBucketListServiceProvider).watchById(id);
+    });
+
+/// Stream pokes received by [userId] inside [listId].
+/// Param is '$listId|$userId'.
+final roomPokesProvider =
+    StreamProvider.family<List<RoomPokeModel>, String>((ref, param) {
+      final parts = param.split('|');
+      if (parts.length != 2) return const Stream.empty();
+      return ref
+          .read(firestoreBucketListServiceProvider)
+          .watchPokesReceived(listId: parts[0], userId: parts[1]);
+    });
+
+/// Stream reports for a room (host only). Param is listId.
+final roomReportsProvider =
+    StreamProvider.family<List<RoomReportModel>, String>((ref, listId) {
+      return ref
+          .read(firestoreBucketListServiceProvider)
+          .watchReports(listId);
+    });
+
+/// Stream all rooms hosted by [userId] for the management screen.
+final hostedRoomsProvider =
+    StreamProvider.family<List<BucketListModel>, String>((ref, userId) {
+      return ref
+          .read(firestoreBucketListServiceProvider)
+          .watchHostedRooms(userId);
     });

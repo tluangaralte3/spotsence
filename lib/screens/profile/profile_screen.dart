@@ -175,10 +175,10 @@ class _AuthenticatedProfileState extends ConsumerState<_AuthenticatedProfile>
               TabBar(
                 controller: _tabController,
                 tabs: const [
-                  Tab(text: 'Stats'),
-                  Tab(text: 'Badges'),
-                  Tab(text: 'Saved'),
-                  Tab(text: 'Activity'),
+                  Tab(icon: Icon(Iconsax.chart_square, size: 18), text: 'Stats'),
+                  Tab(icon: Icon(Iconsax.medal, size: 18), text: 'Badges'),
+                  Tab(icon: Icon(Iconsax.bookmark, size: 18), text: 'Saved'),
+                  Tab(icon: Icon(Iconsax.activity, size: 18), text: 'Activity'),
                 ],
                 labelColor: AppColors.primary,
                 unselectedLabelColor: context.col.textSecondary,
@@ -420,6 +420,65 @@ class _StatsTab extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
+        // ── My Rooms shortcut ────────────────────────────────────────────
+        GestureDetector(
+          onTap: () => context.push(AppRoutes.myRooms),
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.accent.withValues(alpha: 0.15),
+                  AppColors.accent.withValues(alpha: 0.05),
+                ],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                  color: AppColors.accent.withValues(alpha: 0.3)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: AppColors.accent.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Iconsax.element_4,
+                      color: AppColors.accent, size: 20),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'My Rooms',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: context.col.textPrimary,
+                        ),
+                      ),
+                      Text(
+                        'Manage your community challenge rooms',
+                        style: TextStyle(
+                            fontSize: 11, color: context.col.textMuted),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(Iconsax.arrow_right_3,
+                    color: AppColors.accent, size: 20),
+              ],
+            ),
+          ),
+        ),
+
         // ── My Bookings shortcut ─────────────────────────────────────────
         GestureDetector(
           onTap: () => context.push(AppRoutes.myBookings),
@@ -967,5 +1026,5 @@ class _TabBarDelegate extends SliverPersistentHeaderDelegate {
   double get minExtent => tabBar.preferredSize.height;
 
   @override
-  bool shouldRebuild(covariant SliverPersistentHeaderDelegate old) => false;
+  bool shouldRebuild(covariant SliverPersistentHeaderDelegate old) => true;
 }

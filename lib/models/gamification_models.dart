@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
+import 'package:iconsax/iconsax.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // XP Action definitions — single source of truth for every earnable action
@@ -12,6 +14,7 @@ enum XpAction {
   completeBucketItem, // +10  — user checks off an item from their bucket list
   createDilemma, // +25  — user posts a new dilemma
   voteDilemma, // +5   — user casts a vote on any dilemma
+  submitContribution, // +20  — user submits a new spot for review
   dailyLogin, // +5   — first app open of the day (streak seed)
   streakBonus, // +10  — awarded on top of dailyLogin when streak >= 3
   weeklyStreak, // +30  — bonus at exactly 7-day streak
@@ -26,6 +29,7 @@ extension XpActionX on XpAction {
     XpAction.completeBucketItem: 10,
     XpAction.createDilemma: 25,
     XpAction.voteDilemma: 5,
+    XpAction.submitContribution: 20,
     XpAction.dailyLogin: 5,
     XpAction.streakBonus: 10,
     XpAction.weeklyStreak: 30,
@@ -39,6 +43,7 @@ extension XpActionX on XpAction {
     XpAction.completeBucketItem: 'Completed a bucket list item',
     XpAction.createDilemma: 'Posted a dilemma',
     XpAction.voteDilemma: 'Voted on a dilemma',
+    XpAction.submitContribution: 'Submitted a spot',
     XpAction.dailyLogin: 'Daily login',
     XpAction.streakBonus: 'Streak bonus!',
     XpAction.weeklyStreak: '7-day streak!',
@@ -52,10 +57,25 @@ extension XpActionX on XpAction {
     XpAction.completeBucketItem: '✅',
     XpAction.createDilemma: '🤔',
     XpAction.voteDilemma: '🗳️',
+    XpAction.submitContribution: '📍',
     XpAction.dailyLogin: '🌅',
     XpAction.streakBonus: '🔥',
     XpAction.weeklyStreak: '🔥',
     XpAction.monthlyStreak: '👑',
+  }[this]!;
+
+  IconData get icon => const {
+    XpAction.writeReview: Iconsax.star,
+    XpAction.uploadPhoto: Iconsax.camera,
+    XpAction.createBucketList: Iconsax.task_square,
+    XpAction.completeBucketItem: Iconsax.tick_circle,
+    XpAction.createDilemma: Iconsax.message_question,
+    XpAction.voteDilemma: Iconsax.chart_square,
+    XpAction.submitContribution: Iconsax.location_add,
+    XpAction.dailyLogin: Iconsax.clock,
+    XpAction.streakBonus: Iconsax.flash,
+    XpAction.weeklyStreak: Iconsax.flash_1,
+    XpAction.monthlyStreak: Iconsax.crown,
   }[this]!;
 }
 
@@ -277,7 +297,7 @@ class BadgeModel {
   final String id;
   final String name;
   final String description;
-  final String icon;
+  final IconData icon;
   final String rarity; // common, rare, epic, legendary
   final String category;
   final int pointsReward;
@@ -301,7 +321,7 @@ class BadgeModel {
     id: json['id'] as String? ?? '',
     name: json['name'] as String? ?? '',
     description: json['description'] as String? ?? '',
-    icon: json['icon'] as String? ?? '',
+    icon: Iconsax.medal, // icon is now IconData — JSON field ignored
     rarity: json['rarity'] as String? ?? 'common',
     category: json['category'] as String? ?? '',
     pointsReward: (json['pointsReward'] as num?)?.toInt() ?? 0,
@@ -318,13 +338,14 @@ class BadgeModel {
 
   int get rarityColor => rarityColors[rarity] ?? 0xFF9E9E9E;
 
-  // ── Pre-defined badge catalogue (mirrors web constants/badges.ts) ──────────
+  // ── Pre-defined badge catalogue ───────────────────────────────────────────
   static const List<BadgeModel> allBadges = [
+    // ── Review badges ─────────────────────────────────────────────────────────
     BadgeModel(
       id: 'first_review',
       name: 'First Review',
       description: 'Wrote your first review',
-      icon: '⭐',
+      icon: Iconsax.star,
       rarity: 'common',
       category: 'reviews',
       pointsReward: 10,
@@ -334,7 +355,7 @@ class BadgeModel {
       id: 'five_reviews',
       name: 'Reviewer',
       description: 'Wrote 5 reviews',
-      icon: '📝',
+      icon: Iconsax.star_1,
       rarity: 'common',
       category: 'reviews',
       pointsReward: 20,
@@ -344,17 +365,28 @@ class BadgeModel {
       id: 'twenty_reviews',
       name: 'Critic',
       description: 'Wrote 20 reviews',
-      icon: '🏆',
+      icon: Iconsax.medal_star,
       rarity: 'rare',
       category: 'reviews',
       pointsReward: 50,
       earned: false,
     ),
     BadgeModel(
+      id: 'fifty_reviews',
+      name: 'Authority',
+      description: 'Wrote 50 reviews',
+      icon: Iconsax.medal,
+      rarity: 'epic',
+      category: 'reviews',
+      pointsReward: 150,
+      earned: false,
+    ),
+    // ── Contribution badges ───────────────────────────────────────────────────
+    BadgeModel(
       id: 'first_contribution',
       name: 'Contributor',
       description: 'Submitted your first spot',
-      icon: '📍',
+      icon: Iconsax.location_add,
       rarity: 'common',
       category: 'contributions',
       pointsReward: 15,
@@ -364,27 +396,39 @@ class BadgeModel {
       id: 'five_contributions',
       name: 'Explorer',
       description: 'Contributed 5 spots',
-      icon: '🗺️',
+      icon: Iconsax.map_1,
       rarity: 'rare',
       category: 'contributions',
       pointsReward: 75,
       earned: false,
     ),
     BadgeModel(
+      id: 'ten_contributions',
+      name: 'Cartographer',
+      description: 'Contributed 10 spots to the map',
+      icon: Iconsax.map,
+      rarity: 'epic',
+      category: 'contributions',
+      pointsReward: 150,
+      earned: false,
+    ),
+    // ── Bookmark badge ────────────────────────────────────────────────────────
+    BadgeModel(
       id: 'first_bookmark',
       name: 'Collector',
       description: 'Bookmarked your first spot',
-      icon: '🔖',
+      icon: Iconsax.bookmark,
       rarity: 'common',
       category: 'bookmarks',
       pointsReward: 5,
       earned: false,
     ),
+    // ── Level badges ──────────────────────────────────────────────────────────
     BadgeModel(
       id: 'level_5',
       name: 'Guide',
       description: 'Reached Level 5',
-      icon: '🧭',
+      icon: Iconsax.ranking,
       rarity: 'rare',
       category: 'levels',
       pointsReward: 100,
@@ -394,17 +438,18 @@ class BadgeModel {
       id: 'level_10',
       name: 'Guardian',
       description: 'Reached Level 10',
-      icon: '👑',
+      icon: Iconsax.crown,
       rarity: 'legendary',
       category: 'levels',
       pointsReward: 500,
       earned: false,
     ),
+    // ── Community badges ──────────────────────────────────────────────────────
     BadgeModel(
       id: 'community_post',
       name: 'Social',
       description: 'Created your first community post',
-      icon: '💬',
+      icon: Iconsax.people,
       rarity: 'common',
       category: 'community',
       pointsReward: 10,
@@ -414,27 +459,39 @@ class BadgeModel {
       id: 'bucket_list',
       name: 'Planner',
       description: 'Created a bucket list',
-      icon: '📋',
+      icon: Iconsax.task_square,
       rarity: 'common',
       category: 'community',
       pointsReward: 10,
       earned: false,
     ),
+    // ── Photo badges ──────────────────────────────────────────────────────────
     BadgeModel(
       id: 'photo_explorer',
       name: 'Photographer',
       description: 'Uploaded 10 spot photos',
-      icon: '📸',
+      icon: Iconsax.camera,
       rarity: 'rare',
       category: 'media',
       pointsReward: 50,
       earned: false,
     ),
     BadgeModel(
+      id: 'photo_master',
+      name: 'Lens Master',
+      description: 'Uploaded 25 spot photos',
+      icon: Iconsax.camera_slash,
+      rarity: 'epic',
+      category: 'media',
+      pointsReward: 120,
+      earned: false,
+    ),
+    // ── Leaderboard badge ─────────────────────────────────────────────────────
+    BadgeModel(
       id: 'top_10',
       name: 'Top Explorer',
       description: 'Reached top 10 on leaderboard',
-      icon: '🥇',
+      icon: Iconsax.cup,
       rarity: 'epic',
       category: 'leaderboard',
       pointsReward: 200,
@@ -445,7 +502,7 @@ class BadgeModel {
       id: 'streak_3',
       name: 'On a Roll',
       description: 'Logged in 3 days in a row',
-      icon: '🔥',
+      icon: Iconsax.flash_1,
       rarity: 'common',
       category: 'streaks',
       pointsReward: 15,
@@ -455,7 +512,7 @@ class BadgeModel {
       id: 'streak_7',
       name: 'Week Warrior',
       description: 'Logged in 7 days in a row',
-      icon: '🔥',
+      icon: Iconsax.flash,
       rarity: 'rare',
       category: 'streaks',
       pointsReward: 50,
@@ -465,7 +522,7 @@ class BadgeModel {
       id: 'streak_30',
       name: 'Unstoppable',
       description: 'Logged in 30 days in a row',
-      icon: '💎',
+      icon: Iconsax.shield_tick,
       rarity: 'legendary',
       category: 'streaks',
       pointsReward: 300,
@@ -476,7 +533,7 @@ class BadgeModel {
       id: 'first_dilemma',
       name: 'Torn',
       description: 'Posted your first dilemma',
-      icon: '🤔',
+      icon: Iconsax.message_question,
       rarity: 'common',
       category: 'dilemmas',
       pointsReward: 10,
@@ -486,7 +543,7 @@ class BadgeModel {
       id: 'dilemma_voter',
       name: 'Poll Master',
       description: 'Voted on 10 dilemmas',
-      icon: '🗳️',
+      icon: Iconsax.chart_square,
       rarity: 'rare',
       category: 'dilemmas',
       pointsReward: 40,
@@ -497,7 +554,7 @@ class BadgeModel {
       id: 'bucket_complete_1',
       name: 'Ticked Off',
       description: 'Completed your first bucket list item',
-      icon: '✅',
+      icon: Iconsax.tick_circle,
       rarity: 'common',
       category: 'bucket_lists',
       pointsReward: 10,
@@ -507,51 +564,21 @@ class BadgeModel {
       id: 'bucket_complete_10',
       name: 'Go-Getter',
       description: 'Completed 10 bucket list items',
-      icon: '🏁',
+      icon: Iconsax.medal_star,
       rarity: 'rare',
       category: 'bucket_lists',
       pointsReward: 75,
       earned: false,
     ),
-    // ── Social badges ─────────────────────────────────────────────────────────
+    // ── Special badges ────────────────────────────────────────────────────────
     BadgeModel(
       id: 'early_adopter',
       name: 'Early Adopter',
       description: 'One of the first 100 users of SpotMizoram',
-      icon: '🚀',
+      icon: Iconsax.discover,
       rarity: 'legendary',
       category: 'special',
       pointsReward: 100,
-      earned: false,
-    ),
-    BadgeModel(
-      id: 'fifty_reviews',
-      name: 'Authority',
-      description: 'Wrote 50 reviews',
-      icon: '🎖️',
-      rarity: 'epic',
-      category: 'reviews',
-      pointsReward: 150,
-      earned: false,
-    ),
-    BadgeModel(
-      id: 'ten_contributions',
-      name: 'Cartographer',
-      description: 'Contributed 10 spots to the map',
-      icon: '🗺️',
-      rarity: 'epic',
-      category: 'contributions',
-      pointsReward: 150,
-      earned: false,
-    ),
-    BadgeModel(
-      id: 'photo_master',
-      name: 'Lens Master',
-      description: 'Uploaded 25 spot photos',
-      icon: '📷',
-      rarity: 'epic',
-      category: 'media',
-      pointsReward: 120,
       earned: false,
     ),
   ];
@@ -595,9 +622,10 @@ class BadgeModel {
     check('photo_explorer', photosCount >= 10);
     check('photo_master', photosCount >= 25);
 
-    // Dilemmas
+    // Dilemmas / community
     check('first_dilemma', dilemmasCreated >= 1);
     check('dilemma_voter', dilemmasVoted >= 10);
+    check('community_post', dilemmasCreated >= 1);
 
     // Bucket lists
     check('bucket_list', bucketListsCreated >= 1);

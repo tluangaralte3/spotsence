@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:iconsax/iconsax.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import '../controllers/gamification_controller.dart';
 import '../core/theme/app_theme.dart';
@@ -149,7 +150,7 @@ class LevelBadge extends StatelessWidget {
 class BadgeChip extends StatelessWidget {
   final String label;
   final String rarity; // common | rare | epic | legendary
-  final String? icon;
+  final IconData? icon;
 
   const BadgeChip({
     super.key,
@@ -173,7 +174,7 @@ class BadgeChip extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[
-            Text(icon!, style: const TextStyle(fontSize: 12)),
+            Icon(icon, size: 12, color: color),
             const SizedBox(width: 4),
           ],
           Text(
@@ -222,7 +223,16 @@ class BadgeCard extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(badge?.icon ?? '🏅', style: const TextStyle(fontSize: 28)),
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.15),
+              shape: BoxShape.circle,
+            ),
+            alignment: Alignment.center,
+            child: Icon(badge?.icon ?? Iconsax.medal, size: 22, color: color),
+          ),
           const SizedBox(height: 6),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 6),
@@ -302,7 +312,7 @@ class AchievementCard extends StatelessWidget {
               ],
             ),
             alignment: Alignment.center,
-            child: Text(badge.icon, style: const TextStyle(fontSize: 28)),
+            child: Icon(badge.icon, size: 28, color: color),
           ),
           const SizedBox(width: 14),
 
@@ -341,7 +351,7 @@ class AchievementCard extends StatelessWidget {
                 BadgeChip(
                   label: '+${badge.pointsReward} XP',
                   rarity: badge.rarity,
-                  icon: '✨',
+                  icon: Iconsax.flash,
                 ),
               ],
             ),
@@ -372,16 +382,12 @@ class RankBadge extends StatelessWidget {
 
   const RankBadge({super.key, required this.rank});
 
-  String get _emoji {
+  Color _rankColor(BuildContext context) {
     switch (rank) {
-      case 1:
-        return '🥇';
-      case 2:
-        return '🥈';
-      case 3:
-        return '🥉';
-      default:
-        return '#$rank';
+      case 1: return const Color(0xFFFFB300); // gold
+      case 2: return const Color(0xFF90A4AE); // silver
+      case 3: return const Color(0xFFBF8970); // bronze
+      default: return context.col.textSecondary;
     }
   }
 
@@ -398,7 +404,11 @@ class RankBadge extends StatelessWidget {
       );
     }
 
-    return Text(_emoji, style: const TextStyle(fontSize: 22));
+    return Icon(
+      rank == 1 ? Iconsax.cup5 : Iconsax.medal,
+      size: 24,
+      color: _rankColor(context),
+    );
   }
 }
 
@@ -724,7 +734,8 @@ class XpActivityFeed extends ConsumerWidget {
       data: (events) {
         if (events.isEmpty) {
           return const Center(
-            child: Text('No activity yet. Start exploring! 🗺️'),
+            child: Text('No activity yet. Start exploring!'),
+          // TODO: add icon above text if desired
           );
         }
         return ListView.separated(
@@ -747,7 +758,15 @@ class _XpEventTile extends StatelessWidget {
     final theme = Theme.of(context);
     return ListTile(
       dense: true,
-      leading: Text(event.action.emoji, style: const TextStyle(fontSize: 22)),
+      leading: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: AppColors.primary.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(event.action.icon, size: 18, color: AppColors.primary),
+      ),
       title: Text(event.action.label, style: theme.textTheme.bodyMedium),
       trailing: Text(
         '+${event.xpEarned} XP',

@@ -77,7 +77,7 @@ class FirestoreRestaurantsService {
   }
 
   /// Write a review to `restaurants/{id}/reviews`.
-  Future<void> submitReview({
+  Future<bool> submitReview({
     required String restaurantId,
     required String userId,
     required String userName,
@@ -85,15 +85,16 @@ class FirestoreRestaurantsService {
     required double rating,
     required String comment,
   }) async {
-    final batch = _db.batch();
-
-    // 1. Write the review document.
     final reviewRef = _db
         .collection('restaurants')
         .doc(restaurantId)
         .collection('reviews')
-        .doc();
-    batch.set(reviewRef, {
+        .doc(userId); // deterministic ID — one review per user per place
+
+    final existing = await reviewRef.get();
+    final isNew = !existing.exists;
+
+    await reviewRef.set({
       'userId': userId,
       'userName': userName,
       'userAvatar': userAvatar,
@@ -101,11 +102,6 @@ class FirestoreRestaurantsService {
       'comment': comment,
       'timestamp': FieldValue.serverTimestamp(),
     });
-
-    // 2. Update the running average on the restaurant document.
-    // We read the current count and average, then recalculate.
-    // This is done outside the batch since we need to read first.
-    await batch.commit();
 
     // Best-effort: update average rating on the parent doc.
     try {
@@ -118,12 +114,22 @@ class FirestoreRestaurantsService {
         final oldRating =
             (data['rating'] ?? data['averageRating'] as num?)?.toDouble() ??
             0.0;
-        final newCount = oldCount + 1;
-        final newRating = ((oldRating * oldCount) + rating) / newCount;
-        tx.update(docRef, {
-          'rating': double.parse(newRating.toStringAsFixed(1)),
-          'ratingsCount': newCount,
-        });
+        if (isNew) {
+          final newCount = oldCount + 1;
+          final newRating = ((oldRating * oldCount) + rating) / newCount;
+          tx.update(docRef, {
+            'rating': double.parse(newRating.toStringAsFixed(1)),
+            'ratingsCount': newCount,
+          });
+        } else {
+          final oldUserRating = (existing.data()?['rating'] as num?)?.toDouble() ?? rating;
+          final newRating = oldCount > 0
+              ? ((oldRating * oldCount) - oldUserRating + rating) / oldCount
+              : rating;
+          tx.update(docRef, {
+            'rating': double.parse(newRating.toStringAsFixed(1)),
+          });
+        }
       });
 
       // Rebuild the place_rankings entry for this restaurant.
@@ -161,6 +167,7 @@ class FirestoreRestaurantsService {
     } catch (_) {
       // Non-critical — ignore if transaction fails.
     }
+    return isNew;
   }
 }
 

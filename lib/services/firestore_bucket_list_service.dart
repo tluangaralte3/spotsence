@@ -281,6 +281,206 @@ class FirestoreBucketListService {
       });
     });
   }
+
+  // ── Room cap ─────────────────────────────────────────────────────────────
+
+  /// Returns how many rooms the user currently hosts.
+  Future<int> countHostedRooms(String userId) async {
+    final snap = await _col
+        .where('hostId', isEqualTo: userId)
+        .count()
+        .get();
+    return snap.count ?? 0;
+  }
+
+  // ── Strike member ─────────────────────────────────────────────────────────
+
+  /// Adds one strike to [targetUserId]. If strikes reach 3 the member is
+  /// automatically removed from the room.
+  Future<bool> strikeMember({
+    required String listId,
+    required String targetUserId,
+  }) async {
+    bool autoRemoved = false;
+    final docRef = _col.doc(listId);
+    await _db.runTransaction((tx) async {
+      final snap = await tx.get(docRef);
+      if (!snap.exists) return;
+      final data = snap.data()!;
+      final members = List<Map<String, dynamic>>.from(data['members'] ?? []);
+      final idx = members.indexWhere((m) => m['userId'] == targetUserId);
+      if (idx < 0) return;
+
+      final newStrikes = ((members[idx]['strikes'] as num?)?.toInt() ?? 0) + 1;
+      members[idx] = {...members[idx], 'strikes': newStrikes};
+
+      final Map<String, dynamic> update = {'members': members};
+
+      if (newStrikes >= 3) {
+        // Auto-remove
+        final removed = members.where((m) => m['userId'] != targetUserId).toList();
+        update['members'] = removed;
+        update['memberIds'] = FieldValue.arrayRemove([targetUserId]);
+        update['removedUserIds'] = FieldValue.arrayUnion([targetUserId]);
+        autoRemoved = true;
+      }
+      tx.update(docRef, update);
+    });
+    return autoRemoved;
+  }
+
+  // ── Remove member ─────────────────────────────────────────────────────────
+
+  Future<void> removeMember({
+    required String listId,
+    required String targetUserId,
+  }) async {
+    final docRef = _col.doc(listId);
+    await _db.runTransaction((tx) async {
+      final snap = await tx.get(docRef);
+      if (!snap.exists) return;
+      final data = snap.data()!;
+      final members = List<Map<String, dynamic>>.from(data['members'] ?? []);
+      final updated = members.where((m) => m['userId'] != targetUserId).toList();
+      tx.update(docRef, {
+        'members': updated,
+        'memberIds': FieldValue.arrayRemove([targetUserId]),
+        'removedUserIds': FieldValue.arrayUnion([targetUserId]),
+      });
+    });
+  }
+
+  // ── Contact sharing ───────────────────────────────────────────────────────
+
+  /// Toggles [userId]'s contactShared flag inside this room.
+  Future<void> setContactShared({
+    required String listId,
+    required String userId,
+    required bool shared,
+  }) async {
+    final docRef = _col.doc(listId);
+    await _db.runTransaction((tx) async {
+      final snap = await tx.get(docRef);
+      if (!snap.exists) return;
+      final data = snap.data()!;
+      final members = List<Map<String, dynamic>>.from(data['members'] ?? []);
+      final idx = members.indexWhere((m) => m['userId'] == userId);
+      if (idx < 0) return;
+      members[idx] = {...members[idx], 'contactShared': shared};
+      tx.update(docRef, {'members': members});
+    });
+  }
+
+  // ── Pokes (subcollection) ─────────────────────────────────────────────────
+
+  CollectionReference<Map<String, dynamic>> _pokesCol(String listId) =>
+      _col.doc(listId).collection('pokes');
+
+  /// Send a poke. Enforces a 24-hour cooldown per sender→receiver pair
+  /// by checking the most recent poke document. Throws if on cooldown.
+  Future<void> poke({
+    required String listId,
+    required String fromId,
+    required String fromName,
+    required String toId,
+    required String toName,
+  }) async {
+    // Check cooldown — one poke per sender-receiver pair per 24 h
+    final recent = await _pokesCol(listId)
+        .where('fromId', isEqualTo: fromId)
+        .where('toId', isEqualTo: toId)
+        .orderBy('timestamp', descending: true)
+        .limit(1)
+        .get();
+
+    if (recent.docs.isNotEmpty) {
+      final lastTs = recent.docs.first.data()['timestamp'];
+      DateTime? lastPoke;
+      if (lastTs is Timestamp) {
+        lastPoke = lastTs.toDate();
+      } else if (lastTs is String) {
+        lastPoke = DateTime.tryParse(lastTs);
+      }
+      if (lastPoke != null &&
+          DateTime.now().difference(lastPoke).inHours < 24) {
+        throw Exception('You can only poke once every 24 hours');
+      }
+    }
+
+    await _pokesCol(listId).add({
+      'fromId': fromId,
+      'fromName': fromName,
+      'toId': toId,
+      'toName': toName,
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Stream of recent pokes received by [userId] in this room (last 20).
+  Stream<List<RoomPokeModel>> watchPokesReceived({
+    required String listId,
+    required String userId,
+  }) {
+    return _pokesCol(listId)
+        .where('toId', isEqualTo: userId)
+        .orderBy('timestamp', descending: true)
+        .limit(20)
+        .snapshots()
+        .map(
+          (snap) => snap.docs
+              .map((d) => RoomPokeModel.fromFirestore(d))
+              .toList(),
+        );
+  }
+
+  // ── Reports (subcollection) ───────────────────────────────────────────────
+
+  CollectionReference<Map<String, dynamic>> _reportsCol(String listId) =>
+      _col.doc(listId).collection('reports');
+
+  Future<void> reportMember({
+    required String listId,
+    required String reporterId,
+    required String reporterName,
+    required String targetId,
+    required String targetName,
+    required String reason,
+  }) async {
+    await _reportsCol(listId).add({
+      'reporterId': reporterId,
+      'reporterName': reporterName,
+      'targetId': targetId,
+      'targetName': targetName,
+      'reason': reason,
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Stream of reports for a room (host only — sorted newest first, max 50).
+  Stream<List<RoomReportModel>> watchReports(String listId) {
+    return _reportsCol(listId)
+        .orderBy('timestamp', descending: true)
+        .limit(50)
+        .snapshots()
+        .map(
+          (snap) => snap.docs
+              .map((d) => RoomReportModel.fromFirestore(d))
+              .toList(),
+        );
+  }
+
+  // ── Stream hosted rooms ───────────────────────────────────────────────────
+
+  Stream<List<BucketListModel>> watchHostedRooms(String userId) {
+    return _col
+        .where('hostId', isEqualTo: userId)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map(
+          (snap) =>
+              snap.docs.map((d) => BucketListModel.fromFirestore(d)).toList(),
+        );
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

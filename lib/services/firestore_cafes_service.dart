@@ -59,7 +59,7 @@ class FirestoreCafesService {
         );
   }
 
-  Future<void> submitReview({
+  Future<bool> submitReview({
     required String cafeId,
     required String userId,
     required String userName,
@@ -67,7 +67,16 @@ class FirestoreCafesService {
     required double rating,
     required String comment,
   }) async {
-    await _db.collection('cafes').doc(cafeId).collection('reviews').doc().set({
+    final reviewRef = _db
+        .collection('cafes')
+        .doc(cafeId)
+        .collection('reviews')
+        .doc(userId); // deterministic ID — one review per user per place
+
+    final existing = await reviewRef.get();
+    final isNew = !existing.exists;
+
+    await reviewRef.set({
       'userId': userId,
       'userName': userName,
       'userAvatar': userAvatar,
@@ -87,12 +96,22 @@ class FirestoreCafesService {
         final oldRating =
             (data['rating'] ?? data['averageRating'] as num?)?.toDouble() ??
             0.0;
-        final newCount = oldCount + 1;
-        final newRating = ((oldRating * oldCount) + rating) / newCount;
-        tx.update(docRef, {
-          'rating': double.parse(newRating.toStringAsFixed(1)),
-          'ratingsCount': newCount,
-        });
+        if (isNew) {
+          final newCount = oldCount + 1;
+          final newRating = ((oldRating * oldCount) + rating) / newCount;
+          tx.update(docRef, {
+            'rating': double.parse(newRating.toStringAsFixed(1)),
+            'ratingsCount': newCount,
+          });
+        } else {
+          final oldUserRating = (existing.data()?['rating'] as num?)?.toDouble() ?? rating;
+          final newRating = oldCount > 0
+              ? ((oldRating * oldCount) - oldUserRating + rating) / oldCount
+              : rating;
+          tx.update(docRef, {
+            'rating': double.parse(newRating.toStringAsFixed(1)),
+          });
+        }
       });
 
       // Rebuild the place_rankings entry for this cafe.
@@ -125,6 +144,7 @@ class FirestoreCafesService {
         );
       }
     } catch (_) {}
+    return isNew;
   }
 }
 

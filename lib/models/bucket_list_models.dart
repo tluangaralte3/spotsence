@@ -1,8 +1,21 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
+import 'package:iconsax/iconsax.dart';
 
 /// Sentinel object used in copyWith to distinguish null from "not provided".
 const Object _sentinel = Object();
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Free room cap — users can host up to 5 rooms for free
+// ─────────────────────────────────────────────────────────────────────────────
+const int kFreeRoomCap = 5;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Time-based unlock thresholds (days in room)
+// ─────────────────────────────────────────────────────────────────────────────
+const int kConnectUnlockDays = 10;
+const int kPokeUnlockDays = 20;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // BucketCategory
@@ -42,26 +55,26 @@ enum BucketCategory {
     }
   }
 
-  String get emoji {
+  IconData get icon {
     switch (this) {
       case spot:
-        return '🗺️';
+        return Iconsax.location;
       case restaurant:
-        return '🍽️';
+        return Iconsax.coffee;
       case cafe:
-        return '☕';
+        return Iconsax.coffee;
       case hotel:
-        return '🏨';
+        return Iconsax.building;
       case homestay:
-        return '🏡';
+        return Iconsax.home;
       case adventure:
-        return '🧗';
+        return Iconsax.flash;
       case shopping:
-        return '🛍️';
+        return Iconsax.bag;
       case event:
-        return '📅';
+        return Iconsax.calendar;
       case other:
-        return '✨';
+        return Iconsax.element_4;
     }
   }
 
@@ -190,6 +203,15 @@ class BucketMember {
   final MemberStatus status;
   final DateTime joinedAt;
 
+  /// When the member was approved (used for time-based feature unlocks).
+  final DateTime? approvedAt;
+
+  /// Number of strikes issued by the room creator (0–3). 3 = auto-removed.
+  final int strikes;
+
+  /// Whether member has opted to share their contact info inside this room.
+  final bool contactShared;
+
   const BucketMember({
     required this.userId,
     required this.userName,
@@ -197,10 +219,42 @@ class BucketMember {
     required this.role,
     required this.status,
     required this.joinedAt,
+    this.approvedAt,
+    this.strikes = 0,
+    this.contactShared = false,
   });
 
   bool get isHost => role == MemberRole.host;
   bool get isApproved => status == MemberStatus.approved;
+
+  /// Days this member has been an approved member of the room.
+  int daysInRoom(DateTime now) {
+    final ref = approvedAt ?? joinedAt;
+    return now.difference(ref).inDays;
+  }
+
+  /// True when the member has been in the room long enough to use Connect.
+  bool canConnect(DateTime now) => daysInRoom(now) >= kConnectUnlockDays;
+
+  /// True when the member has been in the room long enough to send pokes.
+  bool canPoke(DateTime now) => daysInRoom(now) >= kPokeUnlockDays;
+
+  BucketMember copyWith({
+    MemberStatus? status,
+    DateTime? approvedAt,
+    int? strikes,
+    bool? contactShared,
+  }) => BucketMember(
+    userId: userId,
+    userName: userName,
+    userPhoto: userPhoto,
+    role: role,
+    status: status ?? this.status,
+    joinedAt: joinedAt,
+    approvedAt: approvedAt ?? this.approvedAt,
+    strikes: strikes ?? this.strikes,
+    contactShared: contactShared ?? this.contactShared,
+  );
 
   Map<String, dynamic> toJson() => {
     'userId': userId,
@@ -209,15 +263,26 @@ class BucketMember {
     'role': role.name,
     'status': status.name,
     'joinedAt': joinedAt.toIso8601String(),
+    'approvedAt': approvedAt?.toIso8601String(),
+    'strikes': strikes,
+    'contactShared': contactShared,
   };
 
   factory BucketMember.fromJson(Map<String, dynamic> j) {
     DateTime joinedAt = DateTime.now();
-    final raw = j['joinedAt'];
-    if (raw is Timestamp) {
-      joinedAt = raw.toDate();
-    } else if (raw is String) {
-      joinedAt = DateTime.tryParse(raw) ?? DateTime.now();
+    final rawJoined = j['joinedAt'];
+    if (rawJoined is Timestamp) {
+      joinedAt = rawJoined.toDate();
+    } else if (rawJoined is String) {
+      joinedAt = DateTime.tryParse(rawJoined) ?? DateTime.now();
+    }
+
+    DateTime? approvedAt;
+    final rawApproved = j['approvedAt'];
+    if (rawApproved is Timestamp) {
+      approvedAt = rawApproved.toDate();
+    } else if (rawApproved is String) {
+      approvedAt = DateTime.tryParse(rawApproved);
     }
 
     return BucketMember(
@@ -230,6 +295,102 @@ class BucketMember {
         orElse: () => MemberStatus.pending,
       ),
       joinedAt: joinedAt,
+      approvedAt: approvedAt,
+      strikes: (j['strikes'] as num?)?.toInt() ?? 0,
+      contactShared: j['contactShared'] == true,
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RoomPokeModel — a single poke between two members (subcollection doc)
+// ─────────────────────────────────────────────────────────────────────────────
+
+@immutable
+class RoomPokeModel {
+  final String id;
+  final String fromId;
+  final String fromName;
+  final String toId;
+  final String toName;
+  final DateTime timestamp;
+
+  const RoomPokeModel({
+    required this.id,
+    required this.fromId,
+    required this.fromName,
+    required this.toId,
+    required this.toName,
+    required this.timestamp,
+  });
+
+  factory RoomPokeModel.fromFirestore(
+    DocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
+    final d = doc.data() ?? {};
+    DateTime ts = DateTime.now();
+    if (d['timestamp'] is Timestamp) {
+      ts = (d['timestamp'] as Timestamp).toDate();
+    }
+    return RoomPokeModel(
+      id: doc.id,
+      fromId: d['fromId']?.toString() ?? '',
+      fromName: d['fromName']?.toString() ?? '',
+      toId: d['toId']?.toString() ?? '',
+      toName: d['toName']?.toString() ?? '',
+      timestamp: ts,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'fromId': fromId,
+    'fromName': fromName,
+    'toId': toId,
+    'toName': toName,
+    'timestamp': timestamp.toIso8601String(),
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RoomReportModel — a member report (subcollection doc)
+// ─────────────────────────────────────────────────────────────────────────────
+
+@immutable
+class RoomReportModel {
+  final String id;
+  final String reporterId;
+  final String reporterName;
+  final String targetId;
+  final String targetName;
+  final String reason;
+  final DateTime timestamp;
+
+  const RoomReportModel({
+    required this.id,
+    required this.reporterId,
+    required this.reporterName,
+    required this.targetId,
+    required this.targetName,
+    required this.reason,
+    required this.timestamp,
+  });
+
+  factory RoomReportModel.fromFirestore(
+    DocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
+    final d = doc.data() ?? {};
+    DateTime ts = DateTime.now();
+    if (d['timestamp'] is Timestamp) {
+      ts = (d['timestamp'] as Timestamp).toDate();
+    }
+    return RoomReportModel(
+      id: doc.id,
+      reporterId: d['reporterId']?.toString() ?? '',
+      reporterName: d['reporterName']?.toString() ?? '',
+      targetId: d['targetId']?.toString() ?? '',
+      targetName: d['targetName']?.toString() ?? '',
+      reason: d['reason']?.toString() ?? '',
+      timestamp: ts,
     );
   }
 }
@@ -269,6 +430,9 @@ class BucketListModel {
   final List<String> badges; // badge ids unlocked on completion
   final String? challengeTitle; // optional challenge name overlay
 
+  /// Users permanently removed/banned from this room by the creator.
+  final List<String> removedUserIds;
+
   const BucketListModel({
     required this.id,
     required this.title,
@@ -290,6 +454,7 @@ class BucketListModel {
     this.xpReward = 100,
     this.badges = const [],
     this.challengeTitle,
+    this.removedUserIds = const [],
   });
 
   // ── Derived ────────────────────────────────────────────────────────────
@@ -312,6 +477,7 @@ class BucketListModel {
   bool isHost(String uid) => hostId == uid;
   bool hasPendingRequest(String uid) =>
       joinRequests.any((r) => r.userId == uid);
+  bool isRemoved(String uid) => removedUserIds.contains(uid);
 
   String get displayCategory =>
       category == BucketCategory.other && customCategory != null
@@ -334,6 +500,7 @@ class BucketListModel {
     List<BucketMember>? members,
     List<BucketMember>? joinRequests,
     DateTime? completedAt,
+    List<String>? removedUserIds,
   }) {
     return BucketListModel(
       id: id,
@@ -360,6 +527,7 @@ class BucketListModel {
       challengeTitle: challengeTitle == _sentinel
           ? this.challengeTitle
           : challengeTitle as String?,
+      removedUserIds: removedUserIds ?? this.removedUserIds,
     );
   }
 
@@ -384,6 +552,7 @@ class BucketListModel {
     'xpReward': xpReward,
     'badges': badges,
     'challengeTitle': challengeTitle,
+    'removedUserIds': removedUserIds,
   };
 
   factory BucketListModel.fromFirestore(
@@ -427,6 +596,7 @@ class BucketListModel {
       xpReward: (d['xpReward'] as num?)?.toInt() ?? 100,
       badges: List<String>.from(d['badges'] as List? ?? []),
       challengeTitle: d['challengeTitle']?.toString(),
+      removedUserIds: List<String>.from(d['removedUserIds'] as List? ?? []),
     );
   }
 }

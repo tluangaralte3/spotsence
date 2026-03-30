@@ -4,6 +4,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:iconsax/iconsax.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../controllers/bucket_list_controller.dart';
@@ -202,7 +203,7 @@ class _EditBodyState extends ConsumerState<_EditBody> {
     if (ok) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Bucket list updated ✨'),
+          content: Text('Bucket list updated'),
           backgroundColor: AppColors.primary,
         ),
       );
@@ -323,17 +324,30 @@ class _EditBodyState extends ConsumerState<_EditBody> {
                               width: selected ? 1.5 : 1,
                             ),
                           ),
-                          child: Text(
-                            '${cat.emoji}  ${cat.label}',
-                            style: TextStyle(
-                              color: selected
-                                  ? AppColors.primary
-                                  : context.col.textSecondary,
-                              fontSize: 12,
-                              fontWeight: selected
-                                  ? FontWeight.w600
-                                  : FontWeight.normal,
-                            ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                cat.icon,
+                                size: 13,
+                                color: selected
+                                    ? AppColors.primary
+                                    : context.col.textMuted,
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                cat.label,
+                                style: TextStyle(
+                                  color: selected
+                                      ? AppColors.primary
+                                      : context.col.textSecondary,
+                                  fontSize: 12,
+                                  fontWeight: selected
+                                      ? FontWeight.w600
+                                      : FontWeight.normal,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       );
@@ -358,7 +372,8 @@ class _EditBodyState extends ConsumerState<_EditBody> {
               child: Row(
                 children: [
                   _ToggleChip(
-                    label: '🌐  Public',
+                    label: 'Public',
+                    icon: Iconsax.global,
                     subtitle: 'Anyone can discover',
                     selected: _visibility == BucketVisibility.public,
                     onTap: () =>
@@ -366,7 +381,8 @@ class _EditBodyState extends ConsumerState<_EditBody> {
                   ),
                   const SizedBox(width: 10),
                   _ToggleChip(
-                    label: '🔒  Private',
+                    label: 'Private',
+                    icon: Iconsax.lock,
                     subtitle: 'Join code only',
                     selected: _visibility == BucketVisibility.private,
                     onTap: () =>
@@ -403,7 +419,8 @@ class _EditBodyState extends ConsumerState<_EditBody> {
 
             // ── Gamification ──────────────────────────────────────────
             _Section(
-              title: '🎮 Gamification',
+              title: 'Gamification',
+              titleIcon: Iconsax.game,
               child: Column(
                 children: [
                   Row(
@@ -613,21 +630,30 @@ class _EditBodyState extends ConsumerState<_EditBody> {
 
 class _Section extends StatelessWidget {
   final String title;
+  final IconData? titleIcon;
   final Widget child;
-  const _Section({required this.title, required this.child});
+  const _Section({required this.title, required this.child, this.titleIcon});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: TextStyle(
-            color: context.col.textPrimary,
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-          ),
+        Row(
+          children: [
+            if (titleIcon != null) ...[              
+              Icon(titleIcon, size: 15, color: AppColors.accent),
+              const SizedBox(width: 6),
+            ],
+            Text(
+              title,
+              style: TextStyle(
+                color: context.col.textPrimary,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 10),
         child,
@@ -688,6 +714,7 @@ class _AppField extends StatelessWidget {
 
 class _ToggleChip extends StatelessWidget {
   final String label;
+  final IconData? icon;
   final String subtitle;
   final bool selected;
   final VoidCallback onTap;
@@ -697,6 +724,7 @@ class _ToggleChip extends StatelessWidget {
     required this.subtitle,
     required this.selected,
     required this.onTap,
+    this.icon,
   });
 
   @override
@@ -719,6 +747,14 @@ class _ToggleChip extends StatelessWidget {
           ),
           child: Column(
             children: [
+              if (icon != null) ...[                
+                Icon(
+                  icon,
+                  size: 18,
+                  color: selected ? AppColors.primary : context.col.textSecondary,
+                ),
+                const SizedBox(height: 4),
+              ],
               Text(
                 label,
                 style: TextStyle(
