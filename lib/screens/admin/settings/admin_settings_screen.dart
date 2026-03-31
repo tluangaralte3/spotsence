@@ -9,6 +9,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../controllers/admin_controller.dart';
 import '../../../controllers/auth_controller.dart';
 import '../../../models/admin_model.dart';
+import 'admin_banner_settings_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Screen
@@ -163,6 +164,32 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
                     _PermissionsCard(permissions: profile.permissions),
                     const SizedBox(height: 20),
                   ],
+
+                  // ── Content management section ─────────────────────
+                  _SectionHeader('Content'),
+                  const SizedBox(height: 8),
+                  _SettingsCard(
+                    children: [
+                      _SettingsTile(
+                        icon: Icons.image_outlined,
+                        iconColor: AppColors.secondary,
+                        title: 'Banner Management',
+                        subtitle: 'Create, edit and schedule home screen banners',
+                        trailing: Icon(
+                          Icons.chevron_right_rounded,
+                          size: 18,
+                          color: context.col.textMuted,
+                        ),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const AdminBannerSettingsScreen(),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
 
                   // ── Developer section ──────────────────────────────
                   _SectionHeader('Developer'),

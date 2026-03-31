@@ -15,6 +15,7 @@ import 'dashboard/admin_dashboard_screen.dart';
 import 'listings/admin_listings_screen.dart';
 import 'users/admin_users_screen.dart';
 import 'analytics/admin_analytics_screen.dart';
+import 'dares/admin_dare_screen.dart';
 import 'ventures/admin_ventures_screen.dart';
 import 'moderation/admin_moderation_screen.dart';
 import 'banners/admin_banners_screen.dart';
@@ -55,6 +56,11 @@ const _navItems = [
     label: 'Analytics',
     icon: Icons.bar_chart_outlined,
     activeIcon: Icons.bar_chart,
+  ),
+  _AdminNavItem(
+    label: 'Dares',
+    icon: Icons.bolt_outlined,
+    activeIcon: Icons.bolt,
   ),
   _AdminNavItem(
     label: 'Ventures',
@@ -100,6 +106,7 @@ class AdminShell extends ConsumerWidget {
     AdminListingsScreen(),
     AdminUsersScreen(),
     AdminAnalyticsScreen(),
+    AdminDareMonitoringScreen(),
     AdminVenturesScreen(),
     AdminModerationScreen(),
     AdminBannersScreen(),
@@ -273,12 +280,12 @@ class _NarrowLayout extends ConsumerWidget {
                   IconButton(
                     tooltip: 'Settings',
                     icon: Icon(
-                      index == 6 ? Icons.settings : Icons.settings_outlined,
-                      color: index == 6 ? AppColors.primary : col.textSecondary,
+                      index == 8 ? Icons.settings : Icons.settings_outlined,
+                      color: index == 8 ? AppColors.primary : col.textSecondary,
                       size: 20,
                     ),
                     onPressed: () =>
-                        ref.read(adminTabIndexProvider.notifier).set(6),
+                        ref.read(adminTabIndexProvider.notifier).set(8),
                   ),
                   _SignOutButton(),
                 ],

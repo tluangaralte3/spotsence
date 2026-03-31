@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 
@@ -730,6 +729,8 @@ class DareModel {
   final bool requiresProof;
   final List<String> removedUserIds;
   final int likeCount;
+  final bool adminRestricted;
+  final String? adminRestrictReason;
 
   const DareModel({
     required this.id,
@@ -755,6 +756,8 @@ class DareModel {
     this.requiresProof = true,
     this.removedUserIds = const [],
     this.likeCount = 0,
+    this.adminRestricted = false,
+    this.adminRestrictReason,
   });
 
   // ── Derived ────────────────────────────────────────────────────────────
@@ -801,6 +804,8 @@ class DareModel {
     List<String>? tags,
     bool? requiresProof,
     int? likeCount,
+    bool? adminRestricted,
+    Object? adminRestrictReason = _dareSentinel,
   }) => DareModel(
     id: id,
     title: title ?? this.title,
@@ -829,6 +834,10 @@ class DareModel {
     requiresProof: requiresProof ?? this.requiresProof,
     removedUserIds: removedUserIds ?? this.removedUserIds,
     likeCount: likeCount ?? this.likeCount,
+    adminRestricted: adminRestricted ?? this.adminRestricted,
+    adminRestrictReason: adminRestrictReason == _dareSentinel
+        ? this.adminRestrictReason
+        : adminRestrictReason as String?,
   );
 
   // ── Firestore ──────────────────────────────────────────────────────────
@@ -855,6 +864,8 @@ class DareModel {
     'requiresProof': requiresProof,
     'removedUserIds': removedUserIds,
     'likeCount': likeCount,
+    'adminRestricted': adminRestricted,
+    'adminRestrictReason': adminRestrictReason,
     // Denormalized for Firestore queries
     'memberIds':
         members
@@ -918,6 +929,8 @@ class DareModel {
       requiresProof: d['requiresProof'] != false,
       removedUserIds: List<String>.from(d['removedUserIds'] as List? ?? []),
       likeCount: (d['likeCount'] as num?)?.toInt() ?? 0,
+      adminRestricted: d['adminRestricted'] as bool? ?? false,
+      adminRestrictReason: d['adminRestrictReason']?.toString(),
     );
   }
 }

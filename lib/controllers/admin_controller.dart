@@ -6,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/admin_model.dart';
+import '../models/dare_models.dart';
 import '../models/user_model.dart';
 import '../services/admin_service.dart';
 import 'auth_controller.dart';
@@ -305,3 +306,13 @@ class AdminUserNotifier extends Notifier<AdminCrudState> {
 
 final adminUserNotifierProvider =
     NotifierProvider<AdminUserNotifier, AdminCrudState>(AdminUserNotifier.new);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Dare Monitoring Providers (Admin)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Live stream of ALL dares in the system for admin monitoring.
+final adminAllDaresProvider =
+    StreamProvider.autoDispose<List<DareModel>>((ref) {
+  return ref.read(adminServiceProvider).watchAllDares(limit: 300);
+});

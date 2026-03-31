@@ -106,7 +106,7 @@ class _MyDaresView extends ConsumerWidget {
         if (cached.isNotEmpty) return _buildList(context, ref, cached);
         return const Center(child: CircularProgressIndicator());
       },
-      error: (_, __) => _buildList(
+      error: (_, _) => _buildList(
         context,
         ref,
         ref.read(dareControllerProvider).myDares,
@@ -293,7 +293,7 @@ class _DiscoverView extends ConsumerWidget {
       child: ListView.separated(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
         itemCount: discoverDares.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 12),
+        separatorBuilder: (_, _) => const SizedBox(height: 12),
         itemBuilder: (context, i) {
           final dare = discoverDares[i];
           return _DareCard(
@@ -1222,8 +1222,8 @@ class _BannerImage extends StatelessWidget {
       width: w,
       height: height,
       fit: BoxFit.cover,
-      placeholder: (_, __) => _shimmer(w),
-      errorWidget: (_, __, ___) => _placeholder(context, w),
+      placeholder: (_, _) => _shimmer(w),
+      errorWidget: (_, _, _) => _placeholder(context, w),
     );
   }
 
@@ -1277,7 +1277,7 @@ class _AnimatedShimmerState extends State<_AnimatedShimmer>
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: _anim,
-      builder: (_, __) => Container(
+      builder: (_, _) => Container(
         width: widget.width,
         height: widget.height,
         decoration: BoxDecoration(

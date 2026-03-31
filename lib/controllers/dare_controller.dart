@@ -276,10 +276,10 @@ class DareController extends Notifier<DareState> {
         'customCategory': customCategory,
         'visibility': visibility.name,
         'maxParticipants': maxParticipants,
-        if (xpReward != null) 'xpReward': xpReward,
+        'xpReward': ?xpReward,
         if (deadline != null) 'deadline': deadline.toIso8601String(),
-        if (requiresProof != null) 'requiresProof': requiresProof,
-        if (tags != null) 'tags': tags,
+        'requiresProof': ?requiresProof,
+        'tags': ?tags,
       });
       final fresh = await _svc.getById(dareId);
       if (fresh != null) _updateLocal(dareId, (_) => fresh);
@@ -591,6 +591,6 @@ final pendingJoinCountProvider =
   return ref.watch(pendingJoinRequestsProvider(userId)).when(
     data: (list) => list.length,
     loading: () => 0,
-    error: (_, __) => 0,
+    error: (_, _) => 0,
   );
 });

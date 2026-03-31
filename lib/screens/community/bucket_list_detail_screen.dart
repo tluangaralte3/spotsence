@@ -1480,7 +1480,7 @@ class _MemberActionTile extends ConsumerWidget {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          err != null ? err : 'You poked ${member.userName}!',
+          err ?? 'You poked ${member.userName}!',
         ),
         backgroundColor: err != null ? AppColors.error : AppColors.primary,
       ),

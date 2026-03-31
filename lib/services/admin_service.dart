@@ -21,6 +21,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/admin_model.dart';
+import '../models/dare_models.dart';
 import '../models/user_model.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -355,4 +356,71 @@ class AdminService {
 
   Stream<QuerySnapshot> watchVentures({int limit = 100}) =>
       watchCollection('ventures', limit: limit);
+
+  // ── Dare Administration ───────────────────────────────────────────────────
+
+  static const _dares = 'dares';
+
+  /// Live stream of ALL dares in the system, newest first.
+  Stream<List<DareModel>> watchAllDares({int limit = 200}) {
+    return _db
+        .collection(_dares)
+        .orderBy('createdAt', descending: true)
+        .limit(limit)
+        .snapshots()
+        .map((s) => s.docs.map((d) => DareModel.fromFirestore(d)).toList());
+  }
+
+  /// Set (or clear) the admin-restricted flag on a dare.
+  Future<void> restrictDare(
+    String dareId, {
+    required bool restrict,
+    String? reason,
+  }) async {
+    await _db.collection(_dares).doc(dareId).update({
+      'adminRestricted': restrict,
+      'adminRestrictReason': restrict ? (reason ?? 'Restricted by admin') : null,
+    });
+    await logAdminActivity(
+      action: restrict ? 'dareRestricted' : 'dareUnrestricted',
+      targetCollection: _dares,
+      targetId: dareId,
+      detail: reason,
+    );
+  }
+
+  /// Permanently delete a dare and its proofs subcollection.
+  Future<void> deleteDareAsAdmin(String dareId, {String? title}) async {
+    // Delete all proof documents first to avoid orphaned subcollection data.
+    final proofSnap = await _db
+        .collection(_dares)
+        .doc(dareId)
+        .collection('proofs')
+        .get();
+    final batch = _db.batch();
+    for (final doc in proofSnap.docs) {
+      batch.delete(doc.reference);
+    }
+    batch.delete(_db.collection(_dares).doc(dareId));
+    await batch.commit();
+    await logAdminActivity(
+      action: 'dareDeletedByAdmin',
+      targetCollection: _dares,
+      targetId: dareId,
+      detail: title,
+    );
+  }
+
+  /// Suspend or reinstate a dare creator (same as user suspend).
+  Future<void> setDareCreatorStatus(
+    String uid, {
+    required bool isActive,
+  }) async {
+    await setUserActiveStatus(uid, isActive: isActive);
+    await logAdminActivity(
+      action: isActive ? 'dareCreatorActivated' : 'dareCreatorSuspended',
+      targetCollection: _users,
+      targetId: uid,
+    );
+  }
 }

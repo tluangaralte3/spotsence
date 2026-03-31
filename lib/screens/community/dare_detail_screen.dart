@@ -410,8 +410,8 @@ class _DareAppBar extends StatelessWidget {
                 ? CachedNetworkImage(
                     imageUrl: dare.bannerUrl!,
                     fit: BoxFit.cover,
-                    placeholder: (_, __) => Container(color: AppColors.bg),
-                    errorWidget: (_, __, ___) =>
+                    placeholder: (_, _) => Container(color: AppColors.bg),
+                    errorWidget: (_, _, _) =>
                         Container(color: context.col.surfaceElevated),
                   )
                 : Container(
@@ -758,7 +758,7 @@ class _ProofReviewCard extends ConsumerWidget {
 
     return proofsAsync.when(
       loading: () => const SizedBox.shrink(),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
       data: (proofs) {
         final pending = proofs.where(
           (p) => p.status == ProofStatus.pending,
@@ -898,7 +898,7 @@ class _ProofReviewTile extends StatelessWidget {
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: proof.imageUrls.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 6),
+                separatorBuilder: (_, _) => const SizedBox(width: 6),
                 itemBuilder: (_, i) => ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: CachedNetworkImage(
@@ -1091,7 +1091,7 @@ class _ChallengeTileState extends ConsumerState<_ChallengeTile> {
                 height: 150,
                 width: double.infinity,
                 fit: BoxFit.cover,
-                placeholder: (_, __) => Container(
+                placeholder: (_, _) => Container(
                   height: 150,
                   color: context.col.surfaceElevated,
                   child: Center(
@@ -1102,7 +1102,7 @@ class _ChallengeTileState extends ConsumerState<_ChallengeTile> {
                     ),
                   ),
                 ),
-                errorWidget: (_, __, ___) => const SizedBox.shrink(),
+                errorWidget: (_, _, _) => const SizedBox.shrink(),
               ),
             ),
 
@@ -2279,7 +2279,7 @@ class _EditChallengeSheetState extends ConsumerState<_EditChallengeSheet> {
                       ),
                       const SizedBox(height: 6),
                       DropdownButtonFormField<MedalType>(
-                        value: _medal,
+                        initialValue: _medal,
                         dropdownColor: context.col.surface,
                         decoration: InputDecoration(
                           filled: true,
@@ -2334,7 +2334,7 @@ class _EditChallengeSheetState extends ConsumerState<_EditChallengeSheet> {
                 Switch(
                   value: _requiresProof,
                   onChanged: (v) => setState(() => _requiresProof = v),
-                  activeColor: AppColors.primary,
+                  activeThumbColor: AppColors.primary,
                 ),
                 const SizedBox(width: 8),
                 Column(

@@ -492,7 +492,7 @@ class _CreateDareScreenState extends ConsumerState<CreateDareScreen> {
                       ),
                       value: _requiresProof,
                       onChanged: (v) => setState(() => _requiresProof = v),
-                      activeColor: AppColors.primary,
+                      activeThumbColor: AppColors.primary,
                     ),
                   ),
                 ],
@@ -1042,7 +1042,7 @@ class _CollectionListingTabState extends ConsumerState<_CollectionListingTab> {
               return ListView.separated(
                 padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
                 itemCount: filtered.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 10),
+                separatorBuilder: (_, _) => const SizedBox(height: 10),
                 itemBuilder: (_, i) => _ListingCard(
                   item: filtered[i],
                   onTap: () => widget.onSelect(filtered[i]),
@@ -1085,7 +1085,7 @@ class _ListingCard extends StatelessWidget {
                       width: 80,
                       height: 80,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _placeholder(context),
+                      errorBuilder: (_, _, _) => _placeholder(context),
                     )
                   : _placeholder(context),
             ),
@@ -1383,7 +1383,7 @@ class _ListingChallengeSheetState
                                 width: 60,
                                 height: 60,
                                 fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) =>
+                                errorBuilder: (_, _, _) =>
                                     _iconThumb(context),
                               )
                             : _iconThumb(context),
@@ -1998,7 +1998,7 @@ class _CustomChallengeTabState extends ConsumerState<_CustomChallengeTab> {
               ),
               value: _requiresProof,
               onChanged: (v) => setState(() => _requiresProof = v),
-              activeColor: AppColors.primary,
+              activeThumbColor: AppColors.primary,
             ),
           ),
           const SizedBox(height: 24),
