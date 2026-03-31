@@ -420,24 +420,27 @@ class _StatsTab extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
-        // ── My Rooms shortcut ────────────────────────────────────────────
+        // ── Dare Dashboard shortcut ──────────────────────────────────────
         GestureDetector(
-          onTap: () => context.push(AppRoutes.myRooms),
+          onTap: () => context.push(
+            '${AppRoutes.dareDashboard}?uid=${user.id}',
+          ),
           child: Container(
             margin: const EdgeInsets.only(bottom: 12),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  AppColors.accent.withValues(alpha: 0.15),
-                  AppColors.accent.withValues(alpha: 0.05),
+                  AppColors.primary.withValues(alpha: 0.18),
+                  AppColors.primary.withValues(alpha: 0.04),
                 ],
                 begin: Alignment.centerLeft,
                 end: Alignment.centerRight,
               ),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                  color: AppColors.accent.withValues(alpha: 0.3)),
+                color: AppColors.primary.withValues(alpha: 0.35),
+              ),
             ),
             child: Row(
               children: [
@@ -445,11 +448,14 @@ class _StatsTab extends StatelessWidget {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: AppColors.accent.withValues(alpha: 0.15),
+                    color: AppColors.primary.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Iconsax.element_4,
-                      color: AppColors.accent, size: 20),
+                  child: const Icon(
+                    Iconsax.flash,
+                    color: AppColors.primary,
+                    size: 20,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -457,7 +463,7 @@ class _StatsTab extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'My Rooms',
+                        'Dare Dashboard',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
@@ -465,15 +471,20 @@ class _StatsTab extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        'Manage your community challenge rooms',
+                        'Stats, charts & manage dare participants',
                         style: TextStyle(
-                            fontSize: 11, color: context.col.textMuted),
+                          fontSize: 11,
+                          color: context.col.textMuted,
+                        ),
                       ),
                     ],
                   ),
                 ),
-                const Icon(Iconsax.arrow_right_3,
-                    color: AppColors.accent, size: 20),
+                const Icon(
+                  Iconsax.arrow_right_3,
+                  color: AppColors.primary,
+                  size: 20,
+                ),
               ],
             ),
           ),

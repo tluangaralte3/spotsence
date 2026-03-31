@@ -425,6 +425,36 @@ class DareController extends Notifier<DareState> {
     }
   }
 
+  Future<void> suspendMember({
+    required String dareId,
+    required String targetUserId,
+  }) async {
+    try {
+      final fresh = await _svc.suspendMember(
+        dareId: dareId,
+        targetUserId: targetUserId,
+      );
+      if (fresh != null) _updateLocal(dareId, (_) => fresh);
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
+    }
+  }
+
+  Future<void> unsuspendMember({
+    required String dareId,
+    required String targetUserId,
+  }) async {
+    try {
+      final fresh = await _svc.unsuspendMember(
+        dareId: dareId,
+        targetUserId: targetUserId,
+      );
+      if (fresh != null) _updateLocal(dareId, (_) => fresh);
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
+    }
+  }
+
   // ── Like ──────────────────────────────────────────────────────────────
 
   Future<void> toggleLike({
@@ -488,6 +518,12 @@ final dareDetailProvider =
 final myDaresStreamProvider =
     StreamProvider.autoDispose.family<List<DareModel>, String>((ref, userId) {
   return ref.read(firestoreDareServiceProvider).watchMyDares(userId);
+});
+
+/// Live stream of dares the current user has created (for dashboard / management).
+final createdDaresStreamProvider =
+    StreamProvider.autoDispose.family<List<DareModel>, String>((ref, userId) {
+  return ref.read(firestoreDareServiceProvider).watchCreatedDares(userId);
 });
 
 /// Stream proofs for a dare (creator view).

@@ -607,6 +607,48 @@ class FirestoreDareService {
     });
     return getById(dareId);
   }
+
+  /// Sets a member's status to [suspended], preventing them from participating.
+  Future<DareModel?> suspendMember({
+    required String dareId,
+    required String targetUserId,
+  }) async {
+    final docRef = _col.doc(dareId);
+    await _db.runTransaction((tx) async {
+      final snap = await tx.get(docRef);
+      if (!snap.exists) return;
+      final data = snap.data()!;
+      final members = List<Map<String, dynamic>>.from(data['members'] ?? []);
+      final idx = members.indexWhere((m) => m['userId'] == targetUserId);
+      if (idx >= 0) {
+        members[idx] = Map<String, dynamic>.from(members[idx])
+          ..['status'] = 'suspended';
+      }
+      tx.update(docRef, {'members': members});
+    });
+    return getById(dareId);
+  }
+
+  /// Reinstates a previously suspended member back to [approved].
+  Future<DareModel?> unsuspendMember({
+    required String dareId,
+    required String targetUserId,
+  }) async {
+    final docRef = _col.doc(dareId);
+    await _db.runTransaction((tx) async {
+      final snap = await tx.get(docRef);
+      if (!snap.exists) return;
+      final data = snap.data()!;
+      final members = List<Map<String, dynamic>>.from(data['members'] ?? []);
+      final idx = members.indexWhere((m) => m['userId'] == targetUserId);
+      if (idx >= 0) {
+        members[idx] = Map<String, dynamic>.from(members[idx])
+          ..['status'] = 'approved';
+      }
+      tx.update(docRef, {'members': members});
+    });
+    return getById(dareId);
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

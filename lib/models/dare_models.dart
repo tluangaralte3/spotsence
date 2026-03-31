@@ -239,7 +239,7 @@ enum DareItemStatus {
 // DareMemberRole + DareMemberStatus
 // ─────────────────────────────────────────────────────────────────────────────
 enum DareMemberRole { creator, participant }
-enum DareMemberStatus { pending, approved, declined }
+enum DareMemberStatus { pending, approved, declined, suspended }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DareMilestone — sub-checkpoint within a challenge

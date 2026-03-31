@@ -41,6 +41,7 @@ import '../../screens/community/dare_proof_screen.dart';
 import '../../screens/community/scratch_card_screen.dart';
 import '../../screens/community/dare_rewards_screen.dart';
 import '../../screens/notifications/dare_notifications_screen.dart';
+import '../../screens/profile/dare_dashboard_screen.dart';
 import '../../models/dare_models.dart';
 import '../../screens/admin/admin_shell.dart';
 import '../../screens/admin/listings/admin_add_listing_screen.dart';
@@ -96,6 +97,7 @@ abstract class AppRoutes {
   static const scratchCard = '/dare-rewards/cards/:cardId';
   static const dareRewards = '/dare-rewards';
   static const notifications = '/notifications';
+  static const dareDashboard = '/profile/dare-dashboard';
 
   static String darePath(String id) => '/community/dares/$id';
   static String editDarePath(String id) => '/community/dares/$id/edit';
@@ -474,6 +476,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.notifications,
         pageBuilder: (_, state) =>
             _slide(state, const DareNotificationsScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.dareDashboard,
+        pageBuilder: (_, state) {
+          final userId = state.uri.queryParameters['uid'] ?? '';
+          return _slide(state, DareDashboardScreen(userId: userId));
+        },
       ),
       GoRoute(
         path: AppRoutes.createDilemma,
