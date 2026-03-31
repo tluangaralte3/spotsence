@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../controllers/auth_controller.dart';
 import '../../core/router/app_router.dart';
 import '../../core/theme/app_theme.dart';
-import 'bucket_lists_tab.dart';
+import 'dare_tab.dart';
 import 'community_map.dart';
 import 'dilemmas_tab.dart';
 
@@ -44,7 +44,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen>
           indicatorSize: TabBarIndicatorSize.label,
           tabs: const [
             Tab(text: 'Feed'),
-            Tab(text: 'Bucket Lists'),
+            Tab(text: 'Dare'),
             Tab(text: 'Dilemmas'),
           ],
         ),
@@ -57,7 +57,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen>
           physics: _tabs.index == 0
               ? const NeverScrollableScrollPhysics()
               : const AlwaysScrollableScrollPhysics(),
-          children: const [CommunityMap(), BucketListsTab(), DilemmasTab()],
+          children: const [CommunityMap(), DareTab(), DilemmasTab()],
         ),
       ),
       floatingActionButton: ListenableBuilder(
@@ -87,7 +87,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen>
                   heroTag: 'create_list',
                   onPressed: () {
                     if (user != null) {
-                      context.push(AppRoutes.createBucketList);
+                      context.push(AppRoutes.createDare);
                     } else {
                       context.go(AppRoutes.login);
                     }

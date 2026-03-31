@@ -34,6 +34,12 @@ import '../../screens/ventures/venture_public_detail_screen.dart';
 import '../../screens/ventures/booking_review_screen.dart';
 import '../../screens/ventures/my_bookings_screen.dart';
 import '../../screens/community/room_management_screen.dart';
+import '../../screens/community/dare_detail_screen.dart';
+import '../../screens/community/dare_create_screens.dart';
+import '../../screens/community/dare_proof_screen.dart';
+import '../../screens/community/scratch_card_screen.dart';
+import '../../screens/community/dare_rewards_screen.dart';
+import '../../models/dare_models.dart';
 import '../../screens/admin/admin_shell.dart';
 import '../../screens/admin/listings/admin_add_listing_screen.dart';
 import '../../screens/admin/listings/admin_venture_form_screen.dart';
@@ -77,6 +83,25 @@ abstract class AppRoutes {
 
   static const myBookings = '/my-bookings';
   static const myRooms = '/community/my-rooms';
+
+  // ── Dare (challenge) routes ──────────────────────────────────────────────
+  static const createDare = '/community/dares/new';
+  static const dareDetail = '/community/dares/:id';
+  static const editDare = '/community/dares/:id/edit';
+  static const addDareChallenge = '/community/dares/:dareId/add-challenge';
+  static const dareProof =
+      '/community/dares/:dareId/challenges/:challengeId/proof';
+  static const scratchCard = '/dare-rewards/cards/:cardId';
+  static const dareRewards = '/dare-rewards';
+
+  static String darePath(String id) => '/community/dares/$id';
+  static String editDarePath(String id) => '/community/dares/$id/edit';
+  static String addDareChallengePath(String dareId) =>
+      '/community/dares/$dareId/add-challenge';
+  static String dareProofPath(String dareId, String challengeId) =>
+      '/community/dares/$dareId/challenges/$challengeId/proof';
+  static String scratchCardPath(String cardId) =>
+      '/dare-rewards/cards/$cardId';
 
   // ── Super Admin ──────────────────────────────────────────────────────────
   static const admin = '/admin';
@@ -384,6 +409,61 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.createPost,
         pageBuilder: (_, state) =>
             _bottomSheet(state, const CreatePostScreen()),
+      ),
+
+      // ── Dare routes ────────────────────────────────────────────────────
+      GoRoute(
+        path: AppRoutes.createDare,
+        pageBuilder: (_, state) =>
+            _bottomSheet(state, const CreateDareScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.dareDetail,
+        pageBuilder: (_, state) => _slide(
+          state,
+          DareDetailScreen(dareId: state.pathParameters['id']!),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.editDare,
+        pageBuilder: (_, state) => _slide(
+          state,
+          // Re-use CreateDareScreen in edit mode — same form but with extra
+          // passed as a DareModel; we keep it simple for now
+          DareDetailScreen(dareId: state.pathParameters['id']!),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.addDareChallenge,
+        pageBuilder: (_, state) => _slide(
+          state,
+          AddDareChallengeScreen(
+            dareId: state.pathParameters['dareId']!,
+          ),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.dareProof,
+        pageBuilder: (_, state) => _slide(
+          state,
+          DareProofScreen(
+            dareId: state.pathParameters['dareId']!,
+            challengeId: state.pathParameters['challengeId']!,
+            challengeTitle: state.uri.queryParameters['title'] ?? 'Challenge',
+          ),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.dareRewards,
+        pageBuilder: (_, state) =>
+            _slide(state, const DareRewardsScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.scratchCard,
+        pageBuilder: (_, state) {
+          final card = state.extra as ScratchCard;
+          return _slide(state, ScratchCardScreen(card: card));
+        },
       ),
       GoRoute(
         path: AppRoutes.createDilemma,

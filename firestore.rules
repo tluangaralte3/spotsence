@@ -331,5 +331,68 @@ service cloud.firestore {
       allow write: if isSuperAdmin();
     }
 
+    // ── Dares (community challenges) ─────────────────────────────────────────
+
+    match /dares/{dareId} {
+      // Public dares readable by all; private only by creator + approved members
+      allow read: if resource == null
+                  || resource.data.visibility == 'public'
+                  || (isAuth() && (
+                       request.auth.uid == resource.data.creatorId
+                       || request.auth.uid in resource.data.memberIds
+                     ));
+
+      // Any authenticated user can create a dare
+      allow create: if isAuth()
+                    && request.resource.data.creatorId == request.auth.uid;
+
+      // Creator can update anything; members can update (likes, join requests)
+      allow update: if isAuth()
+                    && (request.auth.uid == resource.data.creatorId
+                        || request.auth.uid in resource.data.memberIds
+                        || (resource.data.keys().hasAll(['pendingMemberIds'])
+                            && request.auth.uid in resource.data.pendingMemberIds));
+
+      // Only creator can delete
+      allow delete: if isAuth()
+                    && request.auth.uid == resource.data.creatorId;
+
+      // Proof submissions sub-collection
+      match /proofs/{proofId} {
+        // Creator can read all proofs; submitter can read their own
+        allow read: if isAuth()
+                    && (request.auth.uid == get(/databases/$(database)/documents/dares/$(dareId)).data.creatorId
+                        || request.auth.uid == resource.data.userId);
+
+        // Any member or pending member can submit proof
+        allow create: if isAuth()
+                      && request.resource.data.userId == request.auth.uid;
+
+        // Creator can update (approve/reject); submitter cannot alter after submit
+        allow update: if isAuth()
+                      && request.auth.uid == get(/databases/$(database)/documents/dares/$(dareId)).data.creatorId;
+
+        allow delete: if false;
+      }
+    }
+
+    // ── Dare scratch cards (per-user sub-collection) ──────────────────────────
+
+    match /users/{userId}/scratchCards/{cardId} {
+      allow read: if isUser(userId);
+      allow create: if isAuth();          // created by cloud logic / controller on proof approval
+      allow update: if isUser(userId);    // user scratches their own card
+      allow delete: if false;
+    }
+
+    // ── Dare medals (per-user sub-collection) ────────────────────────────────
+
+    match /users/{userId}/daremedals/{medalId} {
+      allow read: if isUser(userId);
+      allow create: if isAuth();          // awarded on proof approval
+      allow update: if false;
+      allow delete: if false;
+    }
+
   }
 }

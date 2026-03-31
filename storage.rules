@@ -52,6 +52,34 @@ service firebase.storage {
       allow write: if isAuth();
     }
 
+    // ── Dare banners ─────────────────────────────────────────────────────────
+    match /dare_banners/{fileName} {
+      allow read: if true;
+      allow create: if isAuth()
+                    && request.resource.size < 10 * 1024 * 1024
+                    && request.resource.contentType.matches('image/.*');
+      allow delete: if isAuth()
+                    && fileName.matches('dare_' + request.auth.uid + '_.*');
+    }
+
+    // ── Dare proof submissions ────────────────────────────────────────────────
+    match /dare_proofs/{fileName} {
+      allow read: if isAuth();
+      allow create: if isAuth()
+                    && request.resource.size < 15 * 1024 * 1024
+                    && request.resource.contentType.matches('image/.*');
+    }
+
+    // ── Dare challenge sample photos ─────────────────────────────────────────
+    match /challenge_samples/{fileName} {
+      allow read: if true;
+      allow create: if isAuth()
+                    && request.resource.size < 10 * 1024 * 1024
+                    && request.resource.contentType.matches('image/.*');
+      allow delete: if isAuth()
+                    && fileName.matches('challenge_' + request.auth.uid + '_.*');
+    }
+
     // ── Home banner images (admin upload) ────────────────────────────────────
     match /banners/{fileName} {
       allow read: if true;
