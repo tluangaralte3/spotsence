@@ -48,6 +48,14 @@ class _DareTabState extends ConsumerState<DareTab>
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(currentUserProvider);
+
+    // If the user signs in after the tab mounts, kick off the load
+    ref.listen(currentUserProvider, (prev, next) {
+      if (next != null && prev?.id != next.id) {
+        ref.read(dareControllerProvider.notifier).loadMyDares(next.id);
+      }
+    });
+
     return Column(
       children: [
         // Inner tab bar
@@ -84,16 +92,34 @@ class _MyDaresView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(dareControllerProvider);
-
     if (userId == null) {
       return _UnauthCta(onLogin: () => context.go(AppRoutes.login));
     }
-    if (state.isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
 
-    final myDares = state.myDares;
+    // Use live stream so My Dares updates in real-time (pending → approved)
+    final async = ref.watch(myDaresStreamProvider(userId!));
+
+    return async.when(
+      loading: () {
+        // Show cached list while stream connects to avoid blank flash
+        final cached = ref.read(dareControllerProvider).myDares;
+        if (cached.isNotEmpty) return _buildList(context, ref, cached);
+        return const Center(child: CircularProgressIndicator());
+      },
+      error: (_, __) => _buildList(
+        context,
+        ref,
+        ref.read(dareControllerProvider).myDares,
+      ),
+      data: (myDares) => _buildList(context, ref, myDares),
+    );
+  }
+
+  Widget _buildList(
+    BuildContext context,
+    WidgetRef ref,
+    List<DareModel> myDares,
+  ) {
     final hostedCount = myDares.where((d) => d.isCreator(userId!)).length;
 
     if (myDares.isEmpty) {
@@ -104,6 +130,7 @@ class _MyDaresView extends ConsumerWidget {
     }
 
     return RefreshIndicator(
+      // Pull-to-refresh reloads the controller cache too
       onRefresh: () =>
           ref.read(dareControllerProvider.notifier).loadMyDares(userId!),
       child: ListView.builder(
@@ -112,10 +139,13 @@ class _MyDaresView extends ConsumerWidget {
         itemBuilder: (context, i) {
           if (i == 0) return _DareCapBanner(hostedCount: hostedCount);
           final dare = myDares[i - 1];
-          return _DareCard(
-            dare: dare,
-            currentUserId: userId!,
-            onTap: () => context.push(AppRoutes.darePath(dare.id)),
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: _DareCard(
+              dare: dare,
+              currentUserId: userId!,
+              onTap: () => context.push(AppRoutes.darePath(dare.id)),
+            ),
           );
         },
       ),
@@ -199,43 +229,57 @@ class _DiscoverView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(dareControllerProvider);
     final user = ref.watch(currentUserProvider);
+    final userId = user?.id ?? '';
 
-    if (state.isLoadingPublic) {
+    // Discover shows ALL public dares (including own)
+    final discoverDares = state.publicDares;
+
+    // Show full-page spinner only on initial load (list is empty)
+    if (state.isLoadingPublic && discoverDares.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (state.publicDares.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+    if (discoverDares.isEmpty) {
+      return RefreshIndicator(
+        onRefresh: () =>
+            ref.read(dareControllerProvider.notifier).loadPublicDares(),
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 60, 16, 100),
           children: [
-            Icon(
-              Iconsax.flag,
-              size: 64,
-              color: context.col.textMuted,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'No public dares yet',
-              style: TextStyle(
-                color: context.col.textSecondary,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Be the first to create a dare!',
-              style: TextStyle(color: context.col.textMuted, fontSize: 14),
-            ),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: () => context.push(AppRoutes.createDare),
-              icon: const Icon(Iconsax.add),
-              label: const Text('Create Dare'),
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: AppColors.bg,
+            Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Iconsax.flag,
+                    size: 64,
+                    color: context.col.textMuted,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No public dares yet',
+                    style: TextStyle(
+                      color: context.col.textSecondary,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Be the first to create a dare!',
+                    style: TextStyle(color: context.col.textMuted, fontSize: 14),
+                  ),
+                  const SizedBox(height: 24),
+                  FilledButton.icon(
+                    onPressed: () => context.push(AppRoutes.createDare),
+                    icon: const Icon(Iconsax.add),
+                    label: const Text('Create Dare'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: AppColors.bg,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -243,18 +287,22 @@ class _DiscoverView extends ConsumerWidget {
       );
     }
 
-    return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
-      itemCount: state.publicDares.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
-      itemBuilder: (context, i) {
-        final dare = state.publicDares[i];
-        return _DareCard(
-          dare: dare,
-          currentUserId: user?.id ?? '',
-          onTap: () => context.push(AppRoutes.darePath(dare.id)),
-        );
-      },
+    return RefreshIndicator(
+      onRefresh: () =>
+          ref.read(dareControllerProvider.notifier).loadPublicDares(),
+      child: ListView.separated(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
+        itemCount: discoverDares.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 12),
+        itemBuilder: (context, i) {
+          final dare = discoverDares[i];
+          return _DareCard(
+            dare: dare,
+            currentUserId: userId,
+            onTap: () => context.push(AppRoutes.darePath(dare.id)),
+          );
+        },
+      ),
     );
   }
 }
@@ -277,23 +325,35 @@ class _DareCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isCreator = dare.isCreator(currentUserId);
+    final isPending = !isCreator && dare.hasPendingRequest(currentUserId);
+    final isActive = isCreator || dare.isParticipant(currentUserId);
     final pendingCount = dare.joinRequests.length;
     final categoryColor = dare.category.color;
 
     return GestureDetector(
       onTap: onTap,
-      child: Container(
+      child: Opacity(
+        opacity: isPending ? 0.72 : 1.0,
+        child: Container(
         decoration: BoxDecoration(
-          color: context.col.surface,
+          color: isPending ? context.col.surfaceElevated : context.col.surface,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: context.col.border),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withAlpha(30),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          border: Border.all(
+            color: isPending
+                ? AppColors.warning.withAlpha(80)
+                : isActive
+                    ? context.col.border
+                    : context.col.border,
+          ),
+          boxShadow: isPending
+              ? []
+              : [
+                  BoxShadow(
+                    color: Colors.black.withAlpha(30),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -378,6 +438,41 @@ class _DareCard extends StatelessWidget {
                       ),
                     ),
                   ),
+                // My join-request pending badge (non-creator)
+                if (!isCreator && dare.hasPendingRequest(currentUserId))
+                  Positioned(
+                    bottom: 10,
+                    right: 12,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.warning.withAlpha(220),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Iconsax.clock,
+                            size: 11,
+                            color: Colors.black,
+                          ),
+                          SizedBox(width: 4),
+                          Text(
+                            'Request Pending',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
               ],
             ),
 
@@ -416,6 +511,47 @@ class _DareCard extends StatelessWidget {
                             'Host',
                             style: TextStyle(
                               color: AppColors.accent,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        )
+                      else if (dare.isParticipant(currentUserId))
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.success.withAlpha(30),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Text(
+                            'Active',
+                            style: TextStyle(
+                              color: AppColors.success,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        )
+                      else if (isPending)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.warning.withAlpha(25),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: AppColors.warning.withAlpha(80),
+                            ),
+                          ),
+                          child: const Text(
+                            'Not Active Yet',
+                            style: TextStyle(
+                              color: AppColors.warning,
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
                             ),
@@ -525,12 +661,50 @@ class _DareCard extends StatelessWidget {
                           .toList(),
                     ),
                   ],
+                  // Not Activated footer for pending members
+                  if (isPending) ...[
+                    const SizedBox(height: 10),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 7,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.warning.withAlpha(15),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: AppColors.warning.withAlpha(50),
+                        ),
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Iconsax.clock,
+                            size: 12,
+                            color: AppColors.warning,
+                          ),
+                          SizedBox(width: 6),
+                          Text(
+                            'Awaiting creator approval to activate',
+                            style: TextStyle(
+                              color: AppColors.warning,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
           ],
         ),
       ),
+    ),  // closes Opacity
     );
   }
 

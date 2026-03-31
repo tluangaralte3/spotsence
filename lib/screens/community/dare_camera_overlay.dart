@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../core/theme/app_theme.dart';
@@ -16,11 +17,17 @@ import '../../core/theme/app_theme.dart';
 class DareCameraOverlay extends StatefulWidget {
   final String challengeTitle;
   final String spotName;
+  /// Optional medal label stamped on the photo, e.g. "Bronze Medal"
+  final String? medalLabel;
+  /// Color for the medal badge in the stamp
+  final Color? medalColor;
 
   const DareCameraOverlay({
     super.key,
     required this.challengeTitle,
     required this.spotName,
+    this.medalLabel,
+    this.medalColor,
   });
 
   @override
@@ -31,6 +38,8 @@ class _DareCameraOverlayState extends State<DareCameraOverlay> {
   File? _captured;
   bool _compositing = false;
   final _repaintKey = GlobalKey();
+  double? _lat;
+  double? _lng;
 
   static const _months = [
     'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -48,7 +57,35 @@ class _DareCameraOverlayState extends State<DareCameraOverlay> {
       maxWidth: 1200,
       imageQuality: 88,
     );
-    if (x != null && mounted) setState(() => _captured = File(x.path));
+    if (x != null && mounted) {
+      setState(() => _captured = File(x.path));
+      _fetchGPS(); // background GPS fetch while user reviews the photo
+    }
+  }
+
+  Future<void> _fetchGPS() async {
+    try {
+      var perm = await Geolocator.checkPermission();
+      if (perm == LocationPermission.denied) {
+        perm = await Geolocator.requestPermission();
+      }
+      if (perm == LocationPermission.denied ||
+          perm == LocationPermission.deniedForever) return;
+      final pos = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.medium,
+          timeLimit: Duration(seconds: 10),
+        ),
+      );
+      if (mounted) {
+        setState(() {
+          _lat = pos.latitude;
+          _lng = pos.longitude;
+        });
+      }
+    } catch (_) {
+      // GPS unavailable — stamp will omit coordinates
+    }
   }
 
   Future<void> _confirmAndComposite() async {
@@ -274,13 +311,67 @@ class _DareCameraOverlayState extends State<DareCameraOverlay> {
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 8),
-                      // Date stamp
-                      Text(
-                        _dateStr,
-                        style: const TextStyle(
-                          color: Colors.white54,
-                          fontSize: 11,
+                      // Medal badge (if provided)
+                      if (widget.medalLabel != null) ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: widget.medalColor ?? AppColors.accent,
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Iconsax.medal_star5,
+                                size: 11,
+                                color: Colors.black,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                widget.medalLabel!,
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
+                        const SizedBox(height: 6),
+                      ],
+                      // GPS coordinates + date row
+                      Row(
+                        children: [
+                          if (_lat != null && _lng != null) ...[
+                            const Icon(
+                              Iconsax.location,
+                              size: 10,
+                              color: Colors.white38,
+                            ),
+                            const SizedBox(width: 3),
+                            Text(
+                              '${_lat!.toStringAsFixed(5)}, ${_lng!.toStringAsFixed(5)}',
+                              style: const TextStyle(
+                                color: Colors.white54,
+                                fontSize: 10,
+                                fontFamily: 'monospace',
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                          ],
+                          Text(
+                            _dateStr,
+                            style: const TextStyle(
+                              color: Colors.white54,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),

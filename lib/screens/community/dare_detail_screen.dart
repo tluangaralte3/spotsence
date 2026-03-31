@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,6 +10,7 @@ import '../../controllers/dare_controller.dart';
 import '../../core/router/app_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/dare_models.dart';
+import 'dare_camera_overlay.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DareDetailScreen — live-streaming dare detail view
@@ -282,7 +284,6 @@ class _DareDetailBody extends ConsumerWidget {
                       currentUserId: currentUserId,
                       isMember: _isMember,
                       isCreator: _isCreator,
-                      ref: ref,
                     ),
                   );
                 },
@@ -981,13 +982,12 @@ class _ProofReviewTile extends StatelessWidget {
 // _ChallengeTile
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _ChallengeTile extends ConsumerWidget {
+class _ChallengeTile extends ConsumerStatefulWidget {
   final DareChallenge challenge;
   final DareModel dare;
   final String currentUserId;
   final bool isMember;
   final bool isCreator;
-  final WidgetRef ref;
 
   const _ChallengeTile({
     required this.challenge,
@@ -995,17 +995,71 @@ class _ChallengeTile extends ConsumerWidget {
     required this.currentUserId,
     required this.isMember,
     required this.isCreator,
-    required this.ref,
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef widgetRef) {
+  ConsumerState<_ChallengeTile> createState() => _ChallengeTileState();
+}
+
+class _ChallengeTileState extends ConsumerState<_ChallengeTile> {
+  // ── Open DareCameraOverlay then navigate to proof screen with the image ──
+  Future<void> _openCameraAndSubmit() async {
+    final spotName =
+        widget.challenge.listingLocation ?? widget.challenge.title;
+    final captured = await Navigator.of(
+      context,
+      rootNavigator: true,
+    ).push<File?>(
+      MaterialPageRoute<File?>(
+        fullscreenDialog: true,
+        builder: (_) => DareCameraOverlay(
+          challengeTitle: widget.challenge.title,
+          spotName: spotName,
+          medalLabel: '${widget.challenge.medalType.label} Medal',
+          medalColor: widget.challenge.medalType.color,
+        ),
+      ),
+    );
+    if (captured != null && mounted) {
+      final path =
+          '${AppRoutes.dareProofPath(widget.dare.id, widget.challenge.id)}'
+          '?title=${Uri.encodeComponent(widget.challenge.title)}';
+      context.push(path, extra: <File>[captured]);
+    }
+  }
+
+  // ── Open gallery-based proof screen ──────────────────────────────────────
+  void _openProofScreen() {
+    final path =
+        '${AppRoutes.dareProofPath(widget.dare.id, widget.challenge.id)}'
+        '?title=${Uri.encodeComponent(widget.challenge.title)}';
+    context.push(path);
+  }
+
+  // ── Show edit challenge sheet (creator only) ──────────────────────────────
+  void _showEditSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: context.col.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => _EditChallengeSheet(
+        challenge: widget.challenge,
+        dareId: widget.dare.id,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     // Check my proof status for this challenge
-    final myProofsAsync = widgetRef.watch(
-      myDareProofsProvider('${dare.id}|$currentUserId'),
+    final myProofsAsync = ref.watch(
+      myDareProofsProvider('${widget.dare.id}|${widget.currentUserId}'),
     );
     final myProofForChallenge = myProofsAsync.value
-        ?.where((p) => p.challengeId == challenge.id)
+        ?.where((p) => p.challengeId == widget.challenge.id)
         .firstOrNull;
 
     final proofStatus = myProofForChallenge?.status;
@@ -1025,15 +1079,15 @@ class _ChallengeTile extends ConsumerWidget {
       child: Column(
         children: [
           // Listing image header — shown for appListing challenges that have one
-          if (challenge.type == DareChallengeType.appListing &&
-              challenge.imageUrl != null &&
-              challenge.imageUrl!.isNotEmpty)
+          if (widget.challenge.type == DareChallengeType.appListing &&
+              widget.challenge.imageUrl != null &&
+              widget.challenge.imageUrl!.isNotEmpty)
             ClipRRect(
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(15),
               ),
               child: CachedNetworkImage(
-                imageUrl: challenge.imageUrl!,
+                imageUrl: widget.challenge.imageUrl!,
                 height: 150,
                 width: double.infinity,
                 fit: BoxFit.cover,
@@ -1042,9 +1096,9 @@ class _ChallengeTile extends ConsumerWidget {
                   color: context.col.surfaceElevated,
                   child: Center(
                     child: Icon(
-                      challenge.category.icon,
+                      widget.challenge.category.icon,
                       size: 36,
-                      color: challenge.category.color.withAlpha(80),
+                      color: widget.challenge.category.color.withAlpha(80),
                     ),
                   ),
                 ),
@@ -1063,12 +1117,12 @@ class _ChallengeTile extends ConsumerWidget {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: challenge.category.color.withAlpha(30),
+                    color: widget.challenge.category.color.withAlpha(30),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
-                    challenge.category.icon,
-                    color: challenge.category.color,
+                    widget.challenge.category.icon,
+                    color: widget.challenge.category.color,
                     size: 22,
                   ),
                 ),
@@ -1081,7 +1135,7 @@ class _ChallengeTile extends ConsumerWidget {
                         children: [
                           Expanded(
                             child: Text(
-                              challenge.title,
+                              widget.challenge.title,
                               style: TextStyle(
                                 color: context.col.textPrimary,
                                 fontWeight: FontWeight.w700,
@@ -1096,17 +1150,19 @@ class _ChallengeTile extends ConsumerWidget {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: challenge.type == DareChallengeType.appListing
+                              color: widget.challenge.type ==
+                                      DareChallengeType.appListing
                                   ? AppColors.info.withAlpha(30)
                                   : AppColors.primary.withAlpha(30),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
-                              challenge.type == DareChallengeType.appListing
+                              widget.challenge.type ==
+                                      DareChallengeType.appListing
                                   ? 'In-App'
                                   : 'Custom',
                               style: TextStyle(
-                                color: challenge.type ==
+                                color: widget.challenge.type ==
                                         DareChallengeType.appListing
                                     ? AppColors.info
                                     : AppColors.primary,
@@ -1115,12 +1171,27 @@ class _ChallengeTile extends ConsumerWidget {
                               ),
                             ),
                           ),
+                          // Edit button for creator
+                          if (widget.isCreator) ...[
+                            const SizedBox(width: 4),
+                            GestureDetector(
+                              onTap: _showEditSheet,
+                              child: Padding(
+                                padding: const EdgeInsets.all(4),
+                                child: Icon(
+                                  Iconsax.edit,
+                                  size: 15,
+                                  color: context.col.textMuted,
+                                ),
+                              ),
+                            ),
+                          ],
                         ],
                       ),
-                      if (challenge.description != null) ...[
+                      if (widget.challenge.description != null) ...[
                         const SizedBox(height: 4),
                         Text(
-                          challenge.description!,
+                          widget.challenge.description!,
                           style: TextStyle(
                             color: context.col.textSecondary,
                             fontSize: 13,
@@ -1135,19 +1206,19 @@ class _ChallengeTile extends ConsumerWidget {
                         children: [
                           _RewardBadge(
                             icon: Iconsax.cup,
-                            label: '${challenge.xpReward} XP',
+                            label: '${widget.challenge.xpReward} XP',
                             color: AppColors.accent,
                           ),
                           const SizedBox(width: 6),
                           _RewardBadge(
-                            icon: challenge.medalType.icon,
-                            label: challenge.medalType.label,
-                            color: challenge.medalType.color,
+                            icon: widget.challenge.medalType.icon,
+                            label: widget.challenge.medalType.label,
+                            color: widget.challenge.medalType.color,
                           ),
-                          if (challenge.requiresProof) ...[
+                          if (widget.challenge.requiresProof) ...[
                             const SizedBox(width: 6),
                             _RewardBadge(
-                              icon: Iconsax.image,
+                              icon: Iconsax.camera,
                               label: 'Proof req.',
                               color: AppColors.info,
                             ),
@@ -1162,7 +1233,7 @@ class _ChallengeTile extends ConsumerWidget {
           ),
 
           // Proof status for current member
-          if ((isMember || isCreator) && proofStatus != null)
+          if ((widget.isMember || widget.isCreator) && proofStatus != null)
             Container(
               margin: const EdgeInsets.fromLTRB(14, 0, 14, 14),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -1190,54 +1261,125 @@ class _ChallengeTile extends ConsumerWidget {
                             : AppColors.error,
                   ),
                   const SizedBox(width: 6),
-                  Text(
-                    isCompleted
-                        ? 'Completed — reward earned!'
-                        : isPending
-                            ? 'Proof submitted — awaiting review'
-                            : 'Proof rejected — please resubmit',
-                    style: TextStyle(
-                      color: isCompleted
-                          ? AppColors.success
+                  Expanded(
+                    child: Text(
+                      isCompleted
+                          ? 'Milestone unlocked — reward earned!'
                           : isPending
-                              ? AppColors.warning
-                              : AppColors.error,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
+                              ? 'Proof submitted — awaiting host review'
+                              : 'Proof rejected — please resubmit',
+                      style: TextStyle(
+                        color: isCompleted
+                            ? AppColors.success
+                            : isPending
+                                ? AppColors.warning
+                                : AppColors.error,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
 
-          // Submit proof button
-          if (isMember && !isCreator && !isCompleted && !isPending) ...[
+          // Camera + gallery proof buttons (member, not yet completed/pending)
+          if (widget.isMember && !widget.isCreator && !isCompleted && !isPending) ...[
             Padding(
               padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
-              child: SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () => context.push(
-                    AppRoutes.dareProofPath(dare.id, challenge.id),
-                  ),
-                  icon: const Icon(Iconsax.image, size: 16),
-                  label: const Text('Submit Proof'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.primary,
-                    side: const BorderSide(color: AppColors.primary),
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+              child: Row(
+                children: [
+                  // Primary: camera with milestone overlay stamp
+                  Expanded(
+                    child: FilledButton.icon(
+                      onPressed: _openCameraAndSubmit,
+                      icon: const Icon(Iconsax.camera, size: 16),
+                      label: const Text('Capture Proof'),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.black,
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        textStyle: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                  const SizedBox(width: 8),
+                  // Secondary: open gallery / add note
+                  OutlinedButton(
+                    onPressed: _openProofScreen,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.primary,
+                      side: const BorderSide(color: AppColors.primary),
+                      minimumSize: const Size(46, 44),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 10,
+                        horizontal: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: const Icon(Iconsax.gallery, size: 16),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
+          // Rejected: allow resubmit
+          if (widget.isMember &&
+              !widget.isCreator &&
+              proofStatus == ProofStatus.rejected) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: FilledButton.icon(
+                      onPressed: _openCameraAndSubmit,
+                      icon: const Icon(Iconsax.camera, size: 16),
+                      label: const Text('Resubmit Proof'),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.error,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  OutlinedButton(
+                    onPressed: _openProofScreen,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.error,
+                      side: const BorderSide(color: AppColors.error),
+                      minimumSize: const Size(46, 44),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 10,
+                        horizontal: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: const Icon(Iconsax.gallery, size: 16),
+                  ),
+                ],
               ),
             ),
           ],
 
           // Custom instructions
-          if (challenge.type == DareChallengeType.custom &&
-              challenge.customInstructions != null) ...[
+          if (widget.challenge.type == DareChallengeType.custom &&
+              widget.challenge.customInstructions != null) ...[
             Container(
               margin: const EdgeInsets.fromLTRB(14, 0, 14, 14),
               padding: const EdgeInsets.all(10),
@@ -1256,7 +1398,7 @@ class _ChallengeTile extends ConsumerWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      challenge.customInstructions!,
+                      widget.challenge.customInstructions!,
                       style: TextStyle(
                         color: context.col.textSecondary,
                         fontSize: 12,
@@ -1270,8 +1412,8 @@ class _ChallengeTile extends ConsumerWidget {
           ],
 
           // App listing location
-          if (challenge.type == DareChallengeType.appListing &&
-              challenge.listingLocation != null) ...[
+          if (widget.challenge.type == DareChallengeType.appListing &&
+              widget.challenge.listingLocation != null) ...[
             Container(
               margin: const EdgeInsets.fromLTRB(14, 0, 14, 14),
               child: Row(
@@ -1283,7 +1425,7 @@ class _ChallengeTile extends ConsumerWidget {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    challenge.listingLocation!,
+                    widget.challenge.listingLocation!,
                     style: TextStyle(
                       color: context.col.textSecondary,
                       fontSize: 12,
@@ -1688,16 +1830,21 @@ class _ActionButton extends StatelessWidget {
           ),
           FilledButton(
             onPressed: () {
+              // Pop the dialog first so its exit animation runs cleanly.
               Navigator.pop(context);
               final user = ref.read(currentUserProvider);
               if (user == null) return;
-              ref.read(dareControllerProvider.notifier).requestJoin(
-                dareId: dare.id,
-                userId: user.id,
-                userName: user.displayName,
-                userPhoto: user.photoURL,
-                isPublic: isPublic,
-              );
+              // Defer Firestore write to the next frame so the dialog dismiss
+              // animation completes before any stream-driven rebuilds fire.
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                ref.read(dareControllerProvider.notifier).requestJoin(
+                  dareId: dare.id,
+                  userId: user.id,
+                  userName: user.displayName,
+                  userPhoto: user.photoURL,
+                  isPublic: isPublic,
+                );
+              });
             },
             style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
             child: Text(isPublic ? 'Join' : 'Request'),
@@ -1875,6 +2022,378 @@ class _DeadlinePill extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// _EditChallengeSheet — creator edits an individual challenge / milestone
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _EditChallengeSheet extends ConsumerStatefulWidget {
+  final DareChallenge challenge;
+  final String dareId;
+
+  const _EditChallengeSheet({
+    required this.challenge,
+    required this.dareId,
+  });
+
+  @override
+  ConsumerState<_EditChallengeSheet> createState() =>
+      _EditChallengeSheetState();
+}
+
+class _EditChallengeSheetState extends ConsumerState<_EditChallengeSheet> {
+  late final TextEditingController _titleCtrl;
+  late final TextEditingController _descCtrl;
+  late final TextEditingController _xpCtrl;
+  late MedalType _medal;
+  bool _requiresProof = true;
+  bool _saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _titleCtrl = TextEditingController(text: widget.challenge.title);
+    _descCtrl = TextEditingController(
+      text: widget.challenge.description ?? '',
+    );
+    _xpCtrl = TextEditingController(
+      text: widget.challenge.xpReward.toString(),
+    );
+    _medal = widget.challenge.medalType;
+    _requiresProof = widget.challenge.requiresProof;
+  }
+
+  @override
+  void dispose() {
+    _titleCtrl.dispose();
+    _descCtrl.dispose();
+    _xpCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    final title = _titleCtrl.text.trim();
+    if (title.isEmpty) return;
+    final xp = int.tryParse(_xpCtrl.text.trim()) ?? widget.challenge.xpReward;
+
+    setState(() => _saving = true);
+    try {
+      final updated = DareChallenge(
+        id: widget.challenge.id,
+        title: title,
+        description: _descCtrl.text.trim().isNotEmpty
+            ? _descCtrl.text.trim()
+            : null,
+        imageUrl: widget.challenge.imageUrl,
+        category: widget.challenge.category,
+        type: widget.challenge.type,
+        listingId: widget.challenge.listingId,
+        listingCollection: widget.challenge.listingCollection,
+        listingLocation: widget.challenge.listingLocation,
+        customInstructions: widget.challenge.customInstructions,
+        xpReward: xp.clamp(10, 10000),
+        medalType: _medal,
+        order: widget.challenge.order,
+        requiresProof: _requiresProof,
+        milestones: widget.challenge.milestones,
+      );
+      await ref
+          .read(dareControllerProvider.notifier)
+          .updateChallenge(widget.dareId, updated);
+      if (mounted) Navigator.of(context).pop();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to save: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 36),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: context.col.border,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            // Header
+            Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: widget.challenge.category.color.withAlpha(30),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    widget.challenge.category.icon,
+                    color: widget.challenge.category.color,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Edit Challenge',
+                    style: TextStyle(
+                      color: context.col.textPrimary,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 18,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+
+            // Title
+            Text(
+              'Challenge Title',
+              style: TextStyle(
+                color: context.col.textMuted,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 6),
+            TextField(
+              controller: _titleCtrl,
+              style: TextStyle(color: context.col.textPrimary),
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: context.col.surfaceElevated,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                hintText: 'Challenge title',
+                hintStyle: TextStyle(color: context.col.textMuted),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Description
+            Text(
+              'Description / Instructions',
+              style: TextStyle(
+                color: context.col.textMuted,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 6),
+            TextField(
+              controller: _descCtrl,
+              style: TextStyle(color: context.col.textPrimary),
+              maxLines: 3,
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: context.col.surfaceElevated,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                hintText: 'What must the challenger do?',
+                hintStyle: TextStyle(color: context.col.textMuted),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // XP + Medal row
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'XP Reward',
+                        style: TextStyle(
+                          color: context.col.textMuted,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      TextField(
+                        controller: _xpCtrl,
+                        style: TextStyle(color: context.col.textPrimary),
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: context.col.surfaceElevated,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          prefixIcon: const Icon(
+                            Iconsax.cup,
+                            size: 16,
+                            color: AppColors.accent,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Medal',
+                        style: TextStyle(
+                          color: context.col.textMuted,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      DropdownButtonFormField<MedalType>(
+                        value: _medal,
+                        dropdownColor: context.col.surface,
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: context.col.surfaceElevated,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 14,
+                          ),
+                        ),
+                        items: MedalType.values
+                            .map(
+                              (m) => DropdownMenuItem(
+                                value: m,
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      m.icon,
+                                      size: 14,
+                                      color: m.color,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      m.label,
+                                      style: TextStyle(
+                                        color: context.col.textPrimary,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (v) {
+                          if (v != null) setState(() => _medal = v);
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // Requires proof toggle
+            Row(
+              children: [
+                Switch(
+                  value: _requiresProof,
+                  onChanged: (v) => setState(() => _requiresProof = v),
+                  activeColor: AppColors.primary,
+                ),
+                const SizedBox(width: 8),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Requires Photo Proof',
+                      style: TextStyle(
+                        color: context.col.textPrimary,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
+                    ),
+                    Text(
+                      'Challenger must upload a stamped photo',
+                      style: TextStyle(
+                        color: context.col.textMuted,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+
+            // Save button
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: _saving ? null : _save,
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                child: _saving
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.black,
+                        ),
+                      )
+                    : const Text(
+                        'Save Changes',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                        ),
+                      ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

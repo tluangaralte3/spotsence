@@ -19,12 +19,15 @@ class DareProofScreen extends ConsumerStatefulWidget {
   final String dareId;
   final String challengeId;
   final String challengeTitle;
+  /// Pre-captured images (e.g. from DareCameraOverlay on the challenge card)
+  final List<File>? initialImages;
 
   const DareProofScreen({
     super.key,
     required this.dareId,
     required this.challengeId,
     required this.challengeTitle,
+    this.initialImages,
   });
 
   @override
@@ -42,6 +45,14 @@ class _DareProofScreenState extends ConsumerState<DareProofScreen> {
   double? _lng;
   String? _locationName;
   bool _submitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialImages != null) {
+      _images.addAll(widget.initialImages!);
+    }
+  }
 
   @override
   void dispose() {

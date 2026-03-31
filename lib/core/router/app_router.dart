@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -39,6 +40,7 @@ import '../../screens/community/dare_create_screens.dart';
 import '../../screens/community/dare_proof_screen.dart';
 import '../../screens/community/scratch_card_screen.dart';
 import '../../screens/community/dare_rewards_screen.dart';
+import '../../screens/notifications/dare_notifications_screen.dart';
 import '../../models/dare_models.dart';
 import '../../screens/admin/admin_shell.dart';
 import '../../screens/admin/listings/admin_add_listing_screen.dart';
@@ -93,6 +95,7 @@ abstract class AppRoutes {
       '/community/dares/:dareId/challenges/:challengeId/proof';
   static const scratchCard = '/dare-rewards/cards/:cardId';
   static const dareRewards = '/dare-rewards';
+  static const notifications = '/notifications';
 
   static String darePath(String id) => '/community/dares/$id';
   static String editDarePath(String id) => '/community/dares/$id/edit';
@@ -450,6 +453,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             dareId: state.pathParameters['dareId']!,
             challengeId: state.pathParameters['challengeId']!,
             challengeTitle: state.uri.queryParameters['title'] ?? 'Challenge',
+            initialImages:
+                state.extra is List<File> ? state.extra as List<File> : null,
           ),
         ),
       ),
@@ -464,6 +469,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           final card = state.extra as ScratchCard;
           return _slide(state, ScratchCardScreen(card: card));
         },
+      ),
+      GoRoute(
+        path: AppRoutes.notifications,
+        pageBuilder: (_, state) =>
+            _slide(state, const DareNotificationsScreen()),
       ),
       GoRoute(
         path: AppRoutes.createDilemma,

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
@@ -55,21 +56,20 @@ class FirestoreDareService {
   Future<List<DareModel>> getMyDares(String userId) async {
     final created = await _col
         .where('creatorId', isEqualTo: userId)
-        .orderBy('createdAt', descending: true)
         .get();
 
     final joined = await _col
         .where('memberIds', arrayContains: userId)
-        .orderBy('createdAt', descending: true)
+        .get();
+
+    final pending = await _col
+        .where('pendingMemberIds', arrayContains: userId)
         .get();
 
     final ids = <String>{};
     final list = <DareModel>[];
 
-    for (final doc in created.docs) {
-      if (ids.add(doc.id)) list.add(DareModel.fromFirestore(doc));
-    }
-    for (final doc in joined.docs) {
+    for (final doc in [...created.docs, ...joined.docs, ...pending.docs]) {
       if (ids.add(doc.id)) list.add(DareModel.fromFirestore(doc));
     }
     list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
@@ -81,10 +81,11 @@ class FirestoreDareService {
   Future<List<DareModel>> getPublicDares({int limit = 30}) async {
     final snap = await _col
         .where('visibility', isEqualTo: 'public')
-        .orderBy('createdAt', descending: true)
         .limit(limit)
         .get();
-    return snap.docs.map((d) => DareModel.fromFirestore(d)).toList();
+    final list = snap.docs.map((d) => DareModel.fromFirestore(d)).toList()
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return list;
   }
 
   // ── Read — single ─────────────────────────────────────────────────────────
@@ -121,6 +122,69 @@ class FirestoreDareService {
         .map((s) => s.docs.map((d) => DareModel.fromFirestore(d)).toList());
   }
 
+  /// Merges three Firestore streams: dares the user created, is a member of,
+  /// or has a pending join request for. Deduped and sorted in Dart.
+  Stream<List<DareModel>> watchMyDares(String userId) {
+    List<DareModel> created = [];
+    List<DareModel> joined = [];
+    List<DareModel> pending = [];
+    StreamSubscription? s1, s2, s3;
+    late StreamController<List<DareModel>> ctl;
+
+    void emit() {
+      if (ctl.isClosed) return;
+      final ids = <String>{};
+      final list = <DareModel>[];
+      for (final d in [...created, ...joined, ...pending]) {
+        if (ids.add(d.id)) list.add(d);
+      }
+      list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      ctl.add(list);
+    }
+
+    ctl = StreamController<List<DareModel>>(
+      onListen: () {
+        s1 = _col
+            .where('creatorId', isEqualTo: userId)
+            .snapshots()
+            .listen(
+              (s) {
+                created = s.docs.map(DareModel.fromFirestore).toList();
+                emit();
+              },
+              onError: ctl.addError,
+            );
+        s2 = _col
+            .where('memberIds', arrayContains: userId)
+            .snapshots()
+            .listen(
+              (s) {
+                joined = s.docs.map(DareModel.fromFirestore).toList();
+                emit();
+              },
+              onError: ctl.addError,
+            );
+        s3 = _col
+            .where('pendingMemberIds', arrayContains: userId)
+            .snapshots()
+            .listen(
+              (s) {
+                pending = s.docs.map(DareModel.fromFirestore).toList();
+                emit();
+              },
+              onError: ctl.addError,
+            );
+      },
+      onCancel: () {
+        s1?.cancel();
+        s2?.cancel();
+        s3?.cancel();
+      },
+    );
+
+    return ctl.stream;
+  }
+
   // ── Join flow ─────────────────────────────────────────────────────────────
 
   Future<void> requestJoin({
@@ -131,36 +195,32 @@ class FirestoreDareService {
     required bool isPublic,
   }) async {
     final docRef = _col.doc(dareId);
+    final now = DateTime.now().toIso8601String();
     final member = {
       'userId': userId,
       'userName': userName,
       'userPhoto': userPhoto,
       'role': 'participant',
       'status': isPublic ? 'approved' : 'pending',
-      'joinedAt': FieldValue.serverTimestamp(),
-      'approvedAt': isPublic ? FieldValue.serverTimestamp() : null,
+      'joinedAt': now,
+      'approvedAt': isPublic ? now : null,
       'completedChallenges': 0,
       'totalXpEarned': 0,
     };
 
-    await _db.runTransaction((tx) async {
-      final snap = await tx.get(docRef);
-      if (!snap.exists) return;
-      final data = snap.data()!;
-      if (isPublic) {
-        final members = List<Map<String, dynamic>>.from(data['members'] ?? []);
-        final memberIds = List<String>.from(data['memberIds'] ?? []);
-        members.add(member);
-        memberIds.add(userId);
-        tx.update(docRef, {'members': members, 'memberIds': memberIds});
-      } else {
-        final requests = List<Map<String, dynamic>>.from(
-          data['joinRequests'] ?? [],
-        );
-        requests.add(member);
-        tx.update(docRef, {'joinRequests': requests});
-      }
-    });
+    // Use direct writes with arrayUnion — no tx.get() read needed, avoiding
+    // permission issues for users who haven't yet been added to the dare.
+    if (isPublic) {
+      await docRef.update({
+        'members': FieldValue.arrayUnion([member]),
+        'memberIds': FieldValue.arrayUnion([userId]),
+      });
+    } else {
+      await docRef.update({
+        'joinRequests': FieldValue.arrayUnion([member]),
+        'pendingMemberIds': FieldValue.arrayUnion([userId]),
+      });
+    }
   }
 
   Future<DareModel?> approveJoin({
@@ -182,16 +242,20 @@ class FirestoreDareService {
       if (idx < 0) return;
       final approved = Map<String, dynamic>.from(requests[idx]);
       approved['status'] = 'approved';
-      approved['approvedAt'] = FieldValue.serverTimestamp();
+      approved['approvedAt'] = DateTime.now().toIso8601String();
 
       requests.removeAt(idx);
       members.add(approved);
       if (!memberIds.contains(userId)) memberIds.add(userId);
 
+      final pendingIds = List<String>.from(data['pendingMemberIds'] ?? []);
+      pendingIds.remove(userId);
+
       tx.update(docRef, {
         'joinRequests': requests,
         'members': members,
         'memberIds': memberIds,
+        'pendingMemberIds': pendingIds,
       });
     });
     return getById(dareId);
@@ -209,8 +273,13 @@ class FirestoreDareService {
       final requests = List<Map<String, dynamic>>.from(
         data['joinRequests'] ?? [],
       );
+      final pendingIds = List<String>.from(data['pendingMemberIds'] ?? []);
       requests.removeWhere((r) => r['userId'] == userId);
-      tx.update(docRef, {'joinRequests': requests});
+      pendingIds.remove(userId);
+      tx.update(docRef, {
+        'joinRequests': requests,
+        'pendingMemberIds': pendingIds,
+      });
     });
     return getById(dareId);
   }
@@ -247,6 +316,23 @@ class FirestoreDareService {
         snap.data()!['challenges'] ?? [],
       );
       challenges.add(challenge.toJson());
+      tx.update(docRef, {'challenges': challenges});
+    });
+  }
+
+  Future<void> updateChallenge(
+    String dareId,
+    DareChallenge updated,
+  ) async {
+    final docRef = _col.doc(dareId);
+    await _db.runTransaction((tx) async {
+      final snap = await tx.get(docRef);
+      if (!snap.exists) return;
+      final challenges = List<Map<String, dynamic>>.from(
+        snap.data()!['challenges'] ?? [],
+      );
+      final idx = challenges.indexWhere((c) => c['id'] == updated.id);
+      if (idx >= 0) challenges[idx] = updated.toJson();
       tx.update(docRef, {'challenges': challenges});
     });
   }
@@ -335,13 +421,15 @@ class FirestoreDareService {
   }) {
     return _proofsCol(dareId)
         .where('userId', isEqualTo: userId)
-        .orderBy('submittedAt', descending: true)
         .snapshots()
         .map(
-          (s) =>
-              s.docs
-                  .map((d) => ProofSubmission.fromFirestore(d))
-                  .toList(),
+          (s) {
+            final list = s.docs
+                .map((d) => ProofSubmission.fromFirestore(d))
+                .toList()
+              ..sort((a, b) => b.submittedAt.compareTo(a.submittedAt));
+            return list;
+          },
         );
   }
 

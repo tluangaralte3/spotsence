@@ -8,6 +8,7 @@ import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../controllers/auth_controller.dart';
 import '../../controllers/banner_controller.dart';
+import '../../controllers/dare_controller.dart';
 import '../../controllers/gamification_controller.dart';
 import '../../controllers/spots_controller.dart';
 import '../../controllers/tour_venture_controller.dart';
@@ -78,11 +79,7 @@ class HomeScreen extends ConsumerWidget {
               ],
             ),
             actions: [
-              IconButton(
-                icon: const Icon(Icons.notifications_outlined),
-                color: context.col.textSecondary,
-                onPressed: () {},
-              ),
+              _NotificationBell(userId: user?.id),
             ],
           ),
 
@@ -254,6 +251,61 @@ class HomeScreen extends ConsumerWidget {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Northeast India state picker — opens from subtitle tap
+// ─────────────────────────────────────────────────────────────────────────────
+// _NotificationBell — badge showing pending dare join requests
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _NotificationBell extends ConsumerWidget {
+  final String? userId;
+  const _NotificationBell({this.userId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final count =
+        userId == null ? 0 : ref.watch(pendingJoinCountProvider(userId!));
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        IconButton(
+          icon: Icon(
+            count > 0
+                ? Icons.notifications
+                : Icons.notifications_outlined,
+          ),
+          color: count > 0
+              ? AppColors.warning
+              : context.col.textSecondary,
+          onPressed: () => context.push(AppRoutes.notifications),
+        ),
+        if (count > 0)
+          Positioned(
+            right: 8,
+            top: 8,
+            child: Container(
+              width: 17,
+              height: 17,
+              decoration: const BoxDecoration(
+                color: AppColors.error,
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: Text(
+                  count > 9 ? '9+' : '$count',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 9,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 typedef _StateItem = ({String name, String abbr, bool available});

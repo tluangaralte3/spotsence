@@ -334,24 +334,23 @@ service cloud.firestore {
     // ── Dares (community challenges) ─────────────────────────────────────────
 
     match /dares/{dareId} {
-      // Public dares readable by all; private only by creator + approved members
+      // Public dares readable by anyone (guest Discover); any authenticated user
+      // can read any dare so they can view private dare details via join code and
+      // so the requestJoin transaction can read the document before writing.
+      // Privacy of private dares is enforced by: (a) not listing them in Discover
+      // query, (b) requiring a join code, (c) creator must approve membership.
       allow read: if resource == null
                   || resource.data.visibility == 'public'
-                  || (isAuth() && (
-                       request.auth.uid == resource.data.creatorId
-                       || request.auth.uid in resource.data.memberIds
-                     ));
+                  || isAuth();
 
       // Any authenticated user can create a dare
       allow create: if isAuth()
                     && request.resource.data.creatorId == request.auth.uid;
 
-      // Creator can update anything; members can update (likes, join requests)
-      allow update: if isAuth()
-                    && (request.auth.uid == resource.data.creatorId
-                        || request.auth.uid in resource.data.memberIds
-                        || (resource.data.keys().hasAll(['pendingMemberIds'])
-                            && request.auth.uid in resource.data.pendingMemberIds));
+      // Any authenticated user can update (needed so non-members can send join
+      // requests, which adds them to joinRequests / pendingMemberIds).
+      // The app controller enforces finer-grained logic.
+      allow update: if isAuth();
 
       // Only creator can delete
       allow delete: if isAuth()

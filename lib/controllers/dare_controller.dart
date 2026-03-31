@@ -154,6 +154,21 @@ class DareController extends Notifier<DareState> {
     }
   }
 
+  // ── Update challenge ───────────────────────────────────────────────────
+
+  Future<void> updateChallenge(
+    String dareId,
+    DareChallenge challenge,
+  ) async {
+    try {
+      await _svc.updateChallenge(dareId, challenge);
+      final fresh = await _svc.getById(dareId);
+      if (fresh != null) _updateLocal(dareId, (_) => fresh);
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
+    }
+  }
+
   // ── Join ──────────────────────────────────────────────────────────────
 
   Future<DareModel?> lookupJoinCode(String code) async {
@@ -180,12 +195,9 @@ class DareController extends Notifier<DareState> {
         userPhoto: userPhoto,
         isPublic: isPublic,
       );
-      if (isPublic) {
-        final fresh = await _svc.getById(dareId);
-        if (fresh != null) {
-          state = state.copyWith(myDares: [fresh, ...state.myDares]);
-        }
-      }
+      // myDaresStreamProvider handles the live update automatically.
+      // We do NOT mutate state here to avoid rebuilding the widget tree
+      // while a dialog dismiss animation is still running.
     } catch (e) {
       state = state.copyWith(error: e.toString());
     }
@@ -472,6 +484,12 @@ final dareDetailProvider =
   return ref.read(firestoreDareServiceProvider).watchById(id);
 });
 
+/// Live stream of dares the current user created, joined, or has a pending request for.
+final myDaresStreamProvider =
+    StreamProvider.autoDispose.family<List<DareModel>, String>((ref, userId) {
+  return ref.read(firestoreDareServiceProvider).watchMyDares(userId);
+});
+
 /// Stream proofs for a dare (creator view).
 final dareProofsProvider =
     StreamProvider.family<List<ProofSubmission>, String>((ref, dareId) {
@@ -505,4 +523,38 @@ final dareMedalsProvider =
 /// All dares (public list) provider
 final daresProvider = Provider<List<DareModel>>((ref) {
   return ref.watch(dareControllerProvider).publicDares;
+});
+
+// ─── Notification providers ─────────────────────────────────────────────────
+
+/// Record type for a single pending join request.
+typedef JoinRequestItem = ({DareModel dare, DareMember requester});
+
+/// Streams all pending join requests across dares the user created.
+final pendingJoinRequestsProvider =
+    StreamProvider.autoDispose.family<List<JoinRequestItem>, String>(
+  (ref, userId) {
+    return ref
+        .read(firestoreDareServiceProvider)
+        .watchCreatedDares(userId)
+        .map((dares) {
+      final items = <JoinRequestItem>[];
+      for (final dare in dares) {
+        for (final request in dare.joinRequests) {
+          items.add((dare: dare, requester: request));
+        }
+      }
+      return items;
+    });
+  },
+);
+
+/// Count of pending join requests (for the notification badge).
+final pendingJoinCountProvider =
+    Provider.autoDispose.family<int, String>((ref, userId) {
+  return ref.watch(pendingJoinRequestsProvider(userId)).when(
+    data: (list) => list.length,
+    loading: () => 0,
+    error: (_, __) => 0,
+  );
 });
