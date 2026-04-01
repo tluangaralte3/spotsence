@@ -46,30 +46,16 @@ class HomeScreen extends ConsumerWidget {
             backgroundColor: context.col.bg,
             expandedHeight: 0,
             title: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
+                Image.asset(
+                  'assets/icons/xplooria_logo.png',
                   width: 32,
                   height: 32,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [AppColors.secondary, AppColors.primary],
-                    ),
-                    borderRadius: BorderRadius.circular(9),
-                  ),
-                  child: const Center(
-                    child: Text(
-                      'S',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'SpotSence',
+                  'Xplooria',
                   style: TextStyle(
                     color: context.col.textPrimary,
                     fontWeight: FontWeight.w800,
@@ -492,7 +478,7 @@ class _StatePickerSheet extends ConsumerWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'We\'re working hard to bring SpotSence\nto $stateName. Stay tuned!',
+              'We\'re working hard to bring Xplooria\nto $stateName. Stay tuned!',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: context.col.textSecondary,
@@ -899,7 +885,7 @@ class _FeaturedSpotsSectionState extends ConsumerState<_FeaturedSpotsSection> {
                           children: const [
                             TextSpan(text: 'Discover hidden gems. '),
                             TextSpan(
-                              text: 'Now with SpotSence.',
+                              text: 'Now with Xplooria.',
                               style: TextStyle(
                                 color: AppColors.primary,
                                 fontWeight: FontWeight.w600,
@@ -1340,7 +1326,7 @@ class _TourVentureSection extends ConsumerWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'Adventure & activity packages, only on SpotSence',
+                    'Adventure & activity packages, only on Xplooria',
                     style: TextStyle(
                       fontSize: 11,
                       color: context.col.textMuted,

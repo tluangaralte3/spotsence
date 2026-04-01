@@ -5,8 +5,8 @@
 // AdventureSpotModel, ShoppingAreaModel, PaginatedState.
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:spotmizoram/models/listing_models.dart';
-import 'package:spotmizoram/controllers/listings_controller.dart';
+import 'package:xplooria/models/listing_models.dart';
+import 'package:xplooria/controllers/listings_controller.dart';
 
 void main() {
   // ── RestaurantModel ───────────────────────────────────────────────────────

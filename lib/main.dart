@@ -17,18 +17,18 @@ Future<void> main() async {
     if (e.code != 'duplicate-app') rethrow;
   }
 
-  runApp(const ProviderScope(child: SpotMizoramApp()));
+  runApp(const ProviderScope(child: XplooriaApp()));
 }
 
-class SpotMizoramApp extends ConsumerWidget {
-  const SpotMizoramApp({super.key});
+class XplooriaApp extends ConsumerWidget {
+  const XplooriaApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
     final themeMode = ref.watch(themeControllerProvider);
     return MaterialApp.router(
-      title: 'SpotMizoram',
+      title: 'Xplooria',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,

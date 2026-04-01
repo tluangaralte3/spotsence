@@ -7,8 +7,8 @@
 import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:spotmizoram/services/auth_service.dart';
-import 'package:spotmizoram/controllers/auth_controller.dart';
+import 'package:xplooria/services/auth_service.dart';
+import 'package:xplooria/controllers/auth_controller.dart';
 
 void main() {
   // ── helpers ───────────────────────────────────────────────────────────────

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// SpotSence Design System
+/// Xplooria Design System
 /// Minimal dark-first palette with gamified accent colours.
 abstract class AppColors {
   // ── Brand ──────────────────────────────────────────────────────────────

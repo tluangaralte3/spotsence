@@ -4,8 +4,8 @@
 // and BucketCategory, BucketItem, BucketListModel (bucket_list_models.dart).
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:spotmizoram/models/community_models.dart';
-import 'package:spotmizoram/models/bucket_list_models.dart';
+import 'package:xplooria/models/community_models.dart';
+import 'package:xplooria/models/bucket_list_models.dart';
 
 void main() {
   // ── PostComment.fromJson ──────────────────────────────────────────────────

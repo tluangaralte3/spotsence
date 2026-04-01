@@ -178,7 +178,7 @@ class _SpotLogo extends StatelessWidget {
         ),
         const SizedBox(width: 10),
         Text(
-          'SpotSence',
+          'Xplooria',
           style: TextStyle(
             color: context.col.textPrimary,
             fontSize: 20,

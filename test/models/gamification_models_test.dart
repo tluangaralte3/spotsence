@@ -3,7 +3,7 @@
 // Tests for XpAction, StreakInfo, GamificationResult, BadgeModel, LevelInfo.
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:spotmizoram/models/gamification_models.dart';
+import 'package:xplooria/models/gamification_models.dart';
 
 void main() {
   // ── XpAction.baseXp ───────────────────────────────────────────────────────

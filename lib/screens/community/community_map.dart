@@ -243,7 +243,7 @@ class _CommunityMapState extends ConsumerState<CommunityMap> {
                         ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
                         : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
                     subdomains: const ['a', 'b', 'c', 'd'],
-                    userAgentPackageName: 'com.hillstech.spotmizoram',
+                    userAgentPackageName: 'com.hillstech.xplooria',
                     retinaMode: MediaQuery.of(context).devicePixelRatio > 1,
                   ),
                   // Spots layer — pulsing blinking pins

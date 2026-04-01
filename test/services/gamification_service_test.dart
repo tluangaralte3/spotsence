@@ -10,9 +10,9 @@
 
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:spotmizoram/models/gamification_models.dart';
-import 'package:spotmizoram/models/user_model.dart';
-import 'package:spotmizoram/services/gamification_service.dart';
+import 'package:xplooria/models/gamification_models.dart';
+import 'package:xplooria/models/user_model.dart';
+import 'package:xplooria/services/gamification_service.dart';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

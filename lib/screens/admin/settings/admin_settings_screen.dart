@@ -237,7 +237,7 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
                         icon: Icons.info_outline,
                         iconColor: AppColors.info,
                         title: 'App Name',
-                        subtitle: 'SpotMizoram Admin Panel',
+                        subtitle: 'Xplooria Admin Panel',
                         onTap: null,
                       ),
                       _Divider(),

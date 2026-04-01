@@ -10,7 +10,7 @@
 
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:spotmizoram/services/global_reviews_service.dart';
+import 'package:xplooria/services/global_reviews_service.dart';
 
 // ── Helper ────────────────────────────────────────────────────────────────────
 

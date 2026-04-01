@@ -3,7 +3,7 @@
 // Unit tests for UserModel — level calculation, progress, serialisation.
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:spotmizoram/models/user_model.dart';
+import 'package:xplooria/models/user_model.dart';
 
 void main() {
   // ── helpers ──────────────────────────────────────────────────────────────

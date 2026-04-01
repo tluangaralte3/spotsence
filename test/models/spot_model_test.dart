@@ -3,7 +3,7 @@
 // Unit tests for EntryFee, SpotRating, SpotComment, SpotModel.
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:spotmizoram/models/spot_model.dart';
+import 'package:xplooria/models/spot_model.dart';
 
 void main() {
   // ── EntryFee ──────────────────────────────────────────────────────────────

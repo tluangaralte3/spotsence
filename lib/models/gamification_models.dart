@@ -573,7 +573,7 @@ class BadgeModel {
     BadgeModel(
       id: 'early_adopter',
       name: 'Early Adopter',
-      description: 'One of the first 100 users of SpotMizoram',
+      description: 'One of the first 100 users of Xplooria',
       icon: Iconsax.discover,
       rarity: 'legendary',
       category: 'special',
