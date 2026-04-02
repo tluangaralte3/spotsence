@@ -19,6 +19,7 @@ import '../../models/banner_model.dart';
 import '../../models/spot_model.dart';
 import '../../models/tour_venture_models.dart';
 import '../../widgets/shared_widgets.dart';
+import 'visitor_guide_screen.dart';
 
 /// Tracks which NE state the user has selected from the state picker.
 class _NeStateNotifier extends Notifier<String> {
@@ -171,8 +172,6 @@ class HomeScreen extends ConsumerWidget {
                   const _HomeBannerCarousel(),
                   const SizedBox(height: 20),
 
-
-
                 ],
               ),
             ),
@@ -212,6 +211,36 @@ class HomeScreen extends ConsumerWidget {
           ),
 
           SliverToBoxAdapter(child: _ListingCategoryGrid()),
+
+          // ── Visitor Guide Section ─────────────────────────────────────
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 28, 20, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.travel_explore_rounded,
+                        size: 18,
+                        color: AppColors.secondary,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Visitor Guide',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  _VisitorGuideCard(
+                    stateName: ref.watch(selectedNeStateProvider),
+                  ),
+                ],
+              ),
+            ),
+          ),
 
           // ── Featured Spots Section ────────────────────────────────────
           const SliverToBoxAdapter(child: _FeaturedSpotsSection()),
@@ -1832,6 +1861,117 @@ class _Chip extends StatelessWidget {
       child: Text(
         label,
         style: TextStyle(color: fg, fontSize: 10, fontWeight: FontWeight.w700),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Visitor Guide card — tappable card on home screen
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _VisitorGuideCard extends StatelessWidget {
+  final String stateName;
+  const _VisitorGuideCard({required this.stateName});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => VisitorGuideScreen(stateName: stateName),
+        ),
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.secondary.withOpacity(0.18),
+              AppColors.primary.withOpacity(0.10),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: AppColors.secondary.withOpacity(0.3),
+          ),
+        ),
+        padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+        child: Row(
+          children: [
+            // Icon
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: AppColors.secondary.withOpacity(0.18),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.travel_explore_rounded,
+                color: AppColors.secondary,
+                size: 22,
+              ),
+            ),
+            const SizedBox(width: 14),
+
+            // Text
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        'Visitor Guide',
+                        style: TextStyle(
+                          color: context.col.textPrimary,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 7, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Text(
+                          'NEW',
+                          style: TextStyle(
+                            color: AppColors.primary,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    'Dos & don\'ts · tips for visiting $stateName',
+                    style: TextStyle(
+                      color: context.col.textSecondary,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Chevron
+            Icon(
+              Icons.chevron_right_rounded,
+              color: context.col.textMuted,
+              size: 20,
+            ),
+          ],
+        ),
       ),
     );
   }

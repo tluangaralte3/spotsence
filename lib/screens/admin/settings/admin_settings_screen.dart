@@ -10,6 +10,7 @@ import '../../../controllers/admin_controller.dart';
 import '../../../controllers/auth_controller.dart';
 import '../../../models/admin_model.dart';
 import 'admin_banner_settings_screen.dart';
+import '../visitor_guides/admin_visitor_guide_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Screen
@@ -184,6 +185,24 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
                           context,
                           MaterialPageRoute(
                             builder: (_) => const AdminBannerSettingsScreen(),
+                          ),
+                        ),
+                      ),
+                      _Divider(),
+                      _SettingsTile(
+                        icon: Icons.travel_explore_rounded,
+                        iconColor: AppColors.accent,
+                        title: 'Visitor Guide CMS',
+                        subtitle: 'Manage dos, don\'ts and info for each NE state',
+                        trailing: Icon(
+                          Icons.chevron_right_rounded,
+                          size: 18,
+                          color: context.col.textMuted,
+                        ),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const AdminVisitorGuideScreen(),
                           ),
                         ),
                       ),
