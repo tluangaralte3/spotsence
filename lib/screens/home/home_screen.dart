@@ -248,6 +248,9 @@ class HomeScreen extends ConsumerWidget {
           // ── Tour Packages Section ─────────────────────────────────────
           const SliverToBoxAdapter(child: _TourVentureSection()),
 
+          // ── AI Travelling Planner (Coming Soon) ───────────────────────
+          const SliverToBoxAdapter(child: _AiPlannerSection()),
+
           // ── Quick stats (if signed in) ──────────────────────────────────
           if (user != null)
             SliverToBoxAdapter(
@@ -2630,5 +2633,285 @@ class _XpPerksSheet extends ConsumerWidget {
     if (diff.inHours < 24) return '${diff.inHours}h ago';
     if (diff.inDays < 7) return '${diff.inDays}d ago';
     return '${dt.day}/${dt.month}/${dt.year}';
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AI Travelling Planner & Companion — Coming Soon locked section
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _AiPlannerSection extends StatelessWidget {
+  const _AiPlannerSection();
+
+  @override
+  Widget build(BuildContext context) {
+    final col = context.col;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 32, 20, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Section header ──────────────────────────────────────────────
+          Row(
+            children: [
+              const Icon(Iconsax.cpu, size: 18, color: AppColors.secondary),
+              const SizedBox(width: 8),
+              Text(
+                'AI Travel Assistant',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // ── Locked card ─────────────────────────────────────────────────
+          Container(
+            width: double.infinity,
+            clipBehavior: Clip.antiAlias,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: AppColors.primary.withValues(alpha: 0.25),
+                width: 1.5,
+              ),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppColors.primary.withValues(alpha: 0.07),
+                  AppColors.secondary.withValues(alpha: 0.12),
+                ],
+              ),
+            ),
+            child: Stack(
+              children: [
+                // ── Decorative blurred circle (top-right) ─────────────────
+                Positioned(
+                  top: -30,
+                  right: -30,
+                  child: Container(
+                    width: 120,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.secondary.withValues(alpha: 0.15),
+                    ),
+                  ),
+                ),
+                // ── Decorative blurred circle (bottom-left) ───────────────
+                Positioned(
+                  bottom: -20,
+                  left: -20,
+                  child: Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.primary.withValues(alpha: 0.10),
+                    ),
+                  ),
+                ),
+
+                // ── Main content ──────────────────────────────────────────
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Icon + lock badge row
+                      Row(
+                        children: [
+                          Container(
+                            width: 56,
+                            height: 56,
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [
+                                  AppColors.secondary,
+                                  AppColors.primary,
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: const Icon(
+                              Iconsax.routing,
+                              color: Colors.white,
+                              size: 28,
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'AI Travelling Planner',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w800,
+                                    color: col.textPrimary,
+                                    letterSpacing: -0.3,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  '& Travelling Companion',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.secondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          // Lock badge
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: col.surfaceElevated,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: col.border),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.lock_rounded,
+                                  size: 12,
+                                  color: col.textSecondary,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Locked',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: col.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 18),
+
+                      // Description
+                      Text(
+                        'Your intelligent travel companion powered by AI — plan personalised itineraries, discover hidden gems, get real-time recommendations, and travel smarter across Northeast India.',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: col.textSecondary,
+                          height: 1.6,
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // Feature chips
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          _AiFeatureChip(
+                            icon: Iconsax.map,
+                            label: 'Smart Itineraries',
+                          ),
+                          _AiFeatureChip(
+                            icon: Iconsax.message_text,
+                            label: 'AI Companion Chat',
+                          ),
+                          _AiFeatureChip(
+                            icon: Iconsax.star,
+                            label: 'Personalised Tips',
+                          ),
+                          _AiFeatureChip(
+                            icon: Iconsax.location,
+                            label: 'Live Suggestions',
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 22),
+
+                      // Coming soon pill
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                        decoration: BoxDecoration(
+                          color: col.surfaceElevated,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: col.border),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.rocket_launch_rounded,
+                              size: 16,
+                              color: AppColors.primary,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Coming Soon — Stay Tuned!',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.primary,
+                                letterSpacing: 0.2,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AiFeatureChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  const _AiFeatureChip({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    final col = context.col;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: col.surfaceElevated,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: col.border),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: AppColors.secondary),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: col.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

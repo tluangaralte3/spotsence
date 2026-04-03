@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:iconsax/iconsax.dart';
 import 'package:latlong2/latlong.dart' hide Path;
 
 import '../../core/theme/app_theme.dart';
@@ -16,17 +17,17 @@ import 'place_detail_sheet.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Filter categories matching the app's listing categories
-typedef _MapCat = ({String emoji, String label, String? type});
+typedef _MapCat = ({IconData icon, String label, String? type});
 
 const _kMapCategories = <_MapCat>[
-  (emoji: '🗺️', label: 'All', type: null),
-  (emoji: '🗺️', label: 'Tourist Spots', type: 'spot'),
-  (emoji: '🍽️', label: 'Restaurants', type: 'restaurant'),
-  (emoji: '☕', label: 'Cafes', type: 'cafe'),
-  (emoji: '🧗', label: 'Adventure', type: 'adventure'),
-  (emoji: '🏡', label: 'Homestays', type: 'homestay'),
-  (emoji: '🛍️', label: 'Shopping', type: 'shopping'),
-  (emoji: '📅', label: 'Events', type: 'event'),
+  (icon: Iconsax.discover, label: 'All', type: null),
+  (icon: Iconsax.map_1, label: 'Tourist Spots', type: 'spot'),
+  (icon: Iconsax.cup, label: 'Restaurants', type: 'restaurant'),
+  (icon: Iconsax.coffee, label: 'Cafes', type: 'cafe'),
+  (icon: Iconsax.activity, label: 'Adventure', type: 'adventure'),
+  (icon: Iconsax.buildings, label: 'Homestays', type: 'homestay'),
+  (icon: Iconsax.bag_2, label: 'Shopping', type: 'shopping'),
+  (icon: Iconsax.calendar, label: 'Events', type: 'event'),
 ];
 
 class MapPlace {
@@ -303,15 +304,28 @@ class _CommunityMapState extends ConsumerState<CommunityMap> {
                                   : context.col.border,
                             ),
                           ),
-                          child: Text(
-                            '${cat.emoji}  ${cat.label}',
-                            style: TextStyle(
-                              color: selected
-                                  ? Colors.black
-                                  : context.col.textPrimary,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                cat.icon,
+                                size: 14,
+                                color: selected
+                                    ? Colors.black
+                                    : context.col.textSecondary,
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                cat.label,
+                                style: TextStyle(
+                                  color: selected
+                                      ? Colors.black
+                                      : context.col.textPrimary,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       );
