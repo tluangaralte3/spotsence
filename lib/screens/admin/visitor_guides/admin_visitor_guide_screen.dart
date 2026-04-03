@@ -14,6 +14,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:iconsax/iconsax.dart';
 import '../../../controllers/visitor_guide_controller.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../models/visitor_guide_model.dart';
@@ -34,6 +35,29 @@ const _kStates = [
   (key: 'Sikkim', emoji: '🏔️', displayName: 'Sikkim'),
 ];
 
+IconData _stateIconFor(String stateKey) {
+  switch (stateKey) {
+    case 'Mizoram':
+      return Iconsax.tree;
+    case 'Manipur':
+      return Iconsax.medal_star;
+    case 'Meghalaya':
+      return Iconsax.cloud;
+    case 'Assam':
+      return Iconsax.map_1;
+    case 'Nagaland':
+      return Iconsax.global;
+    case 'Tripura':
+      return Iconsax.building_4;
+    case 'Arunachal':
+      return Iconsax.sun_fog;
+    case 'Sikkim':
+      return Iconsax.tree;
+    default:
+      return Iconsax.location;
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Screen
 // ─────────────────────────────────────────────────────────────────────────────
@@ -45,6 +69,7 @@ class AdminVisitorGuideScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final guidesAsync = ref.watch(allVisitorGuidesProvider);
     final col = context.col;
+    final isLoading = guidesAsync.isLoading && !guidesAsync.hasValue;
 
     // Build a lookup map from the stream result
     final Map<String, VisitorGuideModel> guideMap = {};
@@ -54,72 +79,138 @@ class AdminVisitorGuideScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: col.bg,
-      body: MediaQuery.removePadding(
-        context: context,
-        removeTop: true,
-        child: Column(
+      appBar: AppBar(
+        backgroundColor: col.surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        leadingWidth: 68,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 12, top: 8, bottom: 8),
+          child: _BackButtonChip(
+            onPressed: () => Navigator.of(context).maybePop(),
+          ),
+        ),
+        titleSpacing: 4,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // ── Header ────────────────────────────────────────────────
-            Material(
-              color: col.surface,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 10),
-                child: Row(
-                  children: [
-                    Text(
-                      'Visitor Guides',
-                      style: TextStyle(
-                        color: col.textPrimary,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 16,
-                      ),
-                    ),
-                    const Spacer(),
-                    Text(
-                      '${guideMap.length} / ${_kStates.length} configured',
-                      style: TextStyle(
-                          color: col.textSecondary, fontSize: 12),
-                    ),
-                  ],
-                ),
+            Text(
+              'Visitor Guides',
+              style: TextStyle(
+                color: col.textPrimary,
+                fontWeight: FontWeight.w800,
+                fontSize: 18,
               ),
             ),
-            Divider(height: 1, color: col.border),
-
-            // ── List ───────────────────────────────────────────────────
-            Expanded(
-              child: guidesAsync.isLoading
-                  ? const Center(
-                      child: CircularProgressIndicator(
-                          color: AppColors.primary))
-                  : ListView.separated(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 16),
-                      itemCount: _kStates.length,
-                        separatorBuilder: (_, _) =>
-                          const SizedBox(height: 10),
-                      itemBuilder: (context, i) {
-                        final state = _kStates[i];
-                        final guide = guideMap[state.key];
-                        return _StateCard(
-                          stateKey: state.key,
-                          displayName: state.displayName,
-                          emoji: state.emoji,
-                          guide: guide,
-                          onTap: () => _openEditor(
-                            context,
-                            stateKey: state.key,
-                            displayName: state.displayName,
-                            defaultEmoji: state.emoji,
-                            existing: guide,
-                          ),
-                        );
-                      },
-                    ),
+            Text(
+              'Manage all eight northeast state guide pages',
+              style: TextStyle(
+                color: col.textSecondary,
+                fontSize: 11,
+              ),
             ),
           ],
         ),
+      ),
+      body: Column(
+        children: [
+          Divider(height: 1, color: col.border),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: col.surface,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: col.border),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Icon(
+                      Icons.travel_explore_rounded,
+                      color: AppColors.primary,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          isLoading
+                              ? 'Loading guide status...'
+                              : '${guideMap.length} of ${_kStates.length} guides configured',
+                          style: TextStyle(
+                            color: col.textPrimary,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Open a state to edit banner image, facts, dos and don\'ts, and publishing status.',
+                          style: TextStyle(
+                            color: col.textSecondary,
+                            fontSize: 12,
+                            height: 1.4,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Expanded(
+            child: Stack(
+              children: [
+                ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+                    itemCount: _kStates.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 10),
+                    itemBuilder: (context, i) {
+                      final state = _kStates[i];
+                      final guide = guideMap[state.key];
+                      return _StateCard(
+                        stateKey: state.key,
+                        displayName: state.displayName,
+                          icon: _stateIconFor(state.key),
+                        guide: guide,
+                        onTap: () => _openEditor(
+                          context,
+                          stateKey: state.key,
+                          displayName: state.displayName,
+                          defaultEmoji: state.emoji,
+                          existing: guide,
+                        ),
+                      );
+                    },
+                  ),
+                if (isLoading)
+                  const Positioned(
+                    top: 0,
+                    left: 16,
+                    right: 16,
+                    child: LinearProgressIndicator(
+                      color: AppColors.primary,
+                      minHeight: 2,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -152,14 +243,14 @@ class AdminVisitorGuideScreen extends ConsumerWidget {
 class _StateCard extends StatelessWidget {
   final String stateKey;
   final String displayName;
-  final String emoji;
+  final IconData icon;
   final VisitorGuideModel? guide;
   final VoidCallback onTap;
 
   const _StateCard({
     required this.stateKey,
     required this.displayName,
-    required this.emoji,
+    required this.icon,
     required this.guide,
     required this.onTap,
   });
@@ -190,10 +281,9 @@ class _StateCard extends StatelessWidget {
                       ? CachedNetworkImage(
                           imageUrl: guide!.bannerImageUrl,
                           fit: BoxFit.cover,
-                            errorWidget: (_, _, _) =>
-                              _EmojiBox(emoji: emoji),
+                          errorWidget: (_, _, _) => _StateIconBox(icon: icon),
                         )
-                      : _EmojiBox(emoji: emoji),
+                      : _StateIconBox(icon: icon),
                 ),
               ),
               const SizedBox(width: 14),
@@ -259,16 +349,17 @@ class _StateCard extends StatelessWidget {
   }
 }
 
-class _EmojiBox extends StatelessWidget {
-  final String emoji;
-  const _EmojiBox({required this.emoji});
+class _StateIconBox extends StatelessWidget {
+  final IconData icon;
+  const _StateIconBox({required this.icon});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       color: context.col.surfaceElevated,
       child: Center(
-          child: Text(emoji, style: const TextStyle(fontSize: 26))),
+        child: Icon(icon, size: 26, color: AppColors.primary),
+      ),
     );
   }
 }
@@ -276,6 +367,7 @@ class _EmojiBox extends StatelessWidget {
 class _StatusBadge extends StatelessWidget {
   final String label;
   final Color color;
+
   const _StatusBadge({required this.label, required this.color});
 
   @override
@@ -291,6 +383,39 @@ class _StatusBadge extends StatelessWidget {
               color: color,
               fontSize: 10,
               fontWeight: FontWeight.w600)),
+    );
+  }
+}
+
+class _BackButtonChip extends StatelessWidget {
+  final VoidCallback onPressed;
+
+  const _BackButtonChip({required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    final col = context.col;
+
+    return Material(
+      color: col.surfaceElevated,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: onPressed,
+        child: Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: col.border),
+          ),
+          child: Icon(
+            Icons.arrow_back_rounded,
+            color: col.textPrimary,
+            size: 20,
+          ),
+        ),
+      ),
     );
   }
 }
@@ -321,7 +446,6 @@ class GuideEditorPage extends ConsumerStatefulWidget {
 class _GuideEditorPageState extends ConsumerState<GuideEditorPage> {
   late final TextEditingController _tagline;
   late final TextEditingController _about;
-  late final TextEditingController _emoji;
 
   late List<String> _dos;
   late List<String> _donts;
@@ -338,8 +462,6 @@ class _GuideEditorPageState extends ConsumerState<GuideEditorPage> {
     final g = widget.existing;
     _tagline = TextEditingController(text: g?.tagline ?? '');
     _about = TextEditingController(text: g?.about ?? '');
-    _emoji = TextEditingController(
-        text: g?.emoji ?? widget.defaultEmoji);
     _dos = List<String>.from(g?.dos ?? []);
     _donts = List<String>.from(g?.donts ?? []);
     _facts = List<GuideQuickFact>.from(g?.facts ?? []);
@@ -351,7 +473,6 @@ class _GuideEditorPageState extends ConsumerState<GuideEditorPage> {
   void dispose() {
     _tagline.dispose();
     _about.dispose();
-    _emoji.dispose();
     super.dispose();
   }
 
@@ -405,9 +526,7 @@ class _GuideEditorPageState extends ConsumerState<GuideEditorPage> {
       final guide = VisitorGuideModel(
         id: widget.stateKey,
         stateName: widget.displayName,
-        emoji: _emoji.text.trim().isEmpty
-            ? widget.defaultEmoji
-            : _emoji.text.trim(),
+        emoji: widget.existing?.emoji ?? widget.defaultEmoji,
         tagline: _tagline.text.trim(),
         about: _about.text.trim(),
         bannerImageUrl: _bannerImageUrl,
@@ -585,14 +704,41 @@ class _GuideEditorPageState extends ConsumerState<GuideEditorPage> {
       appBar: AppBar(
         backgroundColor: col.surface,
         surfaceTintColor: Colors.transparent,
-        titleSpacing: 0,
-        title: Text(
-          '${_emoji.text.isNotEmpty ? "${_emoji.text} " : ""}${widget.displayName}',
-          style: TextStyle(
-            color: col.textPrimary,
-            fontWeight: FontWeight.w800,
-            fontSize: 18,
+        leadingWidth: 68,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 12, top: 8, bottom: 8),
+          child: _BackButtonChip(
+            onPressed: () => Navigator.of(context).maybePop(),
           ),
+        ),
+        titleSpacing: 0,
+        title: Row(
+          children: [
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                _stateIconFor(widget.stateKey),
+                color: AppColors.primary,
+                size: 18,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                widget.displayName,
+                style: TextStyle(
+                  color: col.textPrimary,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 18,
+                ),
+              ),
+            ),
+          ],
         ),
         actions: [
           Padding(
@@ -636,11 +782,54 @@ class _GuideEditorPageState extends ConsumerState<GuideEditorPage> {
           const SizedBox(height: 20),
           _SectionTitle('Basic Info'),
           const SizedBox(height: 8),
-          _EditorField(
-            label: 'Emoji',
-            controller: _emoji,
-            hint: '🏔️',
-            maxLines: 1,
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: col.surfaceElevated,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: col.border),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    _stateIconFor(widget.stateKey),
+                    color: AppColors.primary,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'State Icon',
+                        style: TextStyle(
+                          color: col.textPrimary,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Using a fixed Iconsax icon for ${widget.displayName}.',
+                        style: TextStyle(
+                          color: col.textSecondary,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 10),
           _EditorField(

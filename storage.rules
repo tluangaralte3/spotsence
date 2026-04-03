@@ -8,6 +8,10 @@ service firebase.storage {
       return request.auth != null;
     }
 
+    function isSuperAdmin() {
+      return isAuth() && request.auth.token.superAdmin == true;
+    }
+
     // ── Community photos uploaded from place detail sheet ────────────────────
     // Path: community_photos/{collection}/{placeId}/{userId}_{timestamp}.{ext}
     match /community_photos/{collection}/{placeId}/{fileName} {
@@ -84,6 +88,14 @@ service firebase.storage {
     match /banners/{fileName} {
       allow read: if true;
       allow write: if isAuth()
+                   && request.resource.size < 10 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+    }
+
+    // ── Visitor guide banner images (super admin upload) ───────────────────
+    match /visitor_guides/{fileName} {
+      allow read: if true;
+      allow write: if isSuperAdmin()
                    && request.resource.size < 10 * 1024 * 1024
                    && request.resource.contentType.matches('image/.*');
     }

@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/spot_model.dart';
 import '../services/firestore_spots_service.dart';
 import '../services/spots_service.dart';
+import 'package:dio/dio.dart';
 
 // ── Featured Spots ────────────────────────────────────────────────────────────
 
@@ -201,10 +202,15 @@ final searchControllerProvider =
 
 // ── Bookmarks ─────────────────────────────────────────────────────────────────
 
-final bookmarksProvider = FutureProvider.family<List<SpotModel>, String>((
+final bookmarksProvider = FutureProvider.autoDispose.family<List<SpotModel>, String>((
   ref,
   userId,
 ) async {
-  final result = await ref.read(spotsServiceProvider).getBookmarks(userId);
+  final cancelToken = CancelToken();
+  ref.onDispose(cancelToken.cancel);
+
+  final result = await ref
+      .read(spotsServiceProvider)
+      .getBookmarks(userId, cancelToken: cancelToken);
   return result.when(ok: (list) => list, err: (_) => []);
 });

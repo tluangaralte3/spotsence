@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/spot_model.dart';
 import '../models/gamification_models.dart';
@@ -103,9 +104,15 @@ class SpotsService extends BaseApiService {
     });
   }
 
-  Future<ApiResult<List<SpotModel>>> getBookmarks(String userId) async {
+  Future<ApiResult<List<SpotModel>>> getBookmarks(
+    String userId, {
+    CancelToken? cancelToken,
+  }) async {
     return safeCall(() async {
-      final response = await dio.get('/api/users/$userId/bookmarks');
+      final response = await dio.get(
+        '/api/users/$userId/bookmarks',
+        cancelToken: cancelToken,
+      );
       return unwrap(response, (json) {
         final list = json as List;
         return list

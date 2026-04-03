@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../controllers/admin_controller.dart';
+import '../ventures/admin_ventures_screen.dart';
 import 'csv_upload_sheet.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -172,7 +173,7 @@ class _AdminListingsScreenState extends ConsumerState<AdminListingsScreen>
             AnimatedSize(
               duration: const Duration(milliseconds: 220),
               curve: Curves.easeInOut,
-              child: _filterVisible
+              child: _filterVisible && activeTab != ListingTab.ventures
                   ? Container(
                       color: col.surface,
                       padding: const EdgeInsets.fromLTRB(12, 4, 8, 8),
@@ -250,7 +251,9 @@ class _AdminListingsScreenState extends ConsumerState<AdminListingsScreen>
           ],
         ), // end Column
       ), // end MediaQuery.removePadding
-      floatingActionButton: crudState.isLoading
+      floatingActionButton: activeTab == ListingTab.ventures
+          ? null
+          : crudState.isLoading
           ? const FloatingActionButton(
               heroTag: 'admin_listings_fab_loading',
               onPressed: null,
@@ -305,6 +308,11 @@ class _ListingTabContent extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final col = context.col;
+
+    // The Ventures tab renders the full Packages / Feedback / Bookings UI.
+    if (tab == ListingTab.ventures) {
+      return const AdminVenturesScreen();
+    }
 
     // The Accommodations tab merges docs from both 'accommodations'
     // and 'homestays' Firestore collections into a single list.
@@ -586,7 +594,7 @@ class _ListRow extends ConsumerWidget {
               ),
               tooltip: 'Edit',
               onPressed: () {
-                if (collection == 'adventureSpots') {
+                if (collection == 'adventureSpots' || collection == 'ventures') {
                   context.push(AppRoutes.adminEditVenturePath(docId));
                 } else {
                   context.push('/admin/listings/edit/$collection/$docId');
@@ -726,7 +734,7 @@ class _GridCard extends ConsumerWidget {
                   constraints: const BoxConstraints(),
                   tooltip: 'Edit',
                   onPressed: () {
-                    if (collection == 'adventureSpots') {
+                    if (collection == 'adventureSpots' || collection == 'ventures') {
                       context.push(AppRoutes.adminEditVenturePath(docId));
                     } else {
                       context.push('/admin/listings/edit/$collection/$docId');

@@ -22,6 +22,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:iconsax/iconsax.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../controllers/admin_controller.dart';
@@ -48,6 +49,55 @@ const _kPresetGear = [
   (emoji: '🧴', name: 'Insect Repellent'),
   (emoji: '🩹', name: 'First Aid Kit'),
 ];
+
+IconData _seasonIconFor(PackageSeason season) {
+  switch (season) {
+    case PackageSeason.allYear:
+      return Iconsax.calendar;
+    case PackageSeason.spring:
+      return Iconsax.tree;
+    case PackageSeason.summer:
+      return Iconsax.sun_fog;
+    case PackageSeason.autumn:
+      return Iconsax.cloud;
+    case PackageSeason.winter:
+      return Iconsax.cloud;
+    case PackageSeason.monsoon:
+      return Iconsax.cloud;
+    case PackageSeason.preMonsoon:
+      return Iconsax.sun_fog;
+    case PackageSeason.postMonsoon:
+      return Iconsax.calendar;
+  }
+}
+
+IconData _medalIconFor(MedalTier tier) {
+  switch (tier) {
+    case MedalTier.bronze:
+      return Iconsax.medal;
+    case MedalTier.silver:
+      return Iconsax.award;
+    case MedalTier.gold:
+      return Iconsax.cup;
+    case MedalTier.platinum:
+      return Iconsax.medal;
+    case MedalTier.legendary:
+      return Iconsax.cup;
+  }
+}
+
+IconData _addonIconForName(String name) {
+  final key = name.toLowerCase();
+  if (key.contains('camera') || key.contains('lens')) return Iconsax.camera;
+  if (key.contains('tent') || key.contains('jacket')) return Iconsax.home_2;
+  if (key.contains('rope') || key.contains('compass')) return Iconsax.routing;
+  if (key.contains('boot') || key.contains('backpack')) return Iconsax.bag_2;
+  if (key.contains('lamp') || key.contains('torch')) return Iconsax.flash_1;
+  if (key.contains('binocular') || key.contains('telescope')) {
+    return Iconsax.eye;
+  }
+  return Iconsax.bag_2;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Screen widget
@@ -138,8 +188,6 @@ class _AdminVentureFormScreenState
   String _status = 'active';
   static const _statuses = ['active', 'draft', 'suspended'];
 
-  // ─────────────────────────────────────────────────────────────────────────
-
   @override
   void initState() {
     super.initState();
@@ -196,8 +244,6 @@ class _AdminVentureFormScreenState
     super.dispose();
   }
 
-  // ── Load for edit mode ───────────────────────────────────────────────────
-
   Future<void> _loadExisting() async {
     setState(() => _isLoading = true);
     try {
@@ -216,12 +262,17 @@ class _AdminVentureFormScreenState
       _latCtrl.text = model.latitude?.toString() ?? '';
       _lngCtrl.text = model.longitude?.toString() ?? '';
       _meetingPointCtrl.text = model.meetingPoint;
-      _durationDaysCtrl.text = model.durationDays.toString();
-      _durationNightsCtrl.text = model.durationNights.toString();
+      _durationDaysCtrl.text =
+          model.durationDays == 0 ? '' : model.durationDays.toString();
+      _durationNightsCtrl.text =
+          model.durationNights == 0 ? '' : model.durationNights.toString();
       _departureCtrl.text = model.departurePeriod;
-      _maxGroupCtrl.text = model.maxGroupSize.toString();
-      _minAgeCtrl.text = model.minAge.toString();
-      _advanceBookingCtrl.text = model.advanceBookingDays.toString();
+      _maxGroupCtrl.text =
+          model.maxGroupSize == 0 ? '' : model.maxGroupSize.toString();
+      _minAgeCtrl.text =
+          model.minAge == 0 ? '' : model.minAge.toString();
+      _advanceBookingCtrl.text =
+          model.advanceBookingDays == 0 ? '' : model.advanceBookingDays.toString();
       _category = model.category;
       _difficulty = model.difficulty;
       _seasons
@@ -273,8 +324,6 @@ class _AdminVentureFormScreenState
     }
   }
 
-  // ── Image upload ─────────────────────────────────────────────────────────
-
   Future<void> _pickImages() async {
     final picked = await ImagePicker().pickMultiImage(
       maxWidth: 1600,
@@ -318,8 +367,6 @@ class _AdminVentureFormScreenState
     return urls;
   }
 
-  // ── Submit ────────────────────────────────────────────────────────────────
-
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
@@ -327,7 +374,6 @@ class _AdminVentureFormScreenState
     final newUrls = await _uploadNewImages();
     final allImages = [..._existingUrls, ...newUrls];
 
-    // tiers
     final tiersData = _tiers
         .where((t) => t.nameCtrl.text.trim().isNotEmpty)
         .toList()
@@ -355,7 +401,6 @@ class _AdminVentureFormScreenState
               .map((t) => (t['pricePerPerson'] as num?)?.toDouble() ?? 0.0)
               .reduce((a, b) => a < b ? a : b);
 
-    // add-ons
     final addonsData = _addons
         .where((a) => a.nameCtrl.text.trim().isNotEmpty)
         .toList()
@@ -376,7 +421,6 @@ class _AdminVentureFormScreenState
         )
         .toList();
 
-    // rentals
     final rentalsData = _rentals
         .where((r) => r.nameCtrl.text.trim().isNotEmpty)
         .toList()
@@ -396,7 +440,6 @@ class _AdminVentureFormScreenState
         )
         .toList();
 
-    // slots
     final slotsData = _slots
         .where((s) => s.labelCtrl.text.trim().isNotEmpty)
         .toList()
@@ -420,7 +463,6 @@ class _AdminVentureFormScreenState
         })
         .toList();
 
-    // challenges
     final challengesData = _challenges
         .where((c) => c.titleCtrl.text.trim().isNotEmpty)
         .toList()
@@ -445,10 +487,11 @@ class _AdminVentureFormScreenState
 
     final totalPoints = challengesData.fold<int>(
       0,
-      (s, c) => s + ((c['pointsOnComplete'] as num?)?.toInt() ?? 0),
+      (runningTotal, challenge) =>
+          runningTotal +
+          ((challenge['pointsOnComplete'] as num?)?.toInt() ?? 0),
     );
 
-    // medals
     final medalsData = _medals
         .where((m) => m.nameCtrl.text.trim().isNotEmpty)
         .toList()
@@ -467,7 +510,6 @@ class _AdminVentureFormScreenState
         )
         .toList();
 
-    // operator
     Map<String, dynamic>? operatorData;
     if (_opNameCtrl.text.trim().isNotEmpty) {
       operatorData = OperatorInfo(
@@ -480,10 +522,16 @@ class _AdminVentureFormScreenState
       ).toJson();
     }
 
-    split(String v) =>
-        v.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
-    splitNl(String v) =>
-        v.split('\n').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
+    List<String> split(String value) => value
+        .split(',')
+        .map((entry) => entry.trim())
+        .where((entry) => entry.isNotEmpty)
+        .toList();
+    List<String> splitNl(String value) => value
+        .split('\n')
+        .map((entry) => entry.trim())
+        .where((entry) => entry.isNotEmpty)
+        .toList();
 
     final data = <String, dynamic>{
       'title': _titleCtrl.text.trim(),
@@ -523,7 +571,7 @@ class _AdminVentureFormScreenState
       'cancellationPolicy': _cancelCtrl.text.trim(),
       'tags': split(_tagsCtrl.text),
       'languages': split(_langCtrl.text),
-      'operator': ?operatorData,
+      'operator': operatorData,
       'isFeatured': _isFeatured,
       'isAvailable': _isAvailable,
       'status': _status,
@@ -546,8 +594,8 @@ class _AdminVentureFormScreenState
               const SizedBox(width: 10),
               Text(
                 _isEditMode
-                    ? 'Venture updated successfully!'
-                    : 'Venture created! It will appear in the Ventures tab.',
+                    ? 'Venture updated successfully.'
+                    : 'Venture created successfully.',
               ),
             ],
           ),
@@ -583,10 +631,6 @@ class _AdminVentureFormScreenState
     }
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // BUILD
-  // ─────────────────────────────────────────────────────────────────────────
-
   @override
   Widget build(BuildContext context) {
     final col = context.col;
@@ -594,10 +638,26 @@ class _AdminVentureFormScreenState
       backgroundColor: col.bg,
       appBar: AppBar(
         backgroundColor: col.surface,
+        surfaceTintColor: Colors.transparent,
         leading: BackButton(color: col.textPrimary),
-        title: Text(
-          _isEditMode ? 'Edit Venture' : 'Add Venture',
-          style: TextStyle(color: col.textPrimary, fontWeight: FontWeight.w700),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Venture Editor',
+              style: TextStyle(
+                color: col.textPrimary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            Text(
+              _isEditMode
+                  ? 'Update an existing venture'
+                  : 'Create a new venture',
+              style: TextStyle(color: col.textSecondary, fontSize: 11),
+            ),
+          ],
         ),
         actions: [
           if (_isLoading)
@@ -615,9 +675,9 @@ class _AdminVentureFormScreenState
           else
             TextButton(
               onPressed: _submit,
-              child: Text(
-                _isEditMode ? 'Update' : 'Create',
-                style: const TextStyle(
+              child: const Text(
+                'Save',
+                style: TextStyle(
                   color: AppColors.primary,
                   fontWeight: FontWeight.w700,
                 ),
@@ -625,63 +685,141 @@ class _AdminVentureFormScreenState
             ),
         ],
       ),
-      body: _isLoading && _isEditMode
-          ? const Center(
-              child: CircularProgressIndicator(color: AppColors.primary),
-            )
-          : Form(
-              key: _formKey,
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
-                children: [
-                  _section('🏕️  Basic Info', _buildBasicInfo()),
-                  _section('📍  Location & Category', _buildLocation()),
-                  _section('⏱️  Timing & Booking', _buildTiming()),
-                  _sectionWithCount(
-                    '💰  Pricing Packages',
-                    _tiers.length,
-                    _buildPricingTiers(),
+      body: Stack(
+        children: [
+          Form(
+            key: _formKey,
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: col.surface,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: col.border),
                   ),
-                  _sectionWithCount(
-                    '🎒  Gear Add-ons',
-                    _addons.length,
-                    _buildAddons(),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Iconsax.note_text,
+                          color: AppColors.primary,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _isEditMode
+                                  ? 'Editing venture details'
+                                  : 'Creating a new venture',
+                              style: TextStyle(
+                                color: col.textPrimary,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 14,
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              'Add and edit now use the same editor for structure, pricing, schedule, challenges, and operator info.',
+                              style: TextStyle(
+                                color: col.textSecondary,
+                                fontSize: 12,
+                                height: 1.4,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                  _sectionWithCount(
-                    '🏪  Rental Partners',
-                    _rentals.length,
-                    _buildRentals(),
-                  ),
-                  _sectionWithCount(
-                    '🕐  Schedule Slots',
-                    _slots.length,
-                    _buildSlots(),
-                  ),
-                  _sectionWithCount(
-                    '🏆  Challenges / Dares',
-                    _challenges.length,
-                    _buildChallenges(),
-                  ),
-                  _sectionWithCount(
-                    '🥇  Achievement Medals',
-                    _medals.length,
-                    _buildMedals(),
-                  ),
-                  _section('📋  Content & Info', _buildContent()),
-                  _section('👤  Guide / Operator', _buildOperator()),
-                  _section('⚙️  Settings', _buildSettings()),
-                ],
+                ),
+                _section('Basic Info', Iconsax.note_text, _buildBasicInfo()),
+                _section(
+                  'Location & Category',
+                  Iconsax.location,
+                  _buildLocation(),
+                ),
+                _section('Timing & Booking', Iconsax.clock, _buildTiming()),
+                _sectionWithCount(
+                  'Pricing Packages',
+                  Iconsax.card,
+                  _tiers.length,
+                  _buildPricingTiers(),
+                ),
+                _sectionWithCount(
+                  'Gear Add-ons',
+                  Iconsax.bag_2,
+                  _addons.length,
+                  _buildAddons(),
+                ),
+                _sectionWithCount(
+                  'Rental Partners',
+                  Iconsax.building,
+                  _rentals.length,
+                  _buildRentals(),
+                ),
+                _sectionWithCount(
+                  'Schedule Slots',
+                  Iconsax.calendar,
+                  _slots.length,
+                  _buildSlots(),
+                ),
+                _sectionWithCount(
+                  'Challenges / Dares',
+                  Iconsax.flag,
+                  _challenges.length,
+                  _buildChallenges(),
+                ),
+                _sectionWithCount(
+                  'Achievement Medals',
+                  Iconsax.medal,
+                  _medals.length,
+                  _buildMedals(),
+                ),
+                _section(
+                  'Content & Info',
+                  Iconsax.document_text,
+                  _buildContent(),
+                ),
+                _section('Guide / Operator', Iconsax.user, _buildOperator()),
+                _section('Settings', Iconsax.setting_2, _buildSettings()),
+              ],
+            ),
+          ),
+          if (_isLoading && _isEditMode)
+            Positioned.fill(
+              child: Container(
+                color: col.bg.withValues(alpha: 0.72),
+                child: const Center(
+                  child: CircularProgressIndicator(color: AppColors.primary),
+                ),
               ),
             ),
+        ],
+      ),
     );
   }
 
-  // ─── Section chrome ────────────────────────────────────────────────────────
+  Widget _section(String heading, IconData icon, Widget child) =>
+      _sectionWithCount(heading, icon, -1, child);
 
-  Widget _section(String heading, Widget child) =>
-      _sectionWithCount(heading, -1, child);
-
-  Widget _sectionWithCount(String heading, int count, Widget child) {
+  Widget _sectionWithCount(
+    String heading,
+    IconData icon,
+    int count,
+    Widget child,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -689,12 +827,24 @@ class _AdminVentureFormScreenState
           padding: const EdgeInsets.only(top: 20, bottom: 8),
           child: Row(
             children: [
-              Text(
-                heading,
-                style: TextStyle(
-                  color: context.col.textPrimary,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 15,
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: AppColors.primary, size: 17),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  heading,
+                  style: TextStyle(
+                    color: context.col.textPrimary,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                  ),
                 ),
               ),
               if (count >= 0) ...[
@@ -815,7 +965,7 @@ class _AdminVentureFormScreenState
       _DropdownField<PackageCategory>(
         value: _category,
         items: PackageCategory.values,
-        labelOf: (c) => '${c.emoji}  ${c.label}',
+        labelOf: (c) => c.label,
         onChanged: (v) => setState(() => _category = v!),
       ),
       _gap(),
@@ -866,7 +1016,12 @@ class _AdminVentureFormScreenState
         children: PackageSeason.values.map((s) {
           final sel = _seasons.contains(s);
           return FilterChip(
-            label: Text('${s.emoji} ${s.label}'),
+            avatar: Icon(
+              _seasonIconFor(s),
+              size: 14,
+              color: sel ? AppColors.primary : context.col.textMuted,
+            ),
+            label: Text(s.label),
             selected: sel,
             onSelected: (v) => setState(() {
               if (v) {
@@ -1002,7 +1157,7 @@ class _AdminVentureFormScreenState
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  '${g.emoji} ${g.name}',
+                  g.name,
                   style: TextStyle(
                     fontSize: 12,
                     color: already ? context.col.textMuted : AppColors.primary,
@@ -1115,7 +1270,7 @@ class _AdminVentureFormScreenState
                   name: me.value.nameCtrl.text.isNotEmpty
                       ? me.value.nameCtrl.text
                       : 'Medal ${me.key + 1}',
-                  emoji: me.value.tier.emoji,
+                  icon: _medalIconFor(me.value.tier),
                 ),
               )
               .toList(),
@@ -1693,6 +1848,7 @@ class _TierCardState extends State<_TierCard> {
   Widget build(BuildContext context) {
     final e = widget.entry;
     return _ItemCard(
+      leadingIcon: Iconsax.card,
       title: e.nameCtrl.text.isEmpty
           ? 'Package ${widget.index + 1}'
           : e.nameCtrl.text,
@@ -1751,7 +1907,7 @@ class _TierCardState extends State<_TierCard> {
           const SizedBox(height: 10),
           // Includes chips
           _ChipListEditor(
-            label: '✅  Includes',
+            label: 'Included',
             items: e.includes,
             chipColor: const Color(0xFF22C55E),
             hint: 'e.g. Breakfast',
@@ -1761,7 +1917,7 @@ class _TierCardState extends State<_TierCard> {
           const SizedBox(height: 8),
           // Excludes chips
           _ChipListEditor(
-            label: '❌  Excludes',
+            label: 'Excluded',
             items: e.excludes,
             chipColor: AppColors.error,
             hint: 'e.g. Transport',
@@ -1811,9 +1967,12 @@ class _AddonCardState extends State<_AddonCard> {
   @override
   Widget build(BuildContext context) {
     final e = widget.entry;
+    final title = e.nameCtrl.text.isEmpty
+        ? 'Add-on ${widget.index + 1}'
+        : e.nameCtrl.text;
     return _ItemCard(
-      title:
-          '${e.emojiCtrl.text.isNotEmpty ? e.emojiCtrl.text : '🎒'}  ${e.nameCtrl.text.isEmpty ? 'Add-on ${widget.index + 1}' : e.nameCtrl.text}',
+      leadingIcon: _addonIconForName(e.nameCtrl.text),
+      title: title,
       badge: e.isAvailable ? null : 'Unavailable',
       badgeColor: AppColors.error,
       onRemove: widget.onRemove,
@@ -1822,12 +1981,17 @@ class _AddonCardState extends State<_AddonCard> {
         children: [
           Row(
             children: [
-              SizedBox(
-                width: 56,
-                child: _SF(
-                  ctrl: e.emojiCtrl,
-                  hint: '🎒',
-                  onChanged: () => setState(() {}),
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  _addonIconForName(e.nameCtrl.text),
+                  size: 18,
+                  color: AppColors.primary,
                 ),
               ),
               const SizedBox(width: 8),
@@ -1903,6 +2067,7 @@ class _RentalCardState extends State<_RentalCard> {
   Widget build(BuildContext context) {
     final e = widget.entry;
     return _ItemCard(
+      leadingIcon: Iconsax.building,
       title: e.nameCtrl.text.isEmpty
           ? 'Partner ${widget.index + 1}'
           : e.nameCtrl.text,
@@ -1943,7 +2108,7 @@ class _RentalCardState extends State<_RentalCard> {
           _SF(ctrl: e.logoCtrl, hint: 'Logo image URL (optional)'),
           const SizedBox(height: 10),
           _ChipListEditor(
-            label: '🎒  Items available for rent',
+            label: 'Items available for rent',
             items: e.items,
             chipColor: AppColors.primary,
             hint: 'e.g. Tent',
@@ -2026,6 +2191,7 @@ class _SlotCardState extends State<_SlotCard> {
   Widget build(BuildContext context) {
     final e = widget.entry;
     return _ItemCard(
+      leadingIcon: Iconsax.calendar,
       title: e.labelCtrl.text.isEmpty
           ? 'Slot ${widget.index + 1}'
           : e.labelCtrl.text,
@@ -2105,7 +2271,7 @@ class _SlotCardState extends State<_SlotCard> {
 class _ChallengeCard extends StatefulWidget {
   final int index;
   final _ChallengeEntry entry;
-  final List<({String id, String name, String emoji})> medalOptions;
+  final List<({String id, String name, IconData icon})> medalOptions;
   final VoidCallback onRemove;
   final VoidCallback onChanged;
   const _ChallengeCard({
@@ -2125,7 +2291,7 @@ class _ChallengeCardState extends State<_ChallengeCard> {
     final e = widget.entry;
     final col = context.col;
     final allMedals = [
-      (id: '', name: 'None', emoji: '—'),
+      (id: '', name: 'None', icon: Iconsax.slash),
       ...widget.medalOptions,
     ];
     final validLinked = allMedals.any((m) => m.id == e.linkedMedalId)
@@ -2133,9 +2299,10 @@ class _ChallengeCardState extends State<_ChallengeCard> {
         : '';
 
     return _ItemCard(
+      leadingIcon: Iconsax.flag,
       title: e.titleCtrl.text.isEmpty
-          ? '🎯 Challenge ${widget.index + 1}'
-          : '🎯 ${e.titleCtrl.text}',
+          ? 'Challenge ${widget.index + 1}'
+          : e.titleCtrl.text,
       badge: '${e.pointsCtrl.text.isNotEmpty ? e.pointsCtrl.text : '50'} pts',
       badgeColor: AppColors.primary,
       onRemove: widget.onRemove,
@@ -2219,14 +2386,23 @@ class _ChallengeCardState extends State<_ChallengeCard> {
           // Medal link
           DropdownButtonFormField<String>(
             initialValue: validLinked,
-            decoration: _sfDeco(context, '🥇  Awards Medal (optional)'),
+            decoration: _sfDeco(context, 'Award Medal (optional)'),
             items: allMedals
                 .map(
                   (m) => DropdownMenuItem(
                     value: m.id,
-                    child: Text(
-                      '${m.emoji}  ${m.name}',
-                      style: const TextStyle(fontSize: 12),
+                    child: Row(
+                      children: [
+                        Icon(m.icon, size: 15, color: AppColors.primary),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            m.name,
+                            style: const TextStyle(fontSize: 12),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 )
@@ -2316,8 +2492,11 @@ class _MedalCardState extends State<_MedalCard> {
     final e = widget.entry;
     final tierColor = Color(e.tier.colorHex);
     return _ItemCard(
-      title:
-          '${e.tier.emoji}  ${e.nameCtrl.text.isEmpty ? 'Medal ${widget.index + 1}' : e.nameCtrl.text}',
+      leadingIcon: _medalIconFor(e.tier),
+      leadingIconColor: tierColor,
+      title: e.nameCtrl.text.isEmpty
+          ? 'Medal ${widget.index + 1}'
+          : e.nameCtrl.text,
       badge: e.tier.label,
       badgeColor: tierColor,
       onRemove: widget.onRemove,
@@ -2343,13 +2522,23 @@ class _MedalCardState extends State<_MedalCard> {
                       .map(
                         (t) => DropdownMenuItem(
                           value: t,
-                          child: Text(
-                            '${t.emoji} ${t.label}',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Color(t.colorHex),
-                              fontWeight: FontWeight.w600,
-                            ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                _medalIconFor(t),
+                                size: 15,
+                                color: Color(t.colorHex),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                t.label,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Color(t.colorHex),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       )
@@ -2388,7 +2577,7 @@ class _MedalCardState extends State<_MedalCard> {
           ),
           const SizedBox(height: 8),
           _miniSwitch(
-            '🔒  Secret (hidden until earned)',
+            'Hidden until earned',
             e.isSecret,
             (v) => setState(() => e.isSecret = v),
           ),
@@ -2432,7 +2621,7 @@ class _BadgeImagePicker extends StatelessWidget {
           color: col.surfaceElevated,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: hasAny ? col.primary.withOpacity(0.5) : col.border,
+            color: hasAny ? col.primary.withValues(alpha: 0.5) : col.border,
           ),
         ),
         clipBehavior: Clip.antiAlias,
@@ -2451,7 +2640,8 @@ class _BadgeImagePicker extends StatelessWidget {
                   Image.file(
                     File(pickedFile!.path),
                     fit: BoxFit.cover,
-                    errorBuilder: (_, _, _) => _placeholder(col),
+                    errorBuilder: (context, error, stackTrace) =>
+                        _placeholder(col),
                   ),
                   Positioned(top: 2, right: 2, child: _clearBtn(col)),
                 ],
@@ -2463,7 +2653,8 @@ class _BadgeImagePicker extends StatelessWidget {
                   Image.network(
                     entry.imageUrlCtrl.text.trim(),
                     fit: BoxFit.cover,
-                    errorBuilder: (_, _, _) => _placeholder(col),
+                    errorBuilder: (context, error, stackTrace) =>
+                        _placeholder(col),
                   ),
                   Positioned(top: 2, right: 2, child: _clearBtn(col)),
                 ],
@@ -2476,11 +2667,7 @@ class _BadgeImagePicker extends StatelessWidget {
   Widget _placeholder(AppColorScheme col) => Row(
     mainAxisAlignment: MainAxisAlignment.center,
     children: [
-      Icon(
-        Icons.add_photo_alternate_outlined,
-        size: 18,
-        color: col.textSecondary,
-      ),
+      Icon(Iconsax.image, size: 18, color: col.textSecondary),
       const SizedBox(width: 4),
       Text('Badge', style: TextStyle(fontSize: 12, color: col.textSecondary)),
     ],
@@ -2509,6 +2696,8 @@ class _ItemCard extends StatelessWidget {
   final String title;
   final String? badge;
   final Color? badgeColor;
+  final IconData? leadingIcon;
+  final Color? leadingIconColor;
   final Widget child;
   final VoidCallback onRemove;
 
@@ -2518,6 +2707,8 @@ class _ItemCard extends StatelessWidget {
     required this.onRemove,
     this.badge,
     this.badgeColor,
+    this.leadingIcon,
+    this.leadingIconColor,
   });
 
   @override
@@ -2536,6 +2727,24 @@ class _ItemCard extends StatelessWidget {
         children: [
           Row(
             children: [
+              if (leadingIcon != null) ...[
+                Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: (leadingIconColor ?? AppColors.primary).withValues(
+                      alpha: 0.12,
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    leadingIcon,
+                    size: 15,
+                    color: leadingIconColor ?? AppColors.primary,
+                  ),
+                ),
+                const SizedBox(width: 8),
+              ],
               Expanded(
                 child: Text(
                   title,
@@ -2573,8 +2782,8 @@ class _ItemCard extends StatelessWidget {
               const SizedBox(width: 8),
               GestureDetector(
                 onTap: onRemove,
-                child: Icon(
-                  Icons.delete_outline,
+                child: const Icon(
+                  Iconsax.trash,
                   color: AppColors.error,
                   size: 18,
                 ),
@@ -2617,7 +2826,7 @@ class _TimeTile extends StatelessWidget {
       child: Row(
         children: [
           Icon(
-            Icons.access_time_outlined,
+            Iconsax.clock,
             size: 15,
             color: isSet ? AppColors.primary : col.textMuted,
           ),
@@ -2731,7 +2940,7 @@ class _ChipListEditorState extends State<_ChipListEditor> {
                 controller: _ctrl,
                 style: TextStyle(color: col.textPrimary, fontSize: 12),
                 decoration: _sfDeco(context, widget.hint),
-                onFieldSubmitted: (_) => _add(),
+                onFieldSubmitted: (value) => _add(),
               ),
             ),
             const SizedBox(width: 6),
@@ -2743,7 +2952,11 @@ class _ChipListEditorState extends State<_ChipListEditor> {
                   color: widget.chipColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(6),
                 ),
-                child: Icon(Icons.add, color: widget.chipColor, size: 18),
+                child: Icon(
+                  Iconsax.add_circle,
+                  color: widget.chipColor,
+                  size: 18,
+                ),
               ),
             ),
           ],
@@ -2790,7 +3003,7 @@ class _SF extends StatelessWidget {
       controller: ctrl,
       maxLines: maxLines,
       keyboardType: keyboardType,
-      onChanged: onChanged != null ? (_) => onChanged!() : null,
+      onChanged: onChanged != null ? (value) => onChanged!() : null,
       style: TextStyle(color: context.col.textPrimary, fontSize: 13),
       decoration: _sfDeco(context, hint).copyWith(prefixText: prefixText),
     );

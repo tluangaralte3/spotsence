@@ -322,6 +322,15 @@ service cloud.firestore {
       allow write: if isSuperAdmin();
     }
 
+    // ── Visitor Guides ───────────────────────────────────────────────────────
+
+    match /visitor_guides/{guideId} {
+      // Guides are user-facing content, so reads are public.
+      allow read: if true;
+      // Only super admins can create, edit, publish, or delete guides.
+      allow write: if isSuperAdmin();
+    }
+
     // ── App Config (used for section visibility flags etc.) ──────────────────
 
     match /app_config/{docId} {
