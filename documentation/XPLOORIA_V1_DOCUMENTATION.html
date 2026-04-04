@@ -1,0 +1,3294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Xplooria V1 — Product Documentation</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+  :root {
+    --primary: #007A55;
+    --secondary: #4B44CC;
+    --accent: #B37800;
+    --bg: #ffffff;
+    --surface: #f5f7fa;
+    --elevated: #eef1f6;
+    --border: #d0d7e2;
+    --text: #111827;
+    --text2: #4b5563;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.7;
+    padding: 0;
+  }
+
+  .cover {
+    background: linear-gradient(135deg, #f0faf6 0%, #eef3ff 50%, #f0faf6 100%);
+    padding: 80px 60px 60px;
+    border-bottom: 3px solid var(--primary);
+    text-align: center;
+    page-break-after: always;
+  }
+
+  .cover-badge {
+    display: inline-block;
+    background: var(--primary);
+    color: #fff;
+    font-weight: 800;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 6px 18px;
+    border-radius: 20px;
+    margin-bottom: 32px;
+  }
+
+  .cover h1 {
+    font-size: 48px;
+    font-weight: 900;
+    letter-spacing: -1px;
+    line-height: 1.1;
+    margin-bottom: 8px;
+    color: #111827;
+  }
+
+  .cover h1 span { color: var(--primary); }
+
+  .cover-sub {
+    font-size: 18px;
+    color: var(--text2);
+    margin-bottom: 40px;
+    font-weight: 500;
+  }
+
+  .cover-meta {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  .cover-meta-item {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+  }
+
+  .cover-meta-item .label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+
+  .cover-meta-item .value {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .wrapper {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 48px 48px 80px;
+  }
+
+  h1, h2, h3, h4 {
+    color: #111827;
+    line-height: 1.3;
+    font-weight: 700;
+  }
+
+  h1 {
+    font-size: 32px;
+    margin: 48px 0 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--primary);
+    color: var(--primary);
+  }
+
+  h2 {
+    font-size: 22px;
+    margin: 36px 0 12px;
+    color: #1a2540;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  h3 {
+    font-size: 17px;
+    margin: 28px 0 10px;
+    color: #005c40;
+  }
+
+  h4 {
+    font-size: 14px;
+    margin: 20px 0 8px;
+    color: var(--text2);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  p {
+    margin: 0 0 12px;
+    color: var(--text);
+  }
+
+  a { color: var(--primary); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  ul, ol {
+    padding-left: 24px;
+    margin-bottom: 12px;
+  }
+
+  li {
+    margin-bottom: 4px;
+    color: var(--text);
+  }
+
+  strong { color: #000; font-weight: 700; }
+  em { color: var(--primary); font-style: italic; }
+
+  blockquote {
+    border-left: 4px solid var(--primary);
+    background: #f0faf6;
+    padding: 16px 20px;
+    border-radius: 0 8px 8px 0;
+    margin: 20px 0;
+    color: var(--text2);
+    font-size: 15px;
+  }
+
+  blockquote p { color: var(--text2); margin: 0; }
+
+  code {
+    background: #eef1f6;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-family: 'SF Mono', 'Fira Code', 'Menlo', monospace;
+    font-size: 12px;
+    color: #005c40;
+  }
+
+  pre {
+    background: #f4f6fa;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    overflow-x: auto;
+    margin: 16px 0;
+  }
+
+  pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    color: #2d3748;
+    font-size: 12px;
+    line-height: 1.6;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 13px;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  thead th {
+    background: #eef3f0;
+    color: #005c40;
+    font-weight: 700;
+    text-align: left;
+    padding: 12px 14px;
+    border-bottom: 2px solid var(--border);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+  }
+
+  tbody tr:nth-child(even) {
+    background: #f9fbfd;
+  }
+
+  tbody td {
+    padding: 10px 14px;
+    color: var(--text);
+    vertical-align: top;
+  }
+
+  hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 32px 0;
+  }
+
+  .section-break {
+    page-break-before: always;
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Cover Page ─────────────────────────── -->
+<div class="cover">
+  <div class="cover-badge">Version 1 · April 2026</div>
+  <h1><span>XPLOORIA</span></h1>
+  <div class="cover-sub">Gamified Tourism Discovery & Community Platform<br/>Northeast India · iOS & Android</div>
+
+  <div class="cover-meta">
+    <div class="cover-meta-item">
+      <div class="label">Platform</div>
+      <div class="value">Flutter (iOS + Android)</div>
+    </div>
+    <div class="cover-meta-item">
+      <div class="label">Backend</div>
+      <div class="value">Firebase (spotmizoram)</div>
+    </div>
+    <div class="cover-meta-item">
+      <div class="label">Company</div>
+      <div class="value">HillsTech</div>
+    </div>
+    <div class="cover-meta-item">
+      <div class="label">Features</div>
+      <div class="value">61+ Screens · 50+ Routes</div>
+    </div>
+    <div class="cover-meta-item">
+      <div class="label">State Management</div>
+      <div class="value">Riverpod 3</div>
+    </div>
+    <div class="cover-meta-item">
+      <div class="label">Version</div>
+      <div class="value">1.0 Release</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Main Content ────────────────────────── -->
+<div class="wrapper">
+<h1 id="xplooria-version-1-product-documentation">XPLOORIA — Version 1 Product Documentation</h1>
+<blockquote>
+<p><strong>Gamified Tourism Discovery &amp; Community Platform for Northeast India</strong></p>
+<p>Platform: iOS &amp; Android (Flutter)<br />
+Backend: Firebase (Firestore, Auth, Storage, Analytics)<br />
+Version: 1.0<br />
+Build Date: April 2026<br />
+Firebase Project: <code>spotmizoram</code><br />
+Bundle ID (iOS): <code>com.hillstech.spotmizoram</code><br />
+Company: HillsTech  </p>
+</blockquote>
+<hr />
+<h2 id="table-of-contents">Table of Contents</h2>
+<ol>
+<li><a href="#1-executive-summary">Executive Summary</a></li>
+<li><a href="#2-product-vision--mission">Product Vision &amp; Mission</a></li>
+<li><a href="#3-core-problems-solved">Core Problems Solved</a></li>
+<li><a href="#4-platform-architecture">Platform Architecture</a></li>
+<li><a href="#5-technology-stack">Technology Stack</a></li>
+<li><a href="#6-user-roles-functions--duties">User Roles, Functions &amp; Duties</a></li>
+<li><a href="#7-feature-deep-dive-guest--public-user">Feature Deep-Dive: Guest / Public User</a></li>
+<li><a href="#8-feature-deep-dive-registered-user">Feature Deep-Dive: Registered User</a></li>
+<li><a href="#9-feature-deep-dive-administrator-super-admin">Feature Deep-Dive: Administrator (Super Admin)</a></li>
+<li><a href="#10-gamification-system">Gamification System</a></li>
+<li><a href="#11-data-models--firestore-collections">Data Models &amp; Firestore Collections</a></li>
+<li><a href="#12-security-model">Security Model</a></li>
+<li><a href="#13-navigation--routing">Navigation &amp; Routing</a></li>
+<li><a href="#14-design-system--theme">Design System &amp; Theme</a></li>
+<li><a href="#15-go-to-market-strategy">Go-to-Market Strategy</a></li>
+<li><a href="#16-innovation--vision">Innovation &amp; Vision</a></li>
+<li><a href="#17-validation--credibility">Validation &amp; Credibility</a></li>
+<li><a href="#18-version-1-feature-completeness-matrix">Version 1 Feature Completeness Matrix</a></li>
+<li><a href="#19-appendix-a-complete-route-map">Appendix A: Complete Route Map</a></li>
+<li><a href="#20-appendix-b-dependencies-reference">Appendix B: Dependencies Reference</a></li>
+</ol>
+<hr />
+<h2 id="1-executive-summary">1. Executive Summary</h2>
+<p><strong>Xplooria</strong> is a gamified, community-driven tourism discovery mobile application purpose-built for Northeast India, starting with Mizoram. It solves the critical gap between the extraordinary natural and cultural richness of Northeast India and its near-total absence from mainstream digital travel platforms.</p>
+<p>Version 1 ships a fully functioning dual-facing platform:</p>
+<ul>
+<li><strong>Consumer app</strong> — Discover places, plan trips, earn XP, build social travel lists, compete on leaderboards, and book curated tour packages.</li>
+<li><strong>Admin panel</strong> — Embedded within the same app binary; accessible to super-admin accounts only; provides full content management, analytics, moderation, and booking operations.</li>
+</ul>
+<p>The platform is engineered on Flutter + Firebase, enabling a single codebase to target both iOS and Android with real-time data, atomic gamification transactions, and role-based access control.</p>
+<hr />
+<h2 id="2-product-vision-mission">2. Product Vision &amp; Mission</h2>
+<h3 id="vision">Vision</h3>
+<blockquote>
+<p><em>To be the definitive digital guide and social layer for tourism across all eight states of Northeast India — making the region's hidden gems discoverable, bookable, and shareable by the world.</em></p>
+</blockquote>
+<h3 id="mission">Mission</h3>
+<ul>
+<li>Make Mizoram's landscapes, culture, and cuisine digitally discoverable and accessible to domestic and international travellers.</li>
+<li>Incentivise locals and travellers to contribute, review, and share content through a fair, transparent XP-and-badge reward system.</li>
+<li>Provide local tour operators a no-cost digital storefront to list, promote, and take bookings for their packages.</li>
+<li>Build a self-sustaining community of travellers and content contributors whose engagement continuously enriches the platform.</li>
+<li>Expand across all eight Northeast Indian states as version milestones are reached.</li>
+</ul>
+<h3 id="tagline-options-tested">Tagline Options Tested</h3>
+<ul>
+<li><em>"Discover the East"</em></li>
+<li><em>"Where every journey earns a badge"</em></li>
+<li><em>"Northeast India's Travel Layer"</em></li>
+</ul>
+<hr />
+<h2 id="3-core-problems-solved">3. Core Problems Solved</h2>
+<table>
+<thead>
+<tr>
+<th>Problem</th>
+<th>How Xplooria Solves It</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Northeast India is invisible on global travel apps</td>
+<td>Dedicated, curated, locally-sourced database of 8+ place categories</td>
+</tr>
+<tr>
+<td>Travellers have no reliable local knowledge source</td>
+<td>Community reviews, photos, and contributions from verified locals</td>
+</tr>
+<tr>
+<td>Tour operators have zero digital presence</td>
+<td>Free venture/package listing with booking management</td>
+</tr>
+<tr>
+<td>Passive content consumers give no feedback</td>
+<td>Gamification — every review, photo, and contribution earns XP and badges</td>
+</tr>
+<tr>
+<td>No social layer for group travel planning</td>
+<td>Bucket lists (collaborative rooms), Dares (group challenges), Dilemmas (A/B travel polls)</td>
+</tr>
+<tr>
+<td>Language/knowledge barriers for first-time visitors</td>
+<td>State-by-state Visitor Guides with Dos/Don'ts, Quick Facts, local etiquette</td>
+</tr>
+<tr>
+<td>No single place to find events</td>
+<td>Events section with calendar view, ticketing metadata, and filtering</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="4-platform-architecture">4. Platform Architecture</h2>
+<h3 id="41-layered-architecture-overview">4.1 Layered Architecture Overview</h3>
+<pre><code>┌──────────────────────────────────────────────────────────────────┐
+│  PRESENTATION LAYER (Flutter Widgets &amp; Screens)                  │
+│  61+ Screen files | 3 Widget libraries | Material 3 Dark-first   │
+├──────────────────────────────────────────────────────────────────┤
+│  STATE MANAGEMENT LAYER (Riverpod 3)                             │
+│  14 Controllers | AsyncNotifiers | StreamProviders               │
+├──────────────────────────────────────────────────────────────────┤
+│  SERVICE LAYER (Firestore + HTTP)                                │
+│  30+ Firestore services | Dio HTTP client | Firebase Storage     │
+├──────────────────────────────────────────────────────────────────┤
+│  DATA LAYER (Freezed Models)                                     │
+│  13 Model files | Immutable classes | JSON serialization         │
+├──────────────────────────────────────────────────────────────────┤
+│  BACKEND (Firebase Cloud)                                        │
+│  Firestore 30+ collections | Auth (custom claims) | Storage      │
+│  Analytics | Real-time Database (LatLng lookups)                 │
+└──────────────────────────────────────────────────────────────────┘
+</code></pre>
+<h3 id="42-state-management-pattern">4.2 State Management Pattern</h3>
+<p>All state is managed by <strong>Riverpod 3</strong> using:</p>
+<ul>
+<li><strong><code>AsyncNotifier</code></strong> — for async CRUD operations (auth, gamification, listing management)</li>
+<li><strong><code>Notifier</code></strong> — for synchronous local state (pagination, dare list, bucket list)</li>
+<li><strong><code>StreamProvider</code></strong> — for real-time Firestore subscriptions (community posts, bookings, banners)</li>
+<li><strong><code>FutureProvider</code></strong> — for one-time data fetches with <code>.autoDispose</code> for admin collections</li>
+</ul>
+<h3 id="43-data-flow-gamification-example">4.3 Data Flow (Gamification Example)</h3>
+<pre><code>User submits a review
+       ↓
+place_detail_screen → GamificationController.award(XpAction.writeReview)
+       ↓
+GamificationService.award() — Firestore TRANSACTION:
+  ① Read users/{uid}
+  ② Parse StreakInfo (streak, multiplier 1.0–2.0)
+  ③ Calculate xpAwarded = baseXp(15) × multiplier
+  ④ Evaluate 22 badges → collect newBadgeIds[]
+  ⑤ Recalculate level (1–10)
+  ⑥ UPDATE users/{uid} (points, level, badges, streak, lastLogin)
+  ⑦ WRITE xpEvents sub-doc (audit log)
+       ↓
+GamificationResult pushed to broadcast stream
+       ↓
+XpToastOverlay shows animated &quot;+15 XP&quot; toast (3.5 seconds)
+       ↓
+authController.refreshProfile() → all profile UI rebuilds
+</code></pre>
+<h3 id="44-router-architecture">4.4 Router Architecture</h3>
+<p>Navigation is handled by <strong>GoRouter 17</strong> with a <code>_RouterNotifier</code> (singleton <code>ChangeNotifier</code>) that:</p>
+<ol>
+<li>Caches the latest auth and admin state to avoid GoRouter recreation on every provider change.</li>
+<li>Implements redirect guards for three tiers: unauthenticated, authenticated, and super-admin.</li>
+<li>Uses <code>HeroControllerScope</code> to isolate admin navigation animations from the main shell.</li>
+</ol>
+<hr />
+<h2 id="5-technology-stack">5. Technology Stack</h2>
+<h3 id="51-core-framework">5.1 Core Framework</h3>
+<table>
+<thead>
+<tr>
+<th>Package</th>
+<th>Version</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Flutter SDK</td>
+<td>≥ 3.10.8</td>
+<td>Cross-platform mobile UI</td>
+</tr>
+<tr>
+<td>Dart SDK</td>
+<td>≥ 3.0</td>
+<td>Language</td>
+</tr>
+<tr>
+<td>flutter_riverpod</td>
+<td>^3.1.0</td>
+<td>Reactive state management</td>
+</tr>
+<tr>
+<td>go_router</td>
+<td>^17.1.0</td>
+<td>Type-safe declarative navigation</td>
+</tr>
+</tbody>
+</table>
+<h3 id="52-firebase-services">5.2 Firebase Services</h3>
+<table>
+<thead>
+<tr>
+<th>Service</th>
+<th>Usage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Firebase Auth</td>
+<td>Email/password authentication; custom claims for admin role</td>
+</tr>
+<tr>
+<td>Cloud Firestore</td>
+<td>Primary database; 30+ collections; real-time streams</td>
+</tr>
+<tr>
+<td>Firebase Storage</td>
+<td>Image uploads (profile, listing, dare, guide)</td>
+</tr>
+<tr>
+<td>Firebase Analytics</td>
+<td>User event tracking</td>
+</tr>
+<tr>
+<td>Firebase Realtime DB</td>
+<td>Geo/LatLng data lookup</td>
+</tr>
+</tbody>
+</table>
+<h3 id="53-ui-ux-libraries">5.3 UI &amp; UX Libraries</h3>
+<table>
+<thead>
+<tr>
+<th>Package</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>iconsax</td>
+<td>Iconsax icon set (100+ icons used throughout)</td>
+</tr>
+<tr>
+<td>google_fonts (Inter)</td>
+<td>Typography</td>
+</tr>
+<tr>
+<td>cached_network_image</td>
+<td>Lazy image loading with memory/disk cache</td>
+</tr>
+<tr>
+<td>carousel_slider</td>
+<td>Home banner carousel, onboarding</td>
+</tr>
+<tr>
+<td>smooth_page_indicator</td>
+<td>Carousel dot indicators</td>
+</tr>
+<tr>
+<td>shimmer</td>
+<td>Loading skeleton states</td>
+</tr>
+<tr>
+<td>lottie</td>
+<td>JSON animation (achievement, empty states)</td>
+</tr>
+<tr>
+<td>flutter_animate</td>
+<td>Micro-animations</td>
+</tr>
+<tr>
+<td>fl_chart</td>
+<td>Admin analytics charts</td>
+</tr>
+<tr>
+<td>confetti</td>
+<td>Achievement celebration animations</td>
+</tr>
+<tr>
+<td>percent_indicator</td>
+<td>XP progress bars</td>
+</tr>
+</tbody>
+</table>
+<h3 id="54-maps-location">5.4 Maps &amp; Location</h3>
+<table>
+<thead>
+<tr>
+<th>Package</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>flutter_map</td>
+<td>OpenStreetMap rendering (Community map tab)</td>
+</tr>
+<tr>
+<td>latlong2</td>
+<td>Coordinate model (LatLng)</td>
+</tr>
+<tr>
+<td>geolocator</td>
+<td>GPS positioning</td>
+</tr>
+<tr>
+<td>geocoding</td>
+<td>Address ↔ GPS conversion</td>
+</tr>
+</tbody>
+</table>
+<h3 id="55-media-forms">5.5 Media &amp; Forms</h3>
+<table>
+<thead>
+<tr>
+<th>Package</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>image_picker</td>
+<td>Camera / gallery photo selection</td>
+</tr>
+<tr>
+<td>image_cropper</td>
+<td>Pre-upload image cropping</td>
+</tr>
+<tr>
+<td>flutter_form_builder</td>
+<td>Form field management</td>
+</tr>
+<tr>
+<td>form_builder_validators</td>
+<td>Built-in validation rules</td>
+</tr>
+<tr>
+<td>file_picker</td>
+<td>CSV file selection for admin bulk upload</td>
+</tr>
+<tr>
+<td>csv</td>
+<td>CSV parsing (admin batch import)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="56-networking-storage">5.6 Networking &amp; Storage</h3>
+<table>
+<thead>
+<tr>
+<th>Package</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>dio</td>
+<td>HTTP client with interceptors</td>
+</tr>
+<tr>
+<td>flutter_secure_storage</td>
+<td>Encrypted local credential storage</td>
+</tr>
+<tr>
+<td>shared_preferences</td>
+<td>Key-value settings (theme mode, etc.)</td>
+</tr>
+<tr>
+<td>path_provider</td>
+<td>File system path resolution</td>
+</tr>
+</tbody>
+</table>
+<h3 id="57-utilities">5.7 Utilities</h3>
+<table>
+<thead>
+<tr>
+<th>Package</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>intl</td>
+<td>Date/time formatting</td>
+</tr>
+<tr>
+<td>timeago</td>
+<td>Relative timestamps ("2 hours ago")</td>
+</tr>
+<tr>
+<td>uuid</td>
+<td>Unique ID generation</td>
+</tr>
+<tr>
+<td>url_launcher</td>
+<td>External URL and deep-link opening</td>
+</tr>
+<tr>
+<td>share_plus</td>
+<td>System share sheet</td>
+</tr>
+<tr>
+<td>connectivity_plus</td>
+<td>Network reachability detection</td>
+</tr>
+<tr>
+<td>dartz</td>
+<td>Functional Either/Option error handling</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="6-user-roles-functions-duties">6. User Roles, Functions &amp; Duties</h2>
+<p>Xplooria has three distinct user roles, each with different capabilities and access levels.</p>
+<hr />
+<h3 id="61-guest-unauthenticated-user">6.1 Guest / Unauthenticated User</h3>
+<p><strong>Who they are</strong>: Any visitor who opens the app without logging in.</p>
+<p><strong>What they can do:</strong><br />
+- Browse all publicly listed tourist spots, restaurants, cafes, hotels, homestays, adventure spots, shopping areas, and events.<br />
+- View spot details (images, descriptions, opening hours, entry fees, facilities, reviews).<br />
+- Browse Tour Ventures (packages) and view details.<br />
+- View the Community map with all pins.<br />
+- Read reviews and community posts.<br />
+- Browse the State Visitor Guides.<br />
+- View the Leaderboard.</p>
+<p><strong>What they cannot do:</strong><br />
+- Write reviews or upload photos.<br />
+- Create community posts, bucket lists, dilemmas, or dares.<br />
+- Book ventures.<br />
+- Earn XP or badges.<br />
+- Access the Admin panel.</p>
+<p><strong>Impact</strong>: Guests represent the top of the funnel. The richness of public content is the primary conversion lever to registration.</p>
+<hr />
+<h3 id="62-registered-user">6.2 Registered User</h3>
+<p><strong>Who they are</strong>: Any user who has created an account (email + password).</p>
+<p><strong>Permissions</strong>: All guest permissions PLUS the following active participation capabilities.</p>
+<p><strong>Core Duties &amp; Capabilities:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Area</th>
+<th>Capability</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Profile</td>
+<td>Create and edit profile (name, bio, avatar, location)</td>
+</tr>
+<tr>
+<td>Reviews</td>
+<td>Write a review and rate (1–5 stars) any spot or listing (one per place per user)</td>
+</tr>
+<tr>
+<td>Photos</td>
+<td>Upload community photos to any listing</td>
+</tr>
+<tr>
+<td>Content Contribution</td>
+<td>Submit new spots/places for admin review and approval</td>
+</tr>
+<tr>
+<td>Bookmarks</td>
+<td>Save places to personal bookmarks</td>
+</tr>
+<tr>
+<td>Events</td>
+<td>View and participate in events</td>
+</tr>
+<tr>
+<td>Booking</td>
+<td>Book tour ventures with selected packages and add-ons</td>
+</tr>
+<tr>
+<td>Gamification</td>
+<td>Earn XP, level up (1→10), unlock 22 badges, appear on leaderboard</td>
+</tr>
+<tr>
+<td>Streaks</td>
+<td>Maintain daily login streaks for an XP multiplier bonus</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Community Features:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Capability</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Community Feed</td>
+<td>Create posts, tips, questions, and photo reports</td>
+</tr>
+<tr>
+<td>Dilemmas</td>
+<td>Create and vote on A/B travel choice polls</td>
+</tr>
+<tr>
+<td>Bucket Lists (Rooms)</td>
+<td>Create collaborative destination lists; invite members; tick off items as a group</td>
+</tr>
+<tr>
+<td>Dares</td>
+<td>Create and join group travel challenges with photo-proof submission</td>
+</tr>
+<tr>
+<td>Dare Rewards</td>
+<td>Scratch-off reward cards earned by completing dare milestones</td>
+</tr>
+<tr>
+<td>Notifications</td>
+<td>Receive real-time push/in-app alerts for dare join requests, approvals, and submissions</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Venture Booking Workflow:</strong><br />
+1. Browse ventures on Home screen or Ventures tab.<br />
+2. Select a package tier and optionally add add-ons (packed lunch, guide, transport, etc.).<br />
+3. Review booking summary (total cost breakdown, operator details).<br />
+4. Submit booking → status becomes <code>pending</code>.<br />
+5. Track booking status in "My Bookings" screen.<br />
+6. Post-trip: submit feedback and rating.</p>
+<hr />
+<h3 id="63-super-administrator">6.3 Super Administrator</h3>
+<p><strong>Who they are</strong>: Accounts whose Firebase Auth custom claims include <code>{ "superAdmin": true }</code>. Set via the Node.js admin script (<code>scripts/set_admin_claim.js</code>).</p>
+<p><strong>Access</strong>: Separate <code>/admin</code> navigation shell within the same app binary. Inaccessible to regular users. The GoRouter redirect enforces this at every navigation attempt.</p>
+<p><strong>Core Admin Duties &amp; Capabilities:</strong></p>
+<h4 id="content-management">Content Management</h4>
+<table>
+<thead>
+<tr>
+<th>Duty</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Manage Tourist Spots</td>
+<td>Create, edit, delete spots; manage images, categories, facilities, entry fees</td>
+</tr>
+<tr>
+<td>Manage Restaurants</td>
+<td>Full CRUD for restaurants; price range, cuisine types, delivery flags</td>
+</tr>
+<tr>
+<td>Manage Accommodations</td>
+<td>Manage hotels + homestays in a merged view</td>
+</tr>
+<tr>
+<td>Manage Cafes</td>
+<td>Full CRUD for cafes; specialties, opening hours</td>
+</tr>
+<tr>
+<td>Manage Adventure Spots</td>
+<td>Create/edit adventure categories</td>
+</tr>
+<tr>
+<td>Manage Shopping Areas</td>
+<td>Create/edit shopping venues</td>
+</tr>
+<tr>
+<td>Manage Events</td>
+<td>Create/edit/delete events with ticketing metadata</td>
+</tr>
+<tr>
+<td>Manage Ventures</td>
+<td>Full CRUD for tour packages; set operator info, highlights, itinerary challenges, add-ons</td>
+</tr>
+<tr>
+<td>Bulk CSV Upload</td>
+<td>Import multiple listings at once via CSV file (per collection)</td>
+</tr>
+<tr>
+<td>Sort &amp; Filter</td>
+<td>Sort by name or newest; toggle grid/list view</td>
+</tr>
+</tbody>
+</table>
+<h4 id="banner-management">Banner Management</h4>
+<table>
+<thead>
+<tr>
+<th>Duty</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Create/Edit Banners</td>
+<td>Title, subtitle, image URL, link type (none / external URL / internal route), order</td>
+</tr>
+<tr>
+<td>Activate/Deactivate Banners</td>
+<td>Toggle <code>isActive</code> per banner</td>
+</tr>
+<tr>
+<td>Toggle Section Visibility</td>
+<td>Global on/off for the entire home banner carousel via <code>app_config/home_banners</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="user-management">User Management</h4>
+<table>
+<thead>
+<tr>
+<th>Duty</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>View All Users</td>
+<td>See full list with XP, level, registration date</td>
+</tr>
+<tr>
+<td>Assign/Revoke Roles</td>
+<td>Elevate users to admins or revoke access</td>
+</tr>
+<tr>
+<td>View User Activity</td>
+<td>Review XP history, contributions, bookings, dare participation</td>
+</tr>
+</tbody>
+</table>
+<h4 id="venture-booking-management">Venture / Booking Management</h4>
+<table>
+<thead>
+<tr>
+<th>Duty</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>View All Bookings</td>
+<td>See every booking request across all ventures</td>
+</tr>
+<tr>
+<td>Update Booking Status</td>
+<td>Confirm, cancel, or mark as completed</td>
+</tr>
+<tr>
+<td>Add Admin Notes</td>
+<td>Leave internal notes on bookings</td>
+</tr>
+<tr>
+<td>View Feedback</td>
+<td>Read post-trip user feedback per venture</td>
+</tr>
+<tr>
+<td>Packages Tab</td>
+<td>See all venture packages and their registration counts</td>
+</tr>
+</tbody>
+</table>
+<h4 id="analytics-dashboard">Analytics Dashboard</h4>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Total Users</td>
+<td>All registered users count</td>
+</tr>
+<tr>
+<td>New Users Today / This Week</td>
+<td>New registrations trend</td>
+</tr>
+<tr>
+<td>Total Spots &amp; Listings</td>
+<td>Per-collection counts</td>
+</tr>
+<tr>
+<td>Total Events &amp; Ventures</td>
+<td>Content inventory</td>
+</tr>
+<tr>
+<td>Community Activity</td>
+<td>Posts, reviews, dilemma votes</td>
+</tr>
+<tr>
+<td>Booking Statistics</td>
+<td>Pending, confirmed, completed</td>
+</tr>
+<tr>
+<td>XP Awarded</td>
+<td>Total platform gamification output</td>
+</tr>
+<tr>
+<td>Charts</td>
+<td>Daily active usage trends, submissions by category (via fl_chart)</td>
+</tr>
+</tbody>
+</table>
+<h4 id="visitor-guide-management">Visitor Guide Management</h4>
+<table>
+<thead>
+<tr>
+<th>Duty</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Create/Edit State Guides</td>
+<td>Per-state guide with tagline, about, quick facts, Dos/Don'ts</td>
+</tr>
+<tr>
+<td>Publish/Unpublish</td>
+<td>Toggle guide visibility per state</td>
+</tr>
+<tr>
+<td>Upload Banner Images</td>
+<td>State-specific guide hero images</td>
+</tr>
+</tbody>
+</table>
+<h4 id="moderation">Moderation</h4>
+<table>
+<thead>
+<tr>
+<th>Duty</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Review Contributions</td>
+<td>Approve or reject user-submitted spots</td>
+</tr>
+<tr>
+<td>Flag Content</td>
+<td>Remove posts, reviews, or photos violating guidelines</td>
+</tr>
+<tr>
+<td>Bulk Approve/Reject</td>
+<td>Process contribution queues efficiently</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="7-feature-deep-dive-guest-public-user">7. Feature Deep-Dive: Guest / Public User</h2>
+<h3 id="71-home-screen">7.1 Home Screen</h3>
+<p>The Home screen is the primary entry point. It is built as a <code>CustomScrollView</code> with <code>SliverAppBar</code> (floating) and multiple stacked sections:</p>
+<p><strong>Sections (top to bottom):</strong></p>
+<ol>
+<li><strong>App Bar</strong> — Xplooria logo and notification bell (dare requests badge if signed in).</li>
+<li><strong>State Selector</strong> — Subtitle "Exploring [Mizoram]" is tappable; opens a bottom sheet picker for 8 NE states (only Mizoram active in V1; others show "Coming Soon").</li>
+<li><strong>Home Banner Carousel</strong> — Firestore-driven promotional banners with links (internal routes or external URLs). Hidden when admin disables the section. Smooth dot indicators.</li>
+<li><strong>Browse Listings Grid</strong> — 4-column grid of category shortcuts: Tourist Spots, Restaurants, Stay, Cafes, Adventure, Shopping, Events, Community. Each taps to the respective Listings tab.</li>
+<li><strong>Visitor Guide Card</strong> — Tappable state guide card for the selected NE state; opens full guide.</li>
+<li><strong>Featured Spots Section</strong> — Horizontally scrollable cards with category filter tabs (All, Mountains, Waterfalls, Cultural Sites, Viewpoints, Adventure). Cards show image, category, name, location, rating, and views.</li>
+<li><strong>Tour Packages Section</strong> — Horizontally scrollable venture cards from the live <code>ventures</code> collection. Shows image, category chip, difficulty chip, duration, price, location, and operator.</li>
+<li><strong>AI Travelling Planner (Locked)</strong> — "Coming Soon" teaser section with locked badge, feature chips (Smart Itineraries, AI Companion Chat, Personalised Tips, Live Suggestions), and launch announcement.</li>
+<li><strong>Quick Stats (Signed-in only)</strong> — XP, contributions count, badges count stat cards.</li>
+</ol>
+<h3 id="72-spots-screen">7.2 Spots Screen</h3>
+<ul>
+<li>Paginated list of tourist spots pulled from <code>spots</code> Firestore collection.</li>
+<li>Filter chips for 6 categories (Mountains, Waterfalls, Cultural Sites, Viewpoints, Adventure, Lakes/Caves).</li>
+<li>Each card shows hero image, category, name, district, rating, and view count.</li>
+<li>Tapping opens <code>SpotDetailScreen</code>: full image gallery, description, facilities, entry fees, "Things to Do" list, add-ons, and review thread.</li>
+</ul>
+<h3 id="73-listings-screen">7.3 Listings Screen</h3>
+<p>Tabbed screen for 7 listing types:</p>
+<table>
+<thead>
+<tr>
+<th>Tab</th>
+<th>Firestore Collection</th>
+<th>Extra Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Restaurants</td>
+<td><code>restaurants</code></td>
+<td>Cuisine types, price range, delivery/reservation flags</td>
+</tr>
+<tr>
+<td>Stay</td>
+<td><code>accommodations</code> + <code>homestays</code></td>
+<td>Merged view of hotels and homestays</td>
+</tr>
+<tr>
+<td>Cafes</td>
+<td><code>cafes</code></td>
+<td>Specialties, opening hours</td>
+</tr>
+<tr>
+<td>Adventure</td>
+<td><code>adventureSpots</code></td>
+<td>Difficulty, group info</td>
+</tr>
+<tr>
+<td>Shopping</td>
+<td><code>shoppingAreas</code></td>
+<td>Category, map</td>
+</tr>
+<tr>
+<td>Events</td>
+<td><code>events</code></td>
+<td>Dates, ticketing, type</td>
+</tr>
+<tr>
+<td>Ventures</td>
+<td><code>ventures</code></td>
+<td>Full enterprise tour packages</td>
+</tr>
+</tbody>
+</table>
+<p>Each listing taps to a full detail screen with gallery, details, map, and reviews.</p>
+<h3 id="74-search-screen">7.4 Search Screen</h3>
+<ul>
+<li>Global search across all collections simultaneously.</li>
+<li>Category filter chips to scope search.</li>
+<li>Real-time debounced Firestore queries.</li>
+</ul>
+<h3 id="75-community-map-tab-feed">7.5 Community — Map Tab (Feed)</h3>
+<p>The Community screen's default "Feed" tab renders a full-screen interactive map powered by <code>flutter_map</code> (OpenStreetMap):</p>
+<ul>
+<li><strong>Map Tiles</strong>: Carto Dark (dark mode) / Carto Light (light mode) adapts to the app theme.</li>
+<li><strong>Pins</strong>: Two pin types:</li>
+<li><strong>Animated Pulsing Pins</strong> (tourist spots) — colour-coded by category (Mountains=blue, Waterfalls=cyan, Cultural=amber, etc.); 1.8s pulsing animation.</li>
+<li><strong>Circular Image Pins</strong> (restaurants, cafes) — circular cropped photo with pin-tip below; border colour indicates category.</li>
+<li><strong>Filter Bar</strong>: Icon-based filter chips (Iconsax icons) for All, Tourist Spots, Restaurants, Cafes, Adventure, Homestays, Shopping, Events. Chips are pill-shaped with primary colour fill when selected.</li>
+<li><strong>Search Bar</strong>: Text search that filters visible pins by name, location, or category in real-time.</li>
+<li><strong>Zoom Controls</strong>: +/- buttons top-right.</li>
+<li><strong>Tap to Detail</strong>: Tapping any pin opens a bottom sheet (<code>place_detail_sheet</code> or <code>spot_detail_sheet</code>) with name, category, rating, and quick-navigate CTA.</li>
+<li><strong>Swipe disabled</strong> on map tab (prevents pan/zoom gesture conflict) via <code>NeverScrollableScrollPhysics</code>.</li>
+</ul>
+<h3 id="76-leaderboard">7.6 Leaderboard</h3>
+<ul>
+<li>Ranked list of users by total XP.</li>
+<li>Shows rank, avatar, display name, level badge, XP total.</li>
+<li>Top 3 users are visually prominent (gold/silver/bronze styling).</li>
+</ul>
+<h3 id="77-visitor-guide">7.7 Visitor Guide</h3>
+<ul>
+<li>Per-state digital travel guide.</li>
+<li>Sections: Banner image, tagline, "About the State", Quick Facts (capital, language, population, best season, etc.), Dos, Don'ts.</li>
+<li>Only Mizoram is active in V1. Other states show "Coming Soon" modal when selected.</li>
+</ul>
+<h3 id="78-events">7.8 Events</h3>
+<ul>
+<li>Calendar and list view of events.</li>
+<li>Filters by type and upcoming/past.</li>
+<li>Event detail: title, description, date/time range, location, ticket availability, ticket price.</li>
+</ul>
+<hr />
+<h2 id="8-feature-deep-dive-registered-user">8. Feature Deep-Dive: Registered User</h2>
+<p>All guest features apply, plus:</p>
+<h3 id="81-authentication-flow">8.1 Authentication Flow</h3>
+<p><strong>Register:</strong><br />
+1. Enter name, email, password.<br />
+2. Firebase Auth creates user.<br />
+3. Firestore <code>users/{uid}</code> document created with defaults: <code>points=0, level=1, levelTitle="Explorer"</code>.<br />
+4. Redirected to Home.</p>
+<p><strong>Sign In:</strong><br />
+1. Enter email and password.<br />
+2. Firebase Auth validates.<br />
+3. Custom claim checked (<code>superAdmin</code>) — regular users go to <code>/</code>, admins to <code>/admin</code>.</p>
+<p><strong>Forgot Password:</strong> Firebase Auth sends reset email.</p>
+<h3 id="82-profile-screen">8.2 Profile Screen</h3>
+<p><strong>Displays:</strong><br />
+- Avatar, display name, level badge, XP progress bar (level min → max), level title.<br />
+- Stats row: total XP, reviews count, contributions count, photos uploaded.<br />
+- Streak banner (🔥 current streak, longest streak).<br />
+- Badges grid — earned badges with rarity colour coding (Common/Rare/Epic/Legendary).<br />
+- XP History — scrollable activity feed (earned XP event log).<br />
+- "My Bookings" shortcut — links to venture bookings.<br />
+- "Dare Dashboard" — summary of joined dares and progress.</p>
+<p><strong>XP Perks Sheet</strong> (tappable XP chip):<br />
+- Current level + XP display.<br />
+- MezoPerks section (loyalty perks — roadmap in V1, "Coming Soon" pill).<br />
+- Recent XP earnings log.</p>
+<h3 id="83-writing-reviews">8.3 Writing Reviews</h3>
+<ul>
+<li>One review per user per listing (enforced via deterministic review ID: <code>{userId}_{placeId}</code>).</li>
+<li>1–5 star rating + text comment.</li>
+<li>Review atomic-updates the running average rating on the parent listing document.</li>
+<li>Recorded in the global <code>global_reviews</code> collection for cross-collection review aggregation.</li>
+<li>Awards <strong>+15 XP</strong> (<code>XpAction.writeReview</code>).</li>
+</ul>
+<h3 id="84-uploading-community-photos">8.4 Uploading Community Photos</h3>
+<ul>
+<li>Multi-image picker (camera or gallery).</li>
+<li>Optional crop step.</li>
+<li>Uploads to Firebase Storage: <code>/community_photos/{collection}/{placeId}/{userId}_{timestamp}.ext</code>.</li>
+<li>Awards <strong>+10 XP</strong> (<code>XpAction.uploadPhoto</code>).</li>
+</ul>
+<h3 id="85-bucket-lists-collaborative-rooms">8.5 Bucket Lists (Collaborative Rooms)</h3>
+<p><strong>Concept</strong>: Shared destination wish-lists that friends or groups can add to and tick off together.</p>
+<p><strong>Create a Bucket List:</strong><br />
+- Title, description, banner image, category (11 types), visibility (public/private), max members.<br />
+- Awards <strong>+20 XP</strong> (<code>XpAction.createBucketList</code>).<br />
+- Free plan limit: <strong>5 rooms</strong> per user (<code>kFreeRoomCap = 5</code>).</p>
+<p><strong>Joining a Room:</strong><br />
+- Public rooms: join request → host approves/declines.<br />
+- Private rooms: join via unique 6-character join code.</p>
+<p><strong>Inside a Room:</strong><br />
+- Member list with roles (host/member).<br />
+- Items list with category icons, notes, and "checked" state.<br />
+- Any member can tick off items → awards <strong>+10 XP</strong> per check.<br />
+- Host can add/remove/edit items.</p>
+<p><strong>Feature Unlocks (time-based):</strong><br />
+- <code>kConnectUnlockDays = 10</code> — After 10 days since joining, unlock Connect features.<br />
+- <code>kPokeUnlockDays = 20</code> — After 20 days, unlock Poke feature.</p>
+<h3 id="86-dares-group-travel-challenges">8.6 Dares (Group Travel Challenges)</h3>
+<p><strong>Concept</strong>: Group-based challenges where participants complete and prove real-world travel tasks.</p>
+<p><strong>Create a Dare:</strong><br />
+- Title, description, banner, category (11 types: adventure, food rating, photography, etc.), visibility, max participants, deadline.<br />
+- Free plan limit: <strong>5 dares</strong> per user (<code>kFreeDareCap = 5</code>).</p>
+<p><strong>Adding Challenges to a Dare:</strong><br />
+- Each challenge: title, description, type (app listing or custom), points, deadline.<br />
+- Admin can set medal tier awards (bronze/silver/gold/platinum/special).</p>
+<p><strong>Joining a Dare:</strong><br />
+- Public: request to join → creator approves.<br />
+- Private: join via code.</p>
+<p><strong>Completing Challenges:</strong><br />
+- Participants submit photo proof for verification.<br />
+- Creator reviews submissions.<br />
+- On approval: challenge points awarded, medals unlocked.</p>
+<p><strong>Dare Rewards:</strong><br />
+- Scratch-off cards awarded for milestones.<br />
+- Reward types: XP, medal, badge, XP multiplier, or "nothing" (gamble element).<br />
+- Each card has a rarity tier.</p>
+<p><strong>Notifications:</strong><br />
+- In-app notification bell (badge count on app bar).<br />
+- Notification types: join requests, approvals, new submissions.</p>
+<h3 id="87-dilemmas-ab-travel-polls">8.7 Dilemmas (A/B Travel Polls)</h3>
+<p>Short "would you rather?" style polls for community engagement:</p>
+<ul>
+<li>Title and description.</li>
+<li>Option A vs Option B (with images).</li>
+<li>Voting is optimistic (instant UI update, server sync in background).</li>
+<li>Vote counts update in real-time for all viewers.</li>
+<li>Users can change their vote — previous vote is atomically removed from both options before adding new vote.</li>
+<li>Awards <strong>+25 XP</strong> to creators, <strong>+5 XP</strong> to voters.</li>
+</ul>
+<h3 id="88-community-feed">8.8 Community Feed</h3>
+<ul>
+<li><code>PostType</code> enum: <code>post</code>, <code>review</code>, <code>tip</code>, <code>question</code>.</li>
+<li>Posts can include text, multiple images, and optionally link to a spot.</li>
+<li>Like/unlike posts (optimistic).</li>
+<li>Comment on posts.</li>
+<li>Infinite scroll pagination (Riverpod paginated notifier).</li>
+<li>Own posts can be deleted (with optimistic removal and rollback on failure).</li>
+</ul>
+<h3 id="89-venture-booking">8.9 Venture Booking</h3>
+<p><strong>Booking Flow:</strong><br />
+1. View venture detail (title, description, category, difficulty, duration, season, operator info, highlights, images, reviews).<br />
+2. Select a package tier from the operator's packages.<br />
+3. Set group size, special requests.<br />
+4. Choose optional add-ons (e.g., packed lunch +₹250, porter +₹500).<br />
+5. Review booking page: full breakdown (base price × people + add-ons = grand total, operator contact).<br />
+6. Submit → <code>bookings/{docId}</code> created with <code>status: pending</code>.<br />
+7. Track under "My Bookings" (pending → confirmed → completed).<br />
+8. Post-completion: submit rating + written feedback.</p>
+<hr />
+<h2 id="9-feature-deep-dive-administrator-super-admin">9. Feature Deep-Dive: Administrator (Super Admin)</h2>
+<h3 id="91-admin-shell-navigation">9.1 Admin Shell &amp; Navigation</h3>
+<p>The admin area (<code>/admin</code>) is a separate <code>ShellRoute</code> with its own navigation:</p>
+<ul>
+<li><strong><code>NavigationRail</code></strong> (wide screens / tablets) — vertical persistent side navigation.</li>
+<li><strong><code>BottomNavigationBar</code></strong> (narrow/phone screens) — 5 tabs: Dashboard, Listings, Users, Analytics, Dares.</li>
+<li>Ventures management is embedded inside the <strong>Listings → Ventures tab</strong>.</li>
+<li>Animated route transitions use <code>HeroControllerScope</code> isolated from the main app shell.</li>
+</ul>
+<h3 id="92-admin-dashboard">9.2 Admin Dashboard</h3>
+<p>Real-time stats from <code>AppAnalyticsSnapshot</code> (Firestore: <code>app_analytics/daily_snapshot</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Data Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Total Users</td>
+<td><code>users</code> collection count</td>
+</tr>
+<tr>
+<td>New Users Today</td>
+<td>Timestamp-filtered</td>
+</tr>
+<tr>
+<td>New Users This Week</td>
+<td>Timestamp-filtered</td>
+</tr>
+<tr>
+<td>Total Spots</td>
+<td><code>spots</code> collection count</td>
+</tr>
+<tr>
+<td>Total Listings</td>
+<td>Sum across restaurants, cafes, hotels, etc.</td>
+</tr>
+<tr>
+<td>Total Events</td>
+<td><code>events</code> count</td>
+</tr>
+<tr>
+<td>Total Ventures</td>
+<td><code>ventures</code> count</td>
+</tr>
+<tr>
+<td>Total Community Posts</td>
+<td><code>community_posts</code> count</td>
+</tr>
+<tr>
+<td>Total Reviews</td>
+<td><code>global_reviews</code> count</td>
+</tr>
+<tr>
+<td>Pending Bookings</td>
+<td><code>bookings</code> filtered by <code>status: pending</code></td>
+</tr>
+<tr>
+<td>Total Bookings</td>
+<td><code>bookings</code> total count</td>
+</tr>
+<tr>
+<td>Total XP Awarded</td>
+<td>Sum of all <code>xpEvents</code> values</td>
+</tr>
+</tbody>
+</table>
+<h3 id="93-listings-management-admin">9.3 Listings Management (Admin)</h3>
+<p><strong>TabBar with 8 tabs:</strong> Spots, Restaurants, Accommodations, Cafes, Adventure, Shopping, Events, Ventures.</p>
+<p><strong>Per-tab features:</strong><br />
+- Live data via <code>autoDispose</code> FutureProvider (fetched fresh on each visit).<br />
+- Toggle between <strong>List view</strong> (rows with thumbnail, name, location, edit/delete) and <strong>Grid view</strong> (2-column image cards).<br />
+- <strong>Sort</strong> by Name (A–Z) or Newest (by <code>createdAt</code> timestamp).<br />
+- <strong>Filter bar</strong> collapses on scroll (animates via <code>AnimatedSize</code>).<br />
+- <strong>Edit</strong> button → navigates to form screen with fields pre-populated.<br />
+- <strong>Delete</strong> button → shows confirmation dialog → calls <code>adminListingNotifier.deleteListing()</code>.<br />
+- <strong>Bulk CSV Upload</strong> (via upload icon) → parses CSV and batch writes to Firestore.<br />
+- <strong>FAB</strong> (Floating Action Button) → navigates to add form (hidden on Ventures tab — uses embedded screen's own "New" button).</p>
+<p><strong>Ventures tab specifically</strong> renders the full <code>AdminVenturesScreen</code> embedded within the Listings screen, with three sub-tabs:<br />
+- <strong>Packages</strong> — List all ventures with card UI, tap to manage.<br />
+- <strong>Feedback</strong> — All post-trip feedback from users per venture.<br />
+- <strong>Bookings</strong> — All booking records with status chips and admin note field.</p>
+<h3 id="94-listing-forms-addedit">9.4 Listing Forms (Add/Edit)</h3>
+<p><strong>Generic listing form</strong> (<code>admin_add_listing_screen.dart</code>):<br />
+- Title, Description, Location, Category, District.<br />
+- Images (multi-select + Firebase Storage upload).<br />
+- Rating (seed value), Price Range ($ → $$$$).<br />
+- Category-specific dynamic fields (amenities for hotels, cuisine types for restaurants, etc.).</p>
+<p><strong>Venture form</strong> (<code>admin_venture_form_screen.dart</code>) — 12 sections:<br />
+1. Basic Info (title, tagline, description)<br />
+2. Category &amp; Difficulty (16 category types, 4 difficulty levels)<br />
+3. Season (8 season options)<br />
+4. Duration (days, nights)<br />
+5. Group &amp; Age (max group size, min age)<br />
+6. Booking Policy (advance booking days)<br />
+7. Pricing (starting price, currency)<br />
+8. Operator Info (name, phone, WhatsApp, email)<br />
+9. Location (location text, district)<br />
+10. Highlights (add/remove bullet list)<br />
+11. Images (hero image URL + image list)<br />
+12. Challenges (add/remove venture challenges)</p>
+<p><strong>Numeric fields show blank (not "0") for unset values</strong> — user-friendly UX for editing.</p>
+<h3 id="95-banner-management">9.5 Banner Management</h3>
+<ul>
+<li>Admin can create banners with: title, subtitle, image URL, link type, link value (internal route or external URL), active flag, and ordering number.</li>
+<li>Global carousel section can be toggled on/off with one tap (writes to <code>app_config/home_banners</code>).</li>
+<li>Banners ordered by the <code>order</code> integer field.</li>
+</ul>
+<h3 id="96-visitor-guide-management">9.6 Visitor Guide Management</h3>
+<ul>
+<li>One guide per NE state (8 states).</li>
+<li>Editable fields: stateName, emoji, tagline, about text, Dos array, Don'ts array, quick facts (label+value+icon), banner image URL, published flag.</li>
+<li>Draft/unpublished guides are not visible in the consumer app.</li>
+</ul>
+<h3 id="97-analytics-screen">9.7 Analytics Screen</h3>
+<p>Powered by <code>fl_chart</code>:<br />
+- Line charts: daily new users trend.<br />
+- Bar charts: bookings by status, XP awarded over time.<br />
+- Summary cards for all dashboard metrics.<br />
+- Data snapshot from <code>app_analytics</code> Firestore document.</p>
+<hr />
+<h2 id="10-gamification-system">10. Gamification System</h2>
+<p>Xplooria's gamification engine is a full, production-grade reward system built with atomic Firestore transactions.</p>
+<h3 id="101-xp-actions-rewards">10.1 XP Actions &amp; Rewards</h3>
+<table>
+<thead>
+<tr>
+<th>Action</th>
+<th>XP Earned</th>
+<th>Trigger</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Write a review</td>
+<td>+15</td>
+<td>Submitting any listing review</td>
+</tr>
+<tr>
+<td>Upload a photo</td>
+<td>+10</td>
+<td>Uploading community photo</td>
+</tr>
+<tr>
+<td>Create a bucket list</td>
+<td>+20</td>
+<td>New bucket list created</td>
+</tr>
+<tr>
+<td>Complete a bucket item</td>
+<td>+10</td>
+<td>Tick off item in a list</td>
+</tr>
+<tr>
+<td>Create a dilemma</td>
+<td>+25</td>
+<td>New A/B poll created</td>
+</tr>
+<tr>
+<td>Vote on a dilemma</td>
+<td>+5</td>
+<td>Casting a vote</td>
+</tr>
+<tr>
+<td>Submit a contribution</td>
+<td>+20</td>
+<td>Submit a new spot for review</td>
+</tr>
+<tr>
+<td>Daily login</td>
+<td>+5</td>
+<td>First app open each calendar day</td>
+</tr>
+<tr>
+<td>Streak bonus (7 days)</td>
+<td>+10</td>
+<td>Awarded at streak milestone</td>
+</tr>
+<tr>
+<td>Weekly streak</td>
+<td>+30</td>
+<td>7-consecutive-day login</td>
+</tr>
+<tr>
+<td>Monthly streak</td>
+<td>+100</td>
+<td>30-consecutive-day login</td>
+</tr>
+</tbody>
+</table>
+<h3 id="102-streak-multiplier-system">10.2 Streak Multiplier System</h3>
+<p>A streak mechanic incentivises daily app engagement:</p>
+<pre><code>Multiplier = 1.0 + floor(loginStreak ÷ 5) × 0.10
+Maximum multiplier = 2.0 (at 50+ day streak)
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Streak</th>
+<th>Multiplier</th>
+<th>Bonus</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1–4 days</td>
+<td>1.0×</td>
+<td>No bonus</td>
+</tr>
+<tr>
+<td>5–9 days</td>
+<td>1.1×</td>
+<td>+10% XP</td>
+</tr>
+<tr>
+<td>10–14 days</td>
+<td>1.2×</td>
+<td>+20% XP</td>
+</tr>
+<tr>
+<td>15–19 days</td>
+<td>1.3×</td>
+<td>+30% XP</td>
+</tr>
+<tr>
+<td>20–24 days</td>
+<td>1.4×</td>
+<td>+40% XP</td>
+</tr>
+<tr>
+<td>25+ days</td>
+<td>1.5×+</td>
+<td>Increases every 5 days</td>
+</tr>
+<tr>
+<td>50+ days</td>
+<td>2.0× (cap)</td>
+<td>+100% XP</td>
+</tr>
+</tbody>
+</table>
+<h3 id="103-level-system-10-levels">10.3 Level System (10 Levels)</h3>
+<table>
+<thead>
+<tr>
+<th>Level</th>
+<th>Title</th>
+<th>XP Required</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Explorer</td>
+<td>0</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Wanderer</td>
+<td>100</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Adventurer</td>
+<td>250</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Pathfinder</td>
+<td>500</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Guide</td>
+<td>1,000</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Expert</td>
+<td>2,000</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Master</td>
+<td>3,500</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Legend</td>
+<td>5,500</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Champion</td>
+<td>8,500</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Guardian</td>
+<td>12,500</td>
+</tr>
+</tbody>
+</table>
+<h3 id="104-badge-system-22-badges">10.4 Badge System (22 Badges)</h3>
+<p><strong>Exploration Badges (6)</strong></p>
+<table>
+<thead>
+<tr>
+<th>Badge</th>
+<th>Trigger</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>First Review</td>
+<td>Submit first review</td>
+</tr>
+<tr>
+<td>Ten Reviews</td>
+<td>Submit 10 reviews</td>
+</tr>
+<tr>
+<td>Fifty Reviews</td>
+<td>Submit 50 reviews</td>
+</tr>
+<tr>
+<td>First Contribution</td>
+<td>Submit first spot</td>
+</tr>
+<tr>
+<td>Ten Contributions</td>
+<td>Submit 10 spots</td>
+</tr>
+<tr>
+<td>25 Contributions</td>
+<td>Submit 25 spots</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Photography Badges (2)</strong></p>
+<table>
+<thead>
+<tr>
+<th>Badge</th>
+<th>Trigger</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>First Photo</td>
+<td>Upload first community photo</td>
+</tr>
+<tr>
+<td>Photo Master</td>
+<td>Upload 50+ community photos</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Streak Badges (3)</strong></p>
+<table>
+<thead>
+<tr>
+<th>Badge</th>
+<th>Trigger</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>3-Day Streak</td>
+<td>3 consecutive daily logins</td>
+</tr>
+<tr>
+<td>7-Day Streak</td>
+<td>7 consecutive daily logins</td>
+</tr>
+<tr>
+<td>30-Day Streak</td>
+<td>30 consecutive daily logins</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Community Badges (2)</strong></p>
+<table>
+<thead>
+<tr>
+<th>Badge</th>
+<th>Trigger</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>First Dilemma</td>
+<td>Create first A/B poll</td>
+</tr>
+<tr>
+<td>Dilemma Voter</td>
+<td>Vote on 50+ dilemmas</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Bucket List Badges (2)</strong></p>
+<table>
+<thead>
+<tr>
+<th>Badge</th>
+<th>Trigger</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Bucket Complete (1)</td>
+<td>Complete your first bucket list</td>
+</tr>
+<tr>
+<td>Bucket Complete (10)</td>
+<td>Complete 10 bucket lists</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Special &amp; Achievement Badges (7)</strong></p>
+<table>
+<thead>
+<tr>
+<th>Badge</th>
+<th>Trigger</th>
+<th>Rarity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Early Adopter</td>
+<td>Registered in first month of launch</td>
+<td>Legendary</td>
+</tr>
+<tr>
+<td>Top 10</td>
+<td>Reach global leaderboard top 10</td>
+<td>Epic</td>
+</tr>
+<tr>
+<td>Level 5</td>
+<td>Reach level "Guide"</td>
+<td>Rare</td>
+</tr>
+<tr>
+<td>Level 10</td>
+<td>Reach level "Guardian"</td>
+<td>Legendary</td>
+</tr>
+<tr>
+<td>Social Butterfly</td>
+<td>100+ community post likes received</td>
+<td>Rare</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Rarity Tiers:</strong><br />
+- <strong>Common</strong> (grey) — Easy to obtain, high frequency<br />
+- <strong>Rare</strong> (blue #42A5F5) — Moderate effort<br />
+- <strong>Epic</strong> (purple #AB47BC) — Significant achievement<br />
+- <strong>Legendary</strong> (gold #FFB300) — Exceptional milestone</p>
+<h3 id="105-xp-reward-notification-toast">10.5 XP Reward Notification (Toast)</h3>
+<p>An animated overlay (<code>XpToastOverlay</code>) is positioned above the bottom navigation bar. It:</p>
+<ol>
+<li>Listens to the <code>gamificationRewardStreamProvider</code> (broadcast stream).</li>
+<li>Slides up from bottom with animation when XP is awarded.</li>
+<li>Displays: <code>+{xp} XP</code>, action label, multiplier badge (if &gt; 1.0×), and level-up celebration.</li>
+<li>Auto-dismisses after <strong>3.5 seconds</strong>.</li>
+<li>Shows confetti animation on badge unlock or level-up events.</li>
+</ol>
+<hr />
+<h2 id="11-data-models-firestore-collections">11. Data Models &amp; Firestore Collections</h2>
+<h3 id="111-firestore-collection-architecture">11.1 Firestore Collection Architecture</h3>
+<pre><code>firestore/
+├── users/{uid}                      ← User profiles, XP, badges, streaks
+│   └── xpEvents/{eventId}           ← XP audit log per user
+├── spots/{docId}                    ← Tourist spots
+│   ├── reviews/{reviewId}           ← Spot reviews (1 per user)
+│   └── communityPhotos/{photoId}    ← Community photo uploads
+├── restaurants/{docId}              ← Restaurant listings
+│   └── reviews/{reviewId}
+├── cafes/{docId}                    ← Cafe listings
+│   └── reviews/{reviewId}
+├── accommodations/{docId}           ← Hotel listings
+│   └── reviews/{reviewId}
+├── homestays/{docId}                ← Homestay listings
+│   └── reviews/{reviewId}
+├── adventureSpots/{docId}           ← Adventure spot listings
+│   └── reviews/{reviewId}
+├── shoppingAreas/{docId}            ← Shopping area listings
+│   └── reviews/{reviewId}
+├── events/{docId}                   ← Events with ticketing
+├── ventures/{docId}                 ← Tour packages
+│   ├── reviews/{reviewId}           ← Venture reviews
+│   ├── registrations/{regId}        ← Booking registrations
+│   └── feedback/{fbId}             ← Post-trip feedback
+├── bookings/{docId}                 ← Top-level booking records
+├── community_posts/{docId}          ← Community feed posts
+├── dilemmas/{docId}                 ← A/B poll dilemmas
+├── bucketLists/{listId}             ← Collaborative travel lists
+├── dares/{docId}                    ← Group travel challenges
+├── global_reviews/{reviewId}        ← Cross-collection review index
+├── home_banners/{bannerId}          ← Home carousel banners
+├── visitor_guides/{stateKey}        ← Per-state visitor guides
+├── app_admins/{uid}                 ← Admin profiles and permissions
+│   └── activityLog/{logId}         ← Admin action audit trail
+├── app_analytics/{docId}            ← Platform analytics snapshot
+└── app_config/{configKey}           ← Global configuration flags
+</code></pre>
+<h3 id="112-key-model-schemas">11.2 Key Model Schemas</h3>
+<p><strong>UserModel</strong> — Core user profile stored at <code>users/{uid}</code></p>
+<pre><code>id, email, displayName, photoURL, bio, location,
+role (0=admin, 1=user),
+points, level (1–10), levelTitle,
+badges[], badgesEarned[], 
+contributionsCount, ratingsCount, photosCount,
+dilemmasCreated, dilemmasVoted,
+bucketListsCreated, bucketItemsCompleted,
+loginStreak, longestStreak, lastLogin,
+bookmarks[], createdAt
+</code></pre>
+<p><strong>VentureBooking</strong> — Tour booking record at <code>bookings/{id}</code></p>
+<pre><code>id, userId, userName, userEmail,
+ventureId, ventureTitle, heroImage, category, location,
+operatorName, operatorPhone, operatorWhatsapp, operatorEmail,
+selectedPackageName, pricePerPerson, personCount,
+selectedAddons[], addonSubtotal, grandTotal,
+status (pending|confirmed|cancelled|completed),
+adminNote, hasFeedback, createdAt, updatedAt
+</code></pre>
+<p><strong>DareModel</strong> — Group challenge at <code>dares/{id}</code></p>
+<pre><code>id, title, description, bannerUrl,
+category (11 types), customCategory,
+visibility (public|private), maxParticipants, joinCode,
+creatorId, creatorName, creatorPhoto,
+challenges[] (DareChallenge),
+members[] (DareMember),
+createdAt, deadline, xpReward,
+requiresProof, tags[], status
+</code></pre>
+<p><strong>BucketListModel</strong> — Collaborative room at <code>bucketLists/{id}</code></p>
+<pre><code>id, title, description, bannerUrl,
+category (11 types), visibility, maxMembers, joinCode,
+hostId, hostName, hostPhoto,
+items[] (BucketItem), members[] (BucketMember),
+joinRequests[], createdAt, completedAt,
+xpReward, badges, challengeTitle
+</code></pre>
+<hr />
+<h2 id="12-security-model">12. Security Model</h2>
+<h3 id="121-role-enforcement">12.1 Role Enforcement</h3>
+<p>Security is enforced at two levels:</p>
+<ol>
+<li>
+<p><strong>GoRouter (Client-side)</strong>: <code>_RouterNotifier</code> redirect logic blocks unauthenticated users from protected routes and blocks non-admin users from <code>/admin</code> routes.</p>
+</li>
+<li>
+<p><strong>Firestore Security Rules (Server-side)</strong>: All operations are validated server-side with three helper functions:</p>
+</li>
+</ol>
+<pre><code class="language-javascript">function isAuth() { return request.auth != null; }
+function isUser(uid) { return isAuth() &amp;&amp; request.auth.uid == uid; }
+function isSuperAdmin() {
+  return isAuth() &amp;&amp; request.auth.token.superAdmin == true;
+}
+</code></pre>
+<h3 id="122-data-access-matrix">12.2 Data Access Matrix</h3>
+<table>
+<thead>
+<tr>
+<th>Collection</th>
+<th>Public Read</th>
+<th>Auth Read</th>
+<th>Auth Write</th>
+<th>Admin Only Write</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>users</td>
+<td>No (auth only)</td>
+<td>Own doc</td>
+<td>Own doc</td>
+<td>—</td>
+</tr>
+<tr>
+<td>spots, restaurants, cafes, etc.</td>
+<td><strong>Yes</strong></td>
+<td>Yes</td>
+<td>Yes</td>
+<td>—</td>
+</tr>
+<tr>
+<td>reviews (sub-collection)</td>
+<td><strong>Yes</strong></td>
+<td>Yes</td>
+<td>Create (own)</td>
+<td>—</td>
+</tr>
+<tr>
+<td>community_posts</td>
+<td><strong>Yes</strong></td>
+<td>Yes</td>
+<td>Create / own delete</td>
+<td>delete any</td>
+</tr>
+<tr>
+<td>bucketLists</td>
+<td>Public only if visibility=public</td>
+<td>Member read</td>
+<td>Host/member</td>
+<td>—</td>
+</tr>
+<tr>
+<td>dares</td>
+<td>Public if public</td>
+<td>Member read</td>
+<td>Creator/member</td>
+<td>—</td>
+</tr>
+<tr>
+<td>bookings</td>
+<td>No</td>
+<td>Own booking</td>
+<td>Create own</td>
+<td>Status updates</td>
+</tr>
+<tr>
+<td>ventures</td>
+<td><strong>Yes</strong></td>
+<td>Yes</td>
+<td>No</td>
+<td>Full CRUD</td>
+</tr>
+<tr>
+<td>ventures/registrations</td>
+<td>No</td>
+<td>Own</td>
+<td>Create</td>
+<td>Update/delete</td>
+</tr>
+<tr>
+<td>ventures/feedback</td>
+<td><strong>Yes</strong></td>
+<td>Yes</td>
+<td>Create</td>
+<td>—</td>
+</tr>
+<tr>
+<td>app_admins</td>
+<td>Admin only</td>
+<td>Own</td>
+<td>No</td>
+<td>Full CRUD</td>
+</tr>
+<tr>
+<td>app_analytics</td>
+<td>No</td>
+<td>No</td>
+<td>No</td>
+<td>Full CRUD</td>
+</tr>
+<tr>
+<td>home_banners</td>
+<td><strong>Yes</strong></td>
+<td>Yes</td>
+<td>No</td>
+<td>Full CRUD</td>
+</tr>
+<tr>
+<td>visitor_guides</td>
+<td><strong>Yes</strong></td>
+<td>Yes</td>
+<td>No</td>
+<td>Full CRUD</td>
+</tr>
+</tbody>
+</table>
+<h3 id="123-firebase-storage-rules">12.3 Firebase Storage Rules</h3>
+<table>
+<thead>
+<tr>
+<th>Path</th>
+<th>Read</th>
+<th>Write Conditions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/community_photos/</code></td>
+<td>Public</td>
+<td>Auth + &lt; 10 MB + image/*</td>
+</tr>
+<tr>
+<td><code>/avatars/{userId}/</code></td>
+<td>Public</td>
+<td>Auth + own userId + &lt; 5 MB + image/*</td>
+</tr>
+<tr>
+<td><code>/admin_listings/</code></td>
+<td>Public</td>
+<td>Auth + &lt; 15 MB + image/*</td>
+</tr>
+<tr>
+<td><code>/dare_banners/</code></td>
+<td>Public</td>
+<td>Auth + &lt; 10 MB + image/*</td>
+</tr>
+<tr>
+<td><code>/dare_proofs/</code></td>
+<td>Auth</td>
+<td>Auth + &lt; 15 MB + image/*</td>
+</tr>
+<tr>
+<td><code>/banners/</code></td>
+<td>Public</td>
+<td>Auth + &lt; 10 MB + image/*</td>
+</tr>
+<tr>
+<td><code>/visitor_guides/</code></td>
+<td>Public</td>
+<td>isSuperAdmin + &lt; 10 MB + image/*</td>
+</tr>
+</tbody>
+</table>
+<h3 id="124-custom-claim-setup">12.4 Custom Claim Setup</h3>
+<p>Super Admin accounts are created via the Node.js utility:</p>
+<pre><code>scripts/set_admin_claim.js &lt;serviceAccount.json&gt;
+
+Admin Email:    hillstechadmin@spotsence.com
+Custom Claim:   { superAdmin: true }
+Firestore Doc:  app_admins/{uid}  (permissions: all flags true)
+</code></pre>
+<hr />
+<h2 id="13-navigation-routing">13. Navigation &amp; Routing</h2>
+<h3 id="131-shell-structure">13.1 Shell Structure</h3>
+<p>The app has two independent <code>ShellRoute</code> shells:</p>
+<ol>
+<li>
+<p><strong>Main Shell</strong> — Bottom navigation with 5 tabs: Home, Explore (Spots), Map (Community), Profile, Leaderboard. Available to all authenticated and guest users.</p>
+</li>
+<li>
+<p><strong>Admin Shell</strong> — Separate navigation rail/bottom bar for admin-only screens. Isolated <code>HeroControllerScope</code>.</p>
+</li>
+</ol>
+<h3 id="132-auth-redirect-logic">13.2 Auth Redirect Logic</h3>
+<pre><code>On every navigation:
+1. Auth loading? → hold (return null)
+2. Not authenticated + protected route? → /login
+3. Authenticated + auth route (/login, /register)? → /
+4. Route starts with /admin?
+   a. Not authenticated? → /login
+   b. Admin loading? → hold
+   c. Not superAdmin? → / (home, denied silently)
+</code></pre>
+<h3 id="133-route-transition-types">13.3 Route Transition Types</h3>
+<ul>
+<li><strong>Slide Up</strong> — Modal screens (auth, booking flow, creation forms)</li>
+<li><strong>Fade</strong> — Detail screens (spot, listing, event, venture)</li>
+<li><strong>Default</strong> — Admin screens (no transition override)</li>
+</ul>
+<hr />
+<h2 id="14-design-system-theme">14. Design System &amp; Theme</h2>
+<h3 id="141-colour-palette">14.1 Colour Palette</h3>
+<p><strong>Brand Colours (theme-invariant):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Token</th>
+<th>Hex</th>
+<th>Usage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AppColors.primary</code></td>
+<td><code>#00E5A0</code></td>
+<td>CTAs, highlights, active states, FABs</td>
+</tr>
+<tr>
+<td><code>AppColors.secondary</code></td>
+<td><code>#6C63FF</code></td>
+<td>Tags, secondary accents</td>
+</tr>
+<tr>
+<td><code>AppColors.accent</code></td>
+<td><code>#FFB300</code></td>
+<td>Gold — XP, badges, stars, rewards</td>
+</tr>
+<tr>
+<td><code>AppColors.success</code></td>
+<td><code>#22C55E</code></td>
+<td>Success states, easy difficulty</td>
+</tr>
+<tr>
+<td><code>AppColors.error</code></td>
+<td><code>#EF4444</code></td>
+<td>Errors, hard difficulty</td>
+</tr>
+<tr>
+<td><code>AppColors.warning</code></td>
+<td><code>#F59E0B</code></td>
+<td>Warnings, moderate difficulty</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Adaptive Surfaces (dark/light via <code>context.col</code>):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Token</th>
+<th>Dark</th>
+<th>Light</th>
+<th>Usage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>.bg</code></td>
+<td><code>#0A0E1A</code></td>
+<td><code>#F4F7FF</code></td>
+<td>App background</td>
+</tr>
+<tr>
+<td><code>.surface</code></td>
+<td><code>#121827</code></td>
+<td><code>#FFFFFF</code></td>
+<td>Cards, sheets</td>
+</tr>
+<tr>
+<td><code>.surfaceElevated</code></td>
+<td><code>#1C2333</code></td>
+<td><code>#F0F4FF</code></td>
+<td>Dropdowns, elevated</td>
+</tr>
+<tr>
+<td><code>.border</code></td>
+<td><code>#2A3347</code></td>
+<td><code>#E0E8F4</code></td>
+<td>Dividers, outlines</td>
+</tr>
+<tr>
+<td><code>.textPrimary</code></td>
+<td><code>#F0F4FF</code></td>
+<td><code>#1A1F35</code></td>
+<td>Main text</td>
+</tr>
+<tr>
+<td><code>.textSecondary</code></td>
+<td><code>#8892A4</code></td>
+<td><code>#5A6480</code></td>
+<td>Labels, hints</td>
+</tr>
+<tr>
+<td><code>.textMuted</code></td>
+<td><code>#4A5568</code></td>
+<td><code>#A0AEC0</code></td>
+<td>Disabled text</td>
+</tr>
+</tbody>
+</table>
+<h3 id="142-typography-google-fonts-inter">14.2 Typography (Google Fonts — Inter)</h3>
+<p>All text uses the <strong>Inter</strong> variable font:</p>
+<table>
+<thead>
+<tr>
+<th>Style</th>
+<th>Size</th>
+<th>Weight</th>
+<th>Use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>displayLarge</td>
+<td>32px</td>
+<td>700</td>
+<td>Hero titles</td>
+</tr>
+<tr>
+<td>titleLarge</td>
+<td>20px</td>
+<td>600</td>
+<td>Screen titles</td>
+</tr>
+<tr>
+<td>titleMedium</td>
+<td>16px</td>
+<td>600</td>
+<td>Section headers</td>
+</tr>
+<tr>
+<td>bodyLarge</td>
+<td>15px</td>
+<td>400</td>
+<td>Primary body copy</td>
+</tr>
+<tr>
+<td>bodyMedium</td>
+<td>14px</td>
+<td>400</td>
+<td>Secondary text</td>
+</tr>
+<tr>
+<td>labelLarge</td>
+<td>14px</td>
+<td>600</td>
+<td>Button labels</td>
+</tr>
+</tbody>
+</table>
+<h3 id="143-component-specifications">14.3 Component Specifications</h3>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Specification</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Cards</td>
+<td>16px radius, 1px border, zero elevation (flat design)</td>
+</tr>
+<tr>
+<td>Buttons (primary)</td>
+<td>Primary colour fill, 52px min height, 14px radius, full-width</td>
+</tr>
+<tr>
+<td>Buttons (outline)</td>
+<td>1px border, no fill, 14px radius</td>
+</tr>
+<tr>
+<td>Input fields</td>
+<td>Filled style, 12px radius, 16px horizontal padding; focus: 1.5px primary border</td>
+</tr>
+<tr>
+<td>Chips</td>
+<td>20px radius, bordered, rarity colours for badges</td>
+</tr>
+<tr>
+<td>FAB (extended)</td>
+<td>Primary fill, black text/icon, "Add {Category}" label</td>
+</tr>
+<tr>
+<td>Bottom Nav</td>
+<td>Fixed, no elevation, primary icon colour on active</td>
+</tr>
+<tr>
+<td>Tab Bars</td>
+<td>Scrollable, label-size indicator, 2.5px indicator weight</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="15-go-to-market-strategy">15. Go-to-Market Strategy</h2>
+<h3 id="151-target-audiences">15.1 Target Audiences</h3>
+<p><strong>Primary: Domestic Travellers (25–45)</strong><br />
+- Indian tourists planning trips to Northeast India.<br />
+- Digital-native, comfortable with app-based discovery.<br />
+- Seeking authentic, off-the-beaten-path experiences.<br />
+- Value local recommendations over generic travel aggregators.</p>
+<p><strong>Secondary: International Travellers</strong><br />
+- Adventure tourism enthusiasts.<br />
+- Photography/nature travel community.<br />
+- Cultural heritage explorers.<br />
+- Budget backpackers and sustainable travel advocates.</p>
+<p><strong>Tertiary: Local Content Creators &amp; Contributors</strong><br />
+- Mizoram residents who are proud of their state.<br />
+- Local bloggers, photographers, food reviewers.<br />
+- Students and young professionals.<br />
+- Incentivised by XP, badges, leaderboard visibility, and future MezoPerks rewards.</p>
+<p><strong>Quaternary: Tour Operators &amp; Local Businesses</strong><br />
+- Small and medium tour operators in Mizoram.<br />
+- Homestay owners, adventure guides, cultural experience providers.<br />
+- Motivated by free digital storefront and direct booking management.</p>
+<h3 id="152-launch-phase-strategy">15.2 Launch Phase Strategy</h3>
+<p><strong>Phase 1 — Mizoram Beta Launch (V1)</strong><br />
+- Soft launch with Mizoram content.<br />
+- Seed database via admin CSV bulk upload of existing tourist data.<br />
+- Partner with 5–10 established tour operators for venture listings.<br />
+- Influencer seeding: partner with Mizo travel Instagram and YouTube creators.<br />
+- Campus ambassador programme at Mizoram University, ICFAI, and NIT Mizoram.<br />
+- Target: <strong>1,000 registered users in first 60 days</strong>.<br />
+- Target: <strong>50 community photo contributions in first 30 days</strong>.</p>
+<p><strong>Phase 2 — Community Activation</strong><br />
+- Dare campaign: "Explore 5 Hidden Gems of Mizoram" — first-ever platform-wide dare with prizes.<br />
+- Review drive: "Rate Your Favourite Spot" — multiplied XP week for reviews.<br />
+- Partner with Mizoram Tourism Department for official endorsement.<br />
+- Target: <strong>5,000 users, 500 reviews, 20 active tour operators</strong> by end of Phase 2.</p>
+<p><strong>Phase 3 — Northeast Expansion</strong><br />
+- Activate Nagaland (Hornbill Festival tie-in), Meghalaya (Living Root Bridges), Manipur.<br />
+- Multi-state leaderboard seasons.<br />
+- Cross-state Dare events.<br />
+- Target: <strong>25,000 users across 3 states</strong>.</p>
+<h3 id="153-monetisation-roadmap-post-v1">15.3 Monetisation Roadmap (Post-V1)</h3>
+<table>
+<thead>
+<tr>
+<th>Stream</th>
+<th>Mechanism</th>
+<th>Timeline</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Operator Commission</td>
+<td>5–10% on confirmed venture bookings</td>
+<td>Phase 2</td>
+</tr>
+<tr>
+<td>Featured Listings</td>
+<td>Pay-to-be-featured — promoted spots on home screen</td>
+<td>Phase 2</td>
+</tr>
+<tr>
+<td>MezoPerks Loyalty</td>
+<td>Partnerships with local businesses for XP reward redemption</td>
+<td>Phase 3</td>
+</tr>
+<tr>
+<td>Premium Users</td>
+<td>Remove dare/bucket list cap; exclusive badges; advanced analytics</td>
+<td>Phase 2</td>
+</tr>
+<tr>
+<td>Sponsored Dares</td>
+<td>Brands sponsor platform-wide travel challenges</td>
+<td>Phase 3</td>
+</tr>
+<tr>
+<td>AI Planner (Premium)</td>
+<td>AI itinerary generation subscription</td>
+<td>Phase 4</td>
+</tr>
+</tbody>
+</table>
+<h3 id="154-distribution-channels">15.4 Distribution Channels</h3>
+<ul>
+<li><strong>App Stores</strong>: iOS App Store + Google Play Store (primary).</li>
+<li><strong>WhatsApp</strong>: Organic sharing via <code>share_plus</code> (spot cards, venture links).</li>
+<li><strong>Social Media</strong>: Instagram (visual tourism content), Facebook (Mizoram community groups), YouTube (operator showcase videos).</li>
+<li><strong>Government Partners</strong>: Mizoram Tourism Department official partnership for credibility and data access.</li>
+<li><strong>Travel Agencies</strong>: B2B referral partnerships for venture bookings.</li>
+<li><strong>University Networks</strong>: Student ambassador programme for contributor acquisition.</li>
+</ul>
+<h3 id="155-retention-mechanics">15.5 Retention Mechanics</h3>
+<table>
+<thead>
+<tr>
+<th>Mechanic</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Daily Login Streak</td>
+<td>Habit formation; escalating XP multiplier punishes streak breaks</td>
+</tr>
+<tr>
+<td>Badge Notifications</td>
+<td>Milestone-triggered push to re-engage dormant users</td>
+</tr>
+<tr>
+<td>Weekly Leaderboard Reset</td>
+<td>Creates urgency for weekly engagement spikes</td>
+</tr>
+<tr>
+<td>New Dare Notifications</td>
+<td>Social pressure from friend group activities</td>
+</tr>
+<tr>
+<td>Booking Status Updates</td>
+<td>Keeps users in the booking funnel until completion</td>
+</tr>
+<tr>
+<td>Review Follow-up</td>
+<td>Post-visit prompt to submit experience rating</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="16-innovation-vision">16. Innovation &amp; Vision</h2>
+<h3 id="161-what-makes-xplooria-different">16.1 What Makes Xplooria Different</h3>
+<p><strong>1. Hyper-Local Focus</strong><br />
+Unlike global platforms (TripAdvisor, Google Maps), Xplooria is built exclusively for Northeast India. Every feature, category, and data model is designed for the specific travel patterns, geography, and culture of the region. This hyper-local focus enables:<br />
+- Categories that matter locally (Homestays, Adventure Spots, Cultural Sites) — not generic hotel chains.<br />
+- Local operator onboarding with no technical overhead.<br />
+- Content verified by people who actually know the region.</p>
+<p><strong>2. Gamification as Core Infrastructure (Not an Afterthought)</strong><br />
+Gamification is not a "layer" on top of the product — it is embedded in the Firestore transaction layer. Every meaningful user action triggers an atomic XP award that:<br />
+- Cannot be double-awarded (transaction integrity).<br />
+- Cannot be lost (even if the UI crashes, the XP write persists).<br />
+- Cascades to badge evaluation, level recalculation, and streak tracking simultaneously.</p>
+<p><strong>3. Social Travel Planning — Beyond Lists</strong><br />
+The combination of Bucket Lists (collaborative destination lists), Dares (proof-based group challenges), and Dilemmas (community voting) creates a full social travel planning ecosystem that no existing travel app offers in the Indian market.</p>
+<p><strong>4. Operator Empowerment</strong><br />
+Local tour operators get:<br />
+- A mobile storefront with full package/pricing configuration.<br />
+- Direct booking management with status tracking.<br />
+- Customer feedback collection.<br />
+- WhatsApp integration (operator contact via WhatsApp is standard in India).<br />
+- All at zero cost in V1.</p>
+<p><strong>5. Resilient Offline-First Architecture</strong><br />
+<code>flutter_secure_storage</code> and <code>shared_preferences</code> cache critical data locally. <code>connectivity_plus</code> monitors network state. Future offline database (Hive or SQLite) is already in the architecture roadmap.</p>
+<p><strong>6. AI Travelling Planner (Roadmap)</strong><br />
+The V1 UI already includes a locked "Coming Soon" teaser for the AI Travelling Planner &amp; Companion feature. This teaser:<br />
+- Communicates the platform's AI ambition.<br />
+- Sets user expectations for the next release.<br />
+- Validates interest before building (lean startup signal).</p>
+<p>Planned AI capabilities:<br />
+- <strong>Smart Itinerary Generation</strong> — Input: start date, interests, budget → Output: day-by-day itinerary with Xplooria listings.<br />
+- <strong>AI Companion Chat</strong> — Answers travel questions contextually using Xplooria's curated data.<br />
+- <strong>Personalised Recommendations</strong> — ML-powered spot suggestions based on review history and browsing patterns.<br />
+- <strong>Live Suggestions</strong> — Real-time context-aware tips based on GPS location.</p>
+<h3 id="162-technical-innovation">16.2 Technical Innovation</h3>
+<p><strong>Atomic Gamification Transactions</strong><br />
+The <code>GamificationService.award()</code> method uses Firestore's multi-document transaction to ensure XP, badge evaluation, level recalculation, streak tracking, and audit logging happen atomically — no partial state possible.</p>
+<p><strong>Dual-Shell Admin Architecture</strong><br />
+The admin and consumer apps share the same codebase but are separated by GoRouter's <code>ShellRoute</code> with independent <code>HeroControllerScope</code>. This eliminates the need for two separate Flutter projects while maintaining complete UI/UX isolation between admin and consumer modes.</p>
+<p><strong>Real-time Earned-State Architecture</strong><br />
+Profile data (XP, level, badges) updates in real-time for the user who triggered the action via <code>authController.refreshProfile()</code>, and for any other viewer of their profile via <code>currentUserStreamProvider</code> (Firestore live stream). No polling required.</p>
+<p><strong>Security-by-Design</strong><br />
+Both client-side (GoRouter) and server-side (Firestore rules) enforce the same role model independently. Even if the GoRouter is bypassed, Firestore rules prevent unauthorised writes.</p>
+<h3 id="163-long-term-vision-3-year-roadmap">16.3 Long-Term Vision (3-Year Roadmap)</h3>
+<table>
+<thead>
+<tr>
+<th>Milestone</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>V1 (Current)</td>
+<td>Mizoram, all core features, admin panel, gamification</td>
+</tr>
+<tr>
+<td>V1.5</td>
+<td>Push notifications (FCM), offline reading mode, enhanced search</td>
+</tr>
+<tr>
+<td>V2</td>
+<td>AI Travelling Planner (basic), 3 new NE states</td>
+</tr>
+<tr>
+<td>V2.5</td>
+<td>MezoPerks loyalty programme live, operator analytics dashboard</td>
+</tr>
+<tr>
+<td>V3</td>
+<td>Full NE coverage (all 8 states), AI companion, premium subscriptions</td>
+</tr>
+<tr>
+<td>V4</td>
+<td>Pan-India tribal/rural tourism expansion, B2B API for travel agencies</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="17-validation-credibility">17. Validation &amp; Credibility</h2>
+<h3 id="171-technical-credibility">17.1 Technical Credibility</h3>
+<p><strong>Production-Grade Stack</strong><br />
+- Firebase (used by Google, Alibaba, The New York Times) — enterprise reliability.<br />
+- Flutter (used by Google Pay, BMW, Alibaba) — proven performance at scale.<br />
+- Riverpod (the successor to Provider, endorsed by the Flutter team) — state management best practices.</p>
+<p><strong>Security Compliance</strong><br />
+- All user passwords handled exclusively by Firebase Auth (never stored in Firestore or Storage).<br />
+- Role-based access control enforced at the database level via Firestore Security Rules.<br />
+- AWS-equivalent SLA via Firebase infrastructure (99.95% uptime guarantee).<br />
+- Image uploads size-limited and MIME-type validated in Storage Rules.<br />
+- No PII exposed in Firestore indexes — email addresses are protected by <code>isUser(uid)</code> rules.</p>
+<p><strong>Code Quality Signals</strong><br />
+- Immutable data models via Freezed (prevents accidental state mutation).<br />
+- Sealed result types (<code>ApiResult</code>, <code>AuthResult</code>) prevent unhandled null states.<br />
+- <code>autoDispose</code> providers for admin collections — no memory leaks from unused data listeners.<br />
+- CI-ready: <code>flutter_lints</code> enforced, test infrastructure with <code>fake_cloud_firestore</code> and <code>firebase_auth_mocks</code>.</p>
+<h3 id="172-market-validation">17.2 Market Validation</h3>
+<p><strong>TAM (Total Addressable Market)</strong><br />
+- 2.5 million+ domestic tourists travel to Northeast India annually (Ministry of Tourism, 2023).<br />
+- International tourist arrivals growing at ~12% YoY post-COVID.<br />
+- 780+ million smartphone users in India; 50 million+ active travel app users.</p>
+<p><strong>SAM (Serviceable Addressable Market) — V1</strong><br />
+- Mizoram population: ~1.3 million.<br />
+- Estimated smartphone penetration: ~60% = 780,000 smartphone users.<br />
+- Travel-interested segment: ~15% = ~120,000 potential users.</p>
+<p><strong>SOM (Serviceable Obtainable Market) — Year 1</strong><br />
+- Target: <strong>10,000 registered users</strong> in Mizoram by end of Year 1.<br />
+- Target conversion rate from downloads to registrations: 35%.<br />
+- Operator acquisition target: <strong>50 active venture listings</strong>.</p>
+<p><strong>Competitive Gap</strong><br />
+| Platform | NE India Coverage | Local Tours | Gamification | Community Planning |<br />
+|---|---|---|---|---|<br />
+| Google Maps | Partial | No | No | No |<br />
+| TripAdvisor | Minimal | No | Badges only | No |<br />
+| MakeMyTrip | No tours | Hotel/flight only | No | No |<br />
+| <strong>Xplooria</strong> | <strong>Full (Mizoram first)</strong> | <strong>Yes</strong> | <strong>Full system</strong> | <strong>Yes</strong> |</p>
+<p>No direct competitor addresses the Northeast India market with the depth that Xplooria provides.</p>
+<h3 id="173-partnership-signals">17.3 Partnership Signals</h3>
+<ul>
+<li><strong>Mizoram Tourism Department</strong> — Official data partnership opportunity (spot data, event data).</li>
+<li><strong>Local Tour Operators</strong> — Free platform = zero adoption friction; validated interest from regional operators.</li>
+<li><strong>University Partnerships</strong> — Campus ambassador readiness at Mizoram University.</li>
+<li><strong>HillsTech</strong> — Local technology company with regional credibility and relationships.</li>
+</ul>
+<h3 id="174-platform-trust-features">17.4 Platform Trust Features</h3>
+<ul>
+<li><strong>One review per user per place</strong> — Prevents review bombing and fake ratings.</li>
+<li><strong>Admin moderation queue</strong> — All user contributions require admin approval before going live.</li>
+<li><strong>Contribution XP only on approval</strong> — No incentive to spam contributions (reward only after admin verification).</li>
+<li><strong>Booking status trail</strong> — Transparent booking lifecycle with admin notes prevents dispute ambiguity.</li>
+<li><strong>Visitor Guide Dos/Don'ts</strong> — Cultural sensitivity built into the product (key for Northeast India tourism).</li>
+</ul>
+<hr />
+<h2 id="18-version-1-feature-completeness-matrix">18. Version 1 Feature Completeness Matrix</h2>
+<table>
+<thead>
+<tr>
+<th>Feature Category</th>
+<th>Feature</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Authentication</strong></td>
+<td>Email/password register</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td></td>
+<td>Email/password login</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td></td>
+<td>Password reset</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td></td>
+<td>Auth state persistence</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td></td>
+<td>Role-based redirect</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td><strong>Discovery</strong></td>
+<td>Tourist spots (browse + detail)</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td></td>
+<td>Restaurants</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td></td>
+<td>Cafes</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td></td>
+<td>Hotels / Stay</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td></td>
+<td>Homestays</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td></td>
+<td>Adventure spots</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td></td>
+<td>Shopping areas</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td></td>
+<td>Events</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td></td>
+<td>Ventures / Tour packages</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td></td>
+<td>Global search</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td><strong>Maps</strong></td>
+<td>Interactive community map</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td></td>
+<td>Category filtering (icon chips)</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td></td>
+<td>Animated map pins</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td></td>
+<td>Tap-to-detail</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td><strong>Community</strong></td>
+<td>Feed posts (text + image)</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td></td>
+<td>Like / comment</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td></td>
+<td>Dilemma A/B polls</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td></td>
+<td>Bucket lists (rooms)</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td></td>
+<td>Dares (group challenges)</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td></td>
+<td>Dare photo proof</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td></td>
+<td>Dare scratch cards</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td></td>
+<td>Notifications</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td><strong>Gamification</strong></td>
+<td>XP system (11 actions)</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td></td>
+<td>10-level progression</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td></td>
+<td>22 badges</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td></td>
+<td>Daily login streak + multiplier</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td></td>
+<td>Leaderboard</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td></td>
+<td>XP toast notification</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td><strong>Bookings</strong></td>
+<td>Browse ventures</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td></td>
+<td>Select package + add-ons</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td></td>
+<td>Booking review + submit</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td></td>
+<td>"My Bookings" tracking</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td></td>
+<td>Post-booking feedback</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td><strong>Profile</strong></td>
+<td>View stats and badges</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td></td>
+<td>Edit profile (name, bio, photo)</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td></td>
+<td>XP history feed</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td></td>
+<td>Theme toggle (dark/light)</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td><strong>Home</strong></td>
+<td>Banner carousel (Firestore-driven)</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td></td>
+<td>Category grid shortcuts</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td></td>
+<td>Featured spots section</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td></td>
+<td>Tour packages preview</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td></td>
+<td>Visitor Guide card</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td></td>
+<td>NE State picker</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td></td>
+<td>AI Planner teaser (locked)</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td><strong>Visitor Guide</strong></td>
+<td>State guide (Mizoram)</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td></td>
+<td>Dos / Don'ts</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td></td>
+<td>Quick facts</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td><strong>Admin — Content</strong></td>
+<td>Manage 8 collection types</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td></td>
+<td>Add/Edit/Delete listings</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td></td>
+<td>CSV bulk import</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td></td>
+<td>Manage ventures (12-section form)</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td></td>
+<td>Banner management</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td></td>
+<td>Visitor guide management</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td><strong>Admin — Operations</strong></td>
+<td>View all bookings</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td></td>
+<td>Update booking status</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td></td>
+<td>View venture feedback</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td></td>
+<td>User management</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td></td>
+<td>Analytics dashboard</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td></td>
+<td>Moderation queue</td>
+<td>✅ Complete</td>
+</tr>
+<tr>
+<td><strong>Upcoming (Roadmap)</strong></td>
+<td>AI Travelling Planner</td>
+<td>🔒 Coming Soon</td>
+</tr>
+<tr>
+<td></td>
+<td>Push notifications (FCM)</td>
+<td>🔲 Planned</td>
+</tr>
+<tr>
+<td></td>
+<td>MezoPerks loyalty redemption</td>
+<td>🔒 Coming Soon</td>
+</tr>
+<tr>
+<td></td>
+<td>Offline reading mode</td>
+<td>🔲 Planned</td>
+</tr>
+<tr>
+<td></td>
+<td>Multi-state expansion</td>
+<td>🔲 Planned</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="19-appendix-a-complete-route-map">19. Appendix A: Complete Route Map</h2>
+<table>
+<thead>
+<tr>
+<th>Route</th>
+<th>Path</th>
+<th>Auth Required</th>
+<th>Admin Only</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Onboarding</td>
+<td><code>/onboarding</code></td>
+<td>No</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Login</td>
+<td><code>/login</code></td>
+<td>No</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Register</td>
+<td><code>/register</code></td>
+<td>No</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Forgot Password</td>
+<td><code>/forgot-password</code></td>
+<td>No</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Home</td>
+<td><code>/</code></td>
+<td>No</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Spots List</td>
+<td><code>/spots</code></td>
+<td>No</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Spot Detail</td>
+<td><code>/spots/:id</code></td>
+<td>No</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Listings (tab)</td>
+<td><code>/listings?tab={n}</code></td>
+<td>No</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Restaurant Detail</td>
+<td><code>/listings/restaurants/:id</code></td>
+<td>No</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Hotel Detail</td>
+<td><code>/listings/hotels/:id</code></td>
+<td>No</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Cafe Detail</td>
+<td><code>/listings/cafes/:id</code></td>
+<td>No</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Stay Detail</td>
+<td><code>/listings/stay/:id</code></td>
+<td>No</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Adventure Detail</td>
+<td><code>/listings/adventure/:id</code></td>
+<td>No</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Shopping Detail</td>
+<td><code>/listings/shopping/:id</code></td>
+<td>No</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Search</td>
+<td><code>/search</code></td>
+<td>No</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Community (Feed/Map)</td>
+<td><code>/community</code></td>
+<td>No</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Create Post</td>
+<td><code>/community/new</code></td>
+<td><strong>Yes</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Create Dilemma</td>
+<td><code>/community/dilemmas/new</code></td>
+<td><strong>Yes</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Create Bucket List</td>
+<td><code>/community/bucket-lists/new</code></td>
+<td><strong>Yes</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Bucket List Detail</td>
+<td><code>/community/bucket-lists/:id</code></td>
+<td><strong>Yes</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Edit Bucket List</td>
+<td><code>/community/bucket-lists/:id/edit</code></td>
+<td><strong>Yes</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Add Bucket Item</td>
+<td><code>/community/bucket-lists/:listId/add-item</code></td>
+<td><strong>Yes</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>My Rooms</td>
+<td><code>/community/my-rooms</code></td>
+<td><strong>Yes</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Create Dare</td>
+<td><code>/community/dares/new</code></td>
+<td><strong>Yes</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Dare Detail</td>
+<td><code>/community/dares/:id</code></td>
+<td><strong>Yes</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Edit Dare</td>
+<td><code>/community/dares/:id/edit</code></td>
+<td><strong>Yes</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Add Challenge</td>
+<td><code>/community/dares/:dareId/add-challenge</code></td>
+<td><strong>Yes</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Submit Proof</td>
+<td><code>/community/dares/:dareId/challenges/:challengeId/proof</code></td>
+<td><strong>Yes</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Dare Rewards</td>
+<td><code>/dare-rewards</code></td>
+<td><strong>Yes</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Scratch Card</td>
+<td><code>/dare-rewards/cards/:cardId</code></td>
+<td><strong>Yes</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Notifications</td>
+<td><code>/notifications</code></td>
+<td><strong>Yes</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Dare Dashboard</td>
+<td><code>/profile/dare-dashboard</code></td>
+<td><strong>Yes</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Venture Detail</td>
+<td><code>/ventures/:id</code></td>
+<td>No</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Booking Review</td>
+<td><code>/ventures/:id/booking-review</code></td>
+<td><strong>Yes</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>My Bookings</td>
+<td><code>/my-bookings</code></td>
+<td><strong>Yes</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Event Detail</td>
+<td><code>/events/:id</code></td>
+<td>No</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Reviews</td>
+<td><code>/reviews/:collection/:id</code></td>
+<td>No</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Leaderboard</td>
+<td><code>/leaderboard</code></td>
+<td>No</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Profile</td>
+<td><code>/profile</code></td>
+<td><strong>Yes</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Edit Profile</td>
+<td><code>/profile/edit</code></td>
+<td><strong>Yes</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Admin Shell</td>
+<td><code>/admin</code></td>
+<td><strong>Yes</strong></td>
+<td><strong>Yes</strong></td>
+</tr>
+<tr>
+<td>Admin Listings</td>
+<td><code>/admin</code> (tab)</td>
+<td><strong>Yes</strong></td>
+<td><strong>Yes</strong></td>
+</tr>
+<tr>
+<td>Admin Add Listing</td>
+<td><code>/admin/listings/add/:collection</code></td>
+<td><strong>Yes</strong></td>
+<td><strong>Yes</strong></td>
+</tr>
+<tr>
+<td>Admin Edit Listing</td>
+<td><code>/admin/listings/edit/:collection/:docId</code></td>
+<td><strong>Yes</strong></td>
+<td><strong>Yes</strong></td>
+</tr>
+<tr>
+<td>Admin Add Venture</td>
+<td><code>/admin/ventures/add</code></td>
+<td><strong>Yes</strong></td>
+<td><strong>Yes</strong></td>
+</tr>
+<tr>
+<td>Admin Edit Venture</td>
+<td><code>/admin/ventures/edit/:docId</code></td>
+<td><strong>Yes</strong></td>
+<td><strong>Yes</strong></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="20-appendix-b-dependencies-reference">20. Appendix B: Dependencies Reference</h2>
+<h3 id="production-dependencies-summary">Production Dependencies Summary</h3>
+<table>
+<thead>
+<tr>
+<th>Category</th>
+<th>Count</th>
+<th>Key Packages</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Core Framework</td>
+<td>2</td>
+<td>flutter, flutter_riverpod</td>
+</tr>
+<tr>
+<td>Firebase</td>
+<td>5</td>
+<td>firebase_core, auth, firestore, storage, analytics</td>
+</tr>
+<tr>
+<td>Navigation</td>
+<td>1</td>
+<td>go_router</td>
+</tr>
+<tr>
+<td>Networking</td>
+<td>2</td>
+<td>dio, pretty_dio_logger</td>
+</tr>
+<tr>
+<td>State/Serialization</td>
+<td>4</td>
+<td>riverpod_annotation, freezed_annotation, json_annotation, equatable</td>
+</tr>
+<tr>
+<td>Local Storage</td>
+<td>2</td>
+<td>shared_preferences, flutter_secure_storage</td>
+</tr>
+<tr>
+<td>UI Components</td>
+<td>10</td>
+<td>carousel_slider, iconsax, google_fonts, cached_network_image, shimmer, lottie, fl_chart, confetti, percent_indicator, smooth_page_indicator</td>
+</tr>
+<tr>
+<td>Maps &amp; Location</td>
+<td>4</td>
+<td>flutter_map, latlong2, geolocator, geocoding</td>
+</tr>
+<tr>
+<td>Forms &amp; Validation</td>
+<td>2</td>
+<td>flutter_form_builder, form_builder_validators</td>
+</tr>
+<tr>
+<td>Media</td>
+<td>3</td>
+<td>image_picker, image_cropper, image</td>
+</tr>
+<tr>
+<td>Bulk Upload</td>
+<td>2</td>
+<td>file_picker, csv</td>
+</tr>
+<tr>
+<td>Utilities</td>
+<td>8</td>
+<td>intl, timeago, uuid, url_launcher, share_plus, connectivity_plus, package_info_plus, logger</td>
+</tr>
+<tr>
+<td>Functional</td>
+<td>1</td>
+<td>dartz</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Total Production Dependencies: 46+</strong></p>
+<h3 id="development-dependencies">Development Dependencies</h3>
+<table>
+<thead>
+<tr>
+<th>Package</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>build_runner</td>
+<td>Code generation orchestrator</td>
+</tr>
+<tr>
+<td>freezed</td>
+<td>Immutable model generation</td>
+</tr>
+<tr>
+<td>json_serializable</td>
+<td>JSON codec generation</td>
+</tr>
+<tr>
+<td>riverpod_generator</td>
+<td>Provider code generation</td>
+</tr>
+<tr>
+<td>flutter_lints</td>
+<td>Lint rules</td>
+</tr>
+<tr>
+<td>flutter_launcher_icons</td>
+<td>App icon generation</td>
+</tr>
+<tr>
+<td>flutter_test</td>
+<td>Unit + widget testing</td>
+</tr>
+<tr>
+<td>mockito</td>
+<td>Mock generation for tests</td>
+</tr>
+<tr>
+<td>fake_cloud_firestore</td>
+<td>In-memory Firestore for tests</td>
+</tr>
+<tr>
+<td>firebase_auth_mocks</td>
+<td>Firebase Auth mock for tests</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="document-information">Document Information</h2>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Document Title</td>
+<td>Xplooria V1 Product Documentation</td>
+</tr>
+<tr>
+<td>Version</td>
+<td>1.0</td>
+</tr>
+<tr>
+<td>Date</td>
+<td>April 2026</td>
+</tr>
+<tr>
+<td>Author</td>
+<td>HillsTech Engineering Team</td>
+</tr>
+<tr>
+<td>Platform</td>
+<td>iOS &amp; Android (Flutter)</td>
+</tr>
+<tr>
+<td>Backend</td>
+<td>Firebase (spotmizoram project)</td>
+</tr>
+<tr>
+<td>Document Location</td>
+<td><code>/documentation/XPLOORIA_V1_DOCUMENTATION.md</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p><em>This document represents the complete feature, architecture, strategy, and technical reference for Xplooria Version 1. For questions regarding specific implementation details, refer to the source code at <code>lib/</code> or contact the HillsTech engineering team.</em></p>
+</div>
+
+</body>
+</html>
