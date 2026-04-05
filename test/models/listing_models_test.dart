@@ -327,9 +327,8 @@ void main() {
       const expected = {
         'touristSpots',
         'restaurants',
-        'hotels',
+        'accommodation',
         'cafes',
-        'homestays',
         'adventure',
         'shopping',
         'events',

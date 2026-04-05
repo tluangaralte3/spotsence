@@ -43,7 +43,7 @@ class FeaturedSpotCard extends StatelessWidget {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, Colors.black.withOpacity(0.75)],
+                  colors: [Colors.transparent, Colors.black.withValues(alpha: 0.75)],
                   stops: const [0.4, 1.0],
                 ),
               ),
@@ -172,7 +172,7 @@ class SpotCard extends StatelessWidget {
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.12),
+                      color: AppColors.primary.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(

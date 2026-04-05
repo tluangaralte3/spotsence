@@ -77,6 +77,20 @@ enum BucketCategory {
     }
   }
 
+  String get emoji {
+    switch (this) {
+      case spot:        return '📍';
+      case restaurant:  return '🍽️';
+      case cafe:        return '☕';
+      case hotel:       return '🏨';
+      case homestay:    return '🏡';
+      case adventure:   return '🧗';
+      case shopping:    return '🛍️';
+      case event:       return '🎉';
+      case other:       return '📌';
+    }
+  }
+
   static BucketCategory fromString(String v) {
     return BucketCategory.values.firstWhere(
       (e) => e.name == v.toLowerCase(),

@@ -149,10 +149,10 @@ class _ContributeScreenState extends ConsumerState<ContributeScreen> {
                     vertical: 8,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.15),
+                    color: AppColors.primary.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: AppColors.primary.withOpacity(0.4),
+                      color: AppColors.primary.withValues(alpha: 0.4),
                     ),
                   ),
                   child: const Row(
@@ -424,7 +424,7 @@ class _DetailsStepState extends State<_DetailsStep> {
                 ),
                 decoration: BoxDecoration(
                   color: selected
-                      ? AppColors.primary.withOpacity(0.15)
+                      ? AppColors.primary.withValues(alpha: 0.15)
                       : context.col.surfaceElevated,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
@@ -760,9 +760,9 @@ class _ReviewStep extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: AppColors.primary.withOpacity(0.08),
+            color: AppColors.primary.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+            border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
           ),
           child: const Row(
             children: [

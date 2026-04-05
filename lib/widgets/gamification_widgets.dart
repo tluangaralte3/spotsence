@@ -42,10 +42,10 @@ class XpProgressBar extends StatelessWidget {
                     vertical: 2,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.2),
+                    color: AppColors.primary.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: AppColors.primary.withOpacity(0.4),
+                      color: AppColors.primary.withValues(alpha: 0.4),
                     ),
                   ),
                   child: Text(
@@ -126,7 +126,7 @@ class LevelBadge extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: _color.withOpacity(0.2),
+        color: _color.withValues(alpha: 0.2),
         border: Border.all(color: _color, width: small ? 1.5 : 2),
       ),
       alignment: Alignment.center,
@@ -166,9 +166,9 @@ class BadgeChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.5)),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -211,10 +211,10 @@ class BadgeCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: context.col.surfaceElevated,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.4)),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.08),
+            color: color.withValues(alpha: 0.08),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -227,7 +227,7 @@ class BadgeCard extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.15),
+              color: color.withValues(alpha: 0.15),
               shape: BoxShape.circle,
             ),
             alignment: Alignment.center,
@@ -288,10 +288,10 @@ class AchievementCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: context.col.surfaceElevated,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.6), width: 2),
+        border: Border.all(color: color.withValues(alpha: 0.6), width: 2),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.25),
+            color: color.withValues(alpha: 0.25),
             blurRadius: 24,
             offset: const Offset(0, 8),
           ),
@@ -304,11 +304,11 @@ class AchievementCard extends StatelessWidget {
             width: 56,
             height: 56,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.15),
+              color: color.withValues(alpha: 0.15),
               shape: BoxShape.circle,
               border: Border.all(color: color),
               boxShadow: [
-                BoxShadow(color: color.withOpacity(0.4), blurRadius: 16),
+                BoxShadow(color: color.withValues(alpha: 0.4), blurRadius: 16),
               ],
             ),
             alignment: Alignment.center,
@@ -461,7 +461,7 @@ class MiniStatChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: c.withOpacity(0.1),
+        color: c.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(

@@ -284,8 +284,9 @@ class _AdminAddListingScreenState extends ConsumerState<AdminAddListingScreen> {
           final rawEnd = d['endDate'];
           if (rawEnd is Timestamp) {
             _endDate = rawEnd.toDate();
-          } else if (rawEnd is String && rawEnd.isNotEmpty)
+          } else if (rawEnd is String && rawEnd.isNotEmpty) {
             _endDate = DateTime.tryParse(rawEnd);
+          }
         } else if (_isAccommodations) {
           // accommodations fields
           _phoneAccCtrl.text =
@@ -487,8 +488,9 @@ class _AdminAddListingScreenState extends ConsumerState<AdminAddListingScreen> {
               DateTime? parsed;
               if (rawDate is Timestamp) {
                 parsed = rawDate.toDate();
-              } else if (rawDate is String && rawDate.isNotEmpty)
+              } else if (rawDate is String && rawDate.isNotEmpty) {
                 parsed = DateTime.tryParse(rawDate);
+              }
               if (parsed != null) {
                 if (key == 'startDate') _startDate = parsed;
                 if (key == 'endDate') _endDate = parsed;
@@ -2686,7 +2688,7 @@ class _ImageThumb extends StatelessWidget {
                 width: 22,
                 height: 22,
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.65),
+                  color: Colors.black.withValues(alpha: 0.65),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.close, color: Colors.white, size: 13),
@@ -2707,7 +2709,7 @@ class _UploadBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.55),
+        color: Colors.black.withValues(alpha: 0.55),
         borderRadius: BorderRadius.circular(4),
       ),
       child: const Text(

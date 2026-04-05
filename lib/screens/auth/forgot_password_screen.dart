@@ -147,6 +147,7 @@ class _SuccessView extends StatelessWidget {
 }
 
 /// Shared logo widget used across auth screens.
+// ignore: unused_element
 class _SpotLogo extends StatelessWidget {
   const _SpotLogo();
 

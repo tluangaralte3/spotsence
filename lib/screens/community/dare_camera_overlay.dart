@@ -248,7 +248,7 @@ class _DareCameraOverlayState extends State<DareCameraOverlay> {
                     gradient: LinearGradient(
                       colors: [
                         Colors.transparent,
-                        Colors.black.withOpacity(0.88),
+                        Colors.black.withValues(alpha: 0.88),
                       ],
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,

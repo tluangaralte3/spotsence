@@ -360,7 +360,7 @@ class _SeasonDropdown extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: selected != null
-              ? AppColors.secondary.withOpacity(0.15)
+              ? AppColors.secondary.withValues(alpha: 0.15)
               : context.col.surfaceElevated,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
@@ -494,7 +494,7 @@ class _DifficultyDropdown extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: selected != null
-              ? Color(selected!.colorHex).withOpacity(0.15)
+              ? Color(selected!.colorHex).withValues(alpha: 0.15)
               : context.col.surfaceElevated,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
@@ -619,7 +619,7 @@ class PackageCard extends StatelessWidget {
           border: Border.all(color: context.col.border),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
+              color: Colors.black.withValues(alpha: 0.08),
               blurRadius: 14,
               offset: const Offset(0, 4),
             ),
@@ -657,7 +657,7 @@ class PackageCard extends StatelessWidget {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.6),
+                      color: Colors.black.withValues(alpha: 0.6),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
@@ -706,7 +706,7 @@ class PackageCard extends StatelessWidget {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.secondary.withOpacity(0.9),
+                      color: AppColors.secondary.withValues(alpha: 0.9),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
@@ -732,7 +732,7 @@ class PackageCard extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: Color(
                         package.difficulty.colorHex,
-                      ).withOpacity(0.9),
+                      ).withValues(alpha: 0.9),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
@@ -854,7 +854,7 @@ class PackageCard extends StatelessWidget {
                             vertical: 3,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.secondary.withOpacity(0.12),
+                            color: AppColors.secondary.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(

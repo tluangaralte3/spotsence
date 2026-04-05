@@ -125,10 +125,10 @@ class HomeScreen extends ConsumerWidget {
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.accent.withOpacity(0.12),
+                            color: AppColors.accent.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                              color: AppColors.accent.withOpacity(0.3),
+                              color: AppColors.accent.withValues(alpha: 0.3),
                             ),
                           ),
                           child: Row(
@@ -441,13 +441,14 @@ class _StatePickerSheet extends ConsumerWidget {
                         Navigator.pop(context);
                       }
                     : () {
-                        // Capture navigator BEFORE popping to avoid
-                        // using a deactivated context after pop.
-                        final nav = Navigator.of(context, rootNavigator: true);
+                        // Capture everything BEFORE the pop so we never
+                        // access BuildContext after an async gap.
+                        final capturedContext = context;
                         Navigator.pop(context);
                         Future.delayed(
                           const Duration(milliseconds: 250),
-                          () => _showComingSoon(nav.context, s.name),
+                          // ignore: use_build_context_synchronously
+                          () => _showComingSoon(capturedContext, s.name),
                         );
                       },
               );
@@ -1096,7 +1097,7 @@ class _FeaturedCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.07),
+              color: Colors.black.withValues(alpha: 0.07),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -1583,7 +1584,7 @@ class _VentureCard extends StatelessWidget {
           border: Border.all(color: context.col.border),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
+              color: Colors.black.withValues(alpha: 0.08),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -1721,10 +1722,10 @@ class _VentureCard extends StatelessWidget {
                             vertical: 3,
                           ),
                           decoration: BoxDecoration(
-                            color: diffColor.withOpacity(0.12),
+                            color: diffColor.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                              color: diffColor.withOpacity(0.3),
+                              color: diffColor.withValues(alpha: 0.3),
                             ),
                           ),
                           child: Text(
@@ -1835,7 +1836,7 @@ class _EmojiHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: AppColors.primary.withOpacity(0.08),
+      color: AppColors.primary.withValues(alpha: 0.08),
       child: const Center(
         child: Icon(
           Iconsax.discover,
@@ -1892,13 +1893,13 @@ class _VisitorGuideCard extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              AppColors.secondary.withOpacity(0.18),
-              AppColors.primary.withOpacity(0.10),
+              AppColors.secondary.withValues(alpha: 0.18),
+              AppColors.primary.withValues(alpha: 0.10),
             ],
           ),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: AppColors.secondary.withOpacity(0.3),
+            color: AppColors.secondary.withValues(alpha: 0.3),
           ),
         ),
         padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
@@ -1909,7 +1910,7 @@ class _VisitorGuideCard extends StatelessWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: AppColors.secondary.withOpacity(0.18),
+                color: AppColors.secondary.withValues(alpha: 0.18),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(
@@ -1940,7 +1941,7 @@ class _VisitorGuideCard extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 7, vertical: 2),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.15),
+                          color: AppColors.primary.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: const Text(

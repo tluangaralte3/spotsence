@@ -115,7 +115,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                     ),
                     decoration: BoxDecoration(
                       color: selected
-                          ? AppColors.primary.withOpacity(0.15)
+                          ? AppColors.primary.withValues(alpha: 0.15)
                           : context.col.surfaceElevated,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(

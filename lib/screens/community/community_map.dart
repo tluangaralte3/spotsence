@@ -296,7 +296,7 @@ class _CommunityMapState extends ConsumerState<CommunityMap> {
                           decoration: BoxDecoration(
                             color: selected
                                 ? AppColors.primary
-                                : context.col.surface.withOpacity(0.92),
+                                : context.col.surface.withValues(alpha: 0.92),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
                               color: selected
@@ -538,7 +538,7 @@ class _CirclePin extends StatelessWidget {
               border: Border.all(color: borderColor, width: 3),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.4),
+                  color: Colors.black.withValues(alpha: 0.4),
                   blurRadius: 6,
                   offset: const Offset(0, 2),
                 ),
@@ -711,12 +711,12 @@ class _SearchBar extends StatelessWidget {
     return Container(
       height: 44,
       decoration: BoxDecoration(
-        color: context.col.surface.withOpacity(0.96),
+        color: context.col.surface.withValues(alpha: 0.96),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: context.col.border),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.3),
+            color: Colors.black.withValues(alpha: 0.3),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),

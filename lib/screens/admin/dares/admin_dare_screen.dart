@@ -7,7 +7,6 @@ import 'dart:math';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:iconsax/iconsax.dart';
@@ -2038,7 +2037,7 @@ class _DareDetailSheet extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
               children: [
                 // Basic info
-                _DetailSection('Overview', [
+                _detailSection('Overview', [
                   _DetailRow('Creator', dare.creatorName),
                   _DetailRow('Category', dare.displayCategory),
                   _DetailRow('Visibility',
@@ -2057,7 +2056,7 @@ class _DareDetailSheet extends StatelessWidget {
 
                 // Challenges
                 if (dare.challenges.isNotEmpty) ...[
-                  _SectionLabel('Challenges (${dare.challenges.length})', context),
+                  _sectionLabel('Challenges (${dare.challenges.length})', context),
                   const SizedBox(height: 8),
                   ...dare.challenges.map((c) => _ChallengeDetailTile(c)),
                   const SizedBox(height: 16),
@@ -2065,7 +2064,7 @@ class _DareDetailSheet extends StatelessWidget {
 
                 // Members
                 if (dare.approvedMembers.isNotEmpty) ...[
-                  _SectionLabel('Active Members (${dare.approvedMembers.length})', context),
+                  _sectionLabel('Active Members (${dare.approvedMembers.length})', context),
                   const SizedBox(height: 8),
                   ...dare.approvedMembers.map((m) => _MemberDetailTile(m, dare.challenges.length)),
                   const SizedBox(height: 16),
@@ -2073,7 +2072,7 @@ class _DareDetailSheet extends StatelessWidget {
 
                 // Pending
                 if (dare.joinRequests.isNotEmpty) ...[
-                  _SectionLabel('Pending Requests (${dare.joinRequests.length})', context),
+                  _sectionLabel('Pending Requests (${dare.joinRequests.length})', context),
                   const SizedBox(height: 8),
                   ...dare.joinRequests.map((r) => _MemberDetailTile(r, dare.challenges.length, isPending: true)),
                 ],
@@ -2113,7 +2112,7 @@ class _DareDetailSheet extends StatelessWidget {
     }
   }
 
-  Widget _DetailSection(String title, List<Widget> rows) {
+  Widget _detailSection(String title, List<Widget> rows) {
     return Builder(
       builder: (context) => Container(
         decoration: BoxDecoration(
@@ -2143,7 +2142,7 @@ class _DareDetailSheet extends StatelessWidget {
     );
   }
 
-  Widget _SectionLabel(String label, BuildContext context) {
+  Widget _sectionLabel(String label, BuildContext context) {
     return Text(
       label,
       style: TextStyle(

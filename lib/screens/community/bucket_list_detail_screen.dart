@@ -1668,9 +1668,11 @@ class _ReportDialogState extends State<_ReportDialog> {
               (r) => RadioListTile<String>(
                 title: Text(r, style: TextStyle(color: context.col.textPrimary, fontSize: 13)),
                 value: r,
+                // ignore: deprecated_member_use
                 groupValue: _selected,
                 activeColor: AppColors.primary,
                 dense: true,
+                // ignore: deprecated_member_use
                 onChanged: (v) => setState(() => _selected = v),
               ),
             )

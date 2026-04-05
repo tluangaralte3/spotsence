@@ -274,7 +274,7 @@ abstract class AppTheme {
         backgroundColor: isDark
             ? AppColors.surfaceElevated
             : const Color(0xFFF0F4FF),
-        selectedColor: AppColors.primary.withOpacity(0.2),
+        selectedColor: AppColors.primary.withValues(alpha: 0.2),
         labelStyle: GoogleFonts.inter(
           fontSize: 13,
           color: isDark

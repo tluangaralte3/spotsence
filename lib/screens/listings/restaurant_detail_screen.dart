@@ -84,7 +84,7 @@ class _RestaurantBodyState extends ConsumerState<_RestaurantBody> {
               child: Container(
                 margin: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: context.col.surface.withOpacity(0.9),
+                  color: context.col.surface.withValues(alpha: 0.9),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -138,7 +138,7 @@ class _RestaurantBodyState extends ConsumerState<_RestaurantBody> {
                           end: Alignment.bottomCenter,
                           colors: [
                             Colors.transparent,
-                            context.col.bg.withOpacity(0.8),
+                            context.col.bg.withValues(alpha: 0.8),
                           ],
                         ),
                       ),
@@ -164,7 +164,7 @@ class _RestaurantBodyState extends ConsumerState<_RestaurantBody> {
                               decoration: BoxDecoration(
                                 color: _imageIndex == i
                                     ? AppColors.primary
-                                    : Colors.white.withOpacity(0.5),
+                                    : Colors.white.withValues(alpha: 0.5),
                                 borderRadius: BorderRadius.circular(3),
                               ),
                             ),
@@ -238,7 +238,7 @@ class _RestaurantBodyState extends ConsumerState<_RestaurantBody> {
                         _Badge(
                           label: r.priceRange,
                           color: AppColors.primary,
-                          bgColor: AppColors.primary.withOpacity(0.12),
+                          bgColor: AppColors.primary.withValues(alpha: 0.12),
                         ),
                       if (r.district.isNotEmpty)
                         _Badge(
@@ -251,7 +251,7 @@ class _RestaurantBodyState extends ConsumerState<_RestaurantBody> {
                         _Badge(
                           label: c,
                           color: AppColors.secondary,
-                          bgColor: AppColors.secondary.withOpacity(0.1),
+                          bgColor: AppColors.secondary.withValues(alpha: 0.1),
                         ),
                     ],
                   ),
@@ -514,10 +514,10 @@ class _ReviewSectionState extends ConsumerState<_ReviewSection> {
                     vertical: 7,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.12),
+                    color: AppColors.primary.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: AppColors.primary.withOpacity(0.4),
+                      color: AppColors.primary.withValues(alpha: 0.4),
                     ),
                   ),
                   child: Row(
@@ -850,9 +850,9 @@ class _RatingBadge extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
     decoration: BoxDecoration(
-      color: AppColors.star.withOpacity(0.15),
+      color: AppColors.star.withValues(alpha: 0.15),
       borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: AppColors.star.withOpacity(0.3)),
+      border: Border.all(color: AppColors.star.withValues(alpha: 0.3)),
     ),
     child: Row(
       mainAxisSize: MainAxisSize.min,

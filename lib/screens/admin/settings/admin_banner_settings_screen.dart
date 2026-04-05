@@ -310,7 +310,7 @@ class _SectionVisibilityCard extends StatelessWidget {
           Switch(
             value: visible,
             onChanged: onToggle,
-            activeColor: AppColors.primary,
+            activeThumbColor: AppColors.primary,
           ),
         ],
       ),
@@ -434,7 +434,7 @@ class _BannerCard extends StatelessWidget {
                   Switch(
                     value: banner.isActive,
                     onChanged: (_) => onToggle(),
-                    activeColor: AppColors.primary,
+                    activeThumbColor: AppColors.primary,
                     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                   GestureDetector(
@@ -938,7 +938,7 @@ class _BannerEditorSheetState extends State<_BannerEditorSheet> {
                   Switch(
                     value: _isActive,
                     onChanged: (v) => setState(() => _isActive = v),
-                    activeColor: AppColors.primary,
+                    activeThumbColor: AppColors.primary,
                   ),
                 ],
               ),

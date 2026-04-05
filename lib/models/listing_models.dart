@@ -758,4 +758,16 @@ enum ListingCategory {
         return Iconsax.calendar;
     }
   }
+
+  String get emoji {
+    switch (this) {
+      case touristSpots:    return '📍';
+      case restaurants:     return '🍽️';
+      case accommodation:   return '🏨';
+      case cafes:           return '☕';
+      case adventure:       return '🧗';
+      case shopping:        return '🛍️';
+      case events:          return '🎉';
+    }
+  }
 }
