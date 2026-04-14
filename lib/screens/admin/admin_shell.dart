@@ -20,6 +20,7 @@ import 'ventures/admin_ventures_screen.dart';
 import 'moderation/admin_moderation_screen.dart';
 import 'banners/admin_banners_screen.dart';
 import 'settings/admin_settings_screen.dart';
+import 'rentals/admin_rentals_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Navigation items
@@ -78,6 +79,11 @@ const _navItems = [
     activeIcon: Icons.image,
   ),
   _AdminNavItem(
+    label: 'Rentals',
+    icon: Icons.handyman_outlined,
+    activeIcon: Icons.handyman,
+  ),
+  _AdminNavItem(
     label: 'Settings',
     icon: Icons.settings_outlined,
     activeIcon: Icons.settings,
@@ -110,6 +116,7 @@ class AdminShell extends ConsumerWidget {
     AdminVenturesScreen(),
     AdminModerationScreen(),
     AdminBannersScreen(),
+    AdminRentalsScreen(),
     AdminSettingsScreen(),
   ];
 
@@ -280,12 +287,12 @@ class _NarrowLayout extends ConsumerWidget {
                   IconButton(
                     tooltip: 'Settings',
                     icon: Icon(
-                      index == 8 ? Icons.settings : Icons.settings_outlined,
-                      color: index == 8 ? AppColors.primary : col.textSecondary,
+                      index == 9 ? Icons.settings : Icons.settings_outlined,
+                      color: index == 9 ? AppColors.primary : col.textSecondary,
                       size: 20,
                     ),
                     onPressed: () =>
-                        ref.read(adminTabIndexProvider.notifier).set(8),
+                        ref.read(adminTabIndexProvider.notifier).set(9),
                   ),
                   _SignOutButton(),
                 ],

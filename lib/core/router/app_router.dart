@@ -47,6 +47,9 @@ import '../../models/dare_models.dart';
 import '../../screens/admin/admin_shell.dart';
 import '../../screens/admin/listings/admin_add_listing_screen.dart';
 import '../../screens/admin/listings/admin_venture_form_screen.dart';
+import '../../screens/admin/rentals/admin_rentals_screen.dart';
+import '../../screens/admin/rentals/admin_add_rental_screen.dart';
+import '../../screens/rentals/rentals_screen.dart';
 import '../../controllers/admin_controller.dart';
 
 // Named route paths
@@ -127,6 +130,14 @@ abstract class AppRoutes {
   static String adminAddVenturePath() => '/admin/ventures/add';
   static String adminEditVenturePath(String docId) =>
       '/admin/ventures/edit/$docId';
+
+  static const adminRentals = '/admin/rentals';
+  static const adminAddRental = '/admin/rentals/add';
+  static const adminEditRental = '/admin/rentals/edit/:docId';
+  static String adminEditRentalPath(String docId) =>
+      '/admin/rentals/edit/$docId';
+
+  static const rentals = '/rentals';
 
   static const allReviews = '/reviews/:collection/:id';
   static String allReviewsPath({
@@ -412,7 +423,31 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               AdminVentureFormScreen(docId: state.pathParameters['docId']),
             ),
           ),
+          GoRoute(
+            path: 'rentals',
+            pageBuilder: (_, state) =>
+                _slide(state, const AdminRentalsScreen()),
+          ),
+          GoRoute(
+            path: 'rentals/add',
+            pageBuilder: (_, state) =>
+                _slide(state, const AdminAddRentalScreen()),
+          ),
+          GoRoute(
+            path: 'rentals/edit/:docId',
+            pageBuilder: (_, state) => _slide(
+              state,
+              AdminAddRentalScreen(
+                docId: state.pathParameters['docId'],
+              ),
+            ),
+          ),
         ],
+      ),
+      GoRoute(
+        path: AppRoutes.rentals,
+        pageBuilder: (_, state) =>
+            _slide(state, const RentalsScreen()),
       ),
       GoRoute(
         path: AppRoutes.createPost,

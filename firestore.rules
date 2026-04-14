@@ -402,5 +402,12 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // ── Equipment Rentals ────────────────────────────────────────────────────
+
+    match /equipment_rentals/{docId} {
+      allow read: if true;
+      allow write: if isAuth();
+    }
+
   }
 }

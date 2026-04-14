@@ -19,6 +19,9 @@ import '../../models/banner_model.dart';
 import '../../models/spot_model.dart';
 import '../../models/tour_venture_models.dart';
 import '../../widgets/shared_widgets.dart';
+import '../../controllers/rental_controller.dart';
+import '../../models/rental_models.dart';
+import '../rentals/rentals_screen.dart';
 import 'visitor_guide_screen.dart';
 
 /// Tracks which NE state the user has selected from the state picker.
@@ -247,6 +250,9 @@ class HomeScreen extends ConsumerWidget {
 
           // ── Tour Packages Section ─────────────────────────────────────
           const SliverToBoxAdapter(child: _TourVentureSection()),
+
+          // ── Equipment Rentals Section ────────────────────────────────
+          const SliverToBoxAdapter(child: _EquipmentRentalsSection()),
 
           // ── AI Travelling Planner (Coming Soon) ───────────────────────
           const SliverToBoxAdapter(child: _AiPlannerSection()),
@@ -1829,6 +1835,342 @@ class _VentureCard extends StatelessWidget {
     }
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Equipment Rentals Section — horizontal slider on home screen
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _EquipmentRentalsSection extends ConsumerWidget {
+  const _EquipmentRentalsSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final rentalsAsync = ref.watch(featuredRentalsProvider);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(0, 28, 0, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Header ──────────────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Row(
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: AppColors.secondary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Iconsax.box,
+                    size: 17,
+                    color: AppColors.secondary,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Equipment Rentals',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      Text(
+                        'Gear up for your adventure',
+                        style: TextStyle(
+                          color: context.col.textMuted,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const RentalsScreen(),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text(
+                        'See all',
+                        style: TextStyle(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                        ),
+                      ),
+                      const SizedBox(width: 2),
+                      const Icon(
+                        Iconsax.arrow_right_3,
+                        size: 14,
+                        color: AppColors.primary,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 14),
+
+          // ── Slider ───────────────────────────────────────────────────────
+          rentalsAsync.when(
+            loading: () => SizedBox(
+              height: 210,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                itemCount: 3,
+                itemBuilder: (_, _) => const _RentalCardShimmer(),
+              ),
+            ),
+            error: (_, _) => const SizedBox.shrink(),
+            data: (items) {
+              final available =
+                  items.where((i) => i.isAvailable).toList();
+              if (available.isEmpty) return const SizedBox.shrink();
+              return SizedBox(
+                height: 220,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  itemCount: available.length,
+                  itemBuilder: (ctx, i) => _RentalSliderCard(
+                    item: available[i],
+                    onSeeAll: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const RentalsScreen(),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RentalSliderCard extends StatelessWidget {
+  final RentalItem item;
+  final VoidCallback onSeeAll;
+
+  const _RentalSliderCard({required this.item, required this.onSeeAll});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onSeeAll,
+      child: Container(
+        width: 180,
+        margin: const EdgeInsets.only(right: 12),
+        decoration: BoxDecoration(
+          color: context.col.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: context.col.border),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Image ──────────────────────────────────────────────────
+            ClipRRect(
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(16)),
+              child: SizedBox(
+                height: 116,
+                width: double.infinity,
+                child: item.firstImageUrl != null
+                    ? CachedNetworkImage(
+                        imageUrl: item.firstImageUrl!,
+                        fit: BoxFit.cover,
+                        errorWidget: (_, _, _) =>
+                            _RentalImagePlaceholder(),
+                      )
+                    : _RentalImagePlaceholder(),
+              ),
+            ),
+
+            Padding(
+              padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      item.category.label,
+                      style: const TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    item.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: context.col.textPrimary,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(
+                        Iconsax.tag,
+                        size: 12,
+                        color: AppColors.primary,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '₹${item.pricePerDay.toStringAsFixed(0)}/day',
+                        style: const TextStyle(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (item.location.isNotEmpty) ...[
+                    const SizedBox(height: 3),
+                    Row(
+                      children: [
+                        Icon(
+                          Iconsax.location,
+                          size: 11,
+                          color: context.col.textMuted,
+                        ),
+                        const SizedBox(width: 3),
+                        Expanded(
+                          child: Text(
+                            item.location,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: context.col.textMuted,
+                              fontSize: 10,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RentalImagePlaceholder extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: AppColors.secondary.withValues(alpha: 0.06),
+      child: const Center(
+        child: Icon(Iconsax.box, size: 32, color: AppColors.secondary),
+      ),
+    );
+  }
+}
+
+class _RentalCardShimmer extends StatelessWidget {
+  const _RentalCardShimmer();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 180,
+      margin: const EdgeInsets.only(right: 12),
+      decoration: BoxDecoration(
+        color: context.col.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: context.col.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            height: 116,
+            decoration: BoxDecoration(
+              color: context.col.surfaceElevated,
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(16)),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 60,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    color: context.col.surfaceElevated,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  width: 120,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: context.col.surfaceElevated,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Container(
+                  width: 80,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    color: context.col.surfaceElevated,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _EmojiHero extends StatelessWidget {
   const _EmojiHero();

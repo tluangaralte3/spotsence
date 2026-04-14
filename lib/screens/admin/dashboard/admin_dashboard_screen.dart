@@ -148,6 +148,12 @@ class _StatsGrid extends StatelessWidget {
       Icons.explore_outlined,
       AppColors.primary,
     ),
+    _StatMeta(
+      'equipment_rentals',
+      'Rentals',
+      Icons.handyman_outlined,
+      Color(0xFF06B6D4),
+    ),
   ];
 
   @override
@@ -395,7 +401,7 @@ class _ListingCategoriesSection extends ConsumerWidget {
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: ListingTab.values.length,
+      itemCount: ListingTab.values.length + 1, // +1 for Rentals tile
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 3,
         crossAxisSpacing: 10,
@@ -403,15 +409,25 @@ class _ListingCategoriesSection extends ConsumerWidget {
         childAspectRatio: 1.1,
       ),
       itemBuilder: (context, i) {
+        // Extra tile at the end for Equipment Rentals
+        if (i == ListingTab.values.length) {
+          return _ListingCategoryTile(
+            label: 'Rentals',
+            icon: Icons.handyman_outlined,
+            color: const Color(0xFF06B6D4),
+            col: col,
+            onTap: () => ref.read(adminTabIndexProvider.notifier).set(8),
+          );
+        }
         final tab = ListingTab.values[i];
         final meta = _tabMeta[tab]!;
         return _ListingCategoryTile(
-          tab: tab,
+          label: tab.label,
           icon: meta.icon,
           color: meta.color,
           col: col,
           onTap: () {
-            // Switch to Listings tab (index 1) and pre-select the tab
+            // Switch to   tab (index 1) and pre-select the tab
             ref.read(selectedListingTabProvider.notifier).set(tab);
             ref.read(adminTabIndexProvider.notifier).set(1);
           },
@@ -422,14 +438,14 @@ class _ListingCategoriesSection extends ConsumerWidget {
 }
 
 class _ListingCategoryTile extends StatelessWidget {
-  final ListingTab tab;
+  final String label;
   final IconData icon;
   final Color color;
   final AppColorScheme col;
   final VoidCallback onTap;
 
   const _ListingCategoryTile({
-    required this.tab,
+    required this.label,
     required this.icon,
     required this.color,
     required this.col,
@@ -463,7 +479,7 @@ class _ListingCategoryTile extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4),
               child: Text(
-                tab.label,
+                label,
                 textAlign: TextAlign.center,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,

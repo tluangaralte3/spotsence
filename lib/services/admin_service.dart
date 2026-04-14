@@ -170,6 +170,7 @@ class AdminService {
       'shoppingAreas',
       'events',
       'tour_packages',
+      'equipment_rentals',
     ];
 
     final results = <String, int>{};

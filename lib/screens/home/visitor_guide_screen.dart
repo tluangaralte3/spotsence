@@ -8,6 +8,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:iconsax/iconsax.dart';
 import '../../controllers/visitor_guide_controller.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/visitor_guide_model.dart';
@@ -24,23 +25,23 @@ IconData _factIconFor(String iconName) {
   switch (iconName.toLowerCase()) {
     case 'population':
     case 'people':
-      return Icons.people_outline;
+      return Iconsax.people;
     case 'language':
     case 'globe':
-      return Icons.language;
+      return Iconsax.global;
     case 'weather':
     case 'season':
     case 'besttime':
-      return Icons.wb_sunny_outlined;
+      return Iconsax.sun_1;
     case 'permit':
     case 'ilp':
-      return Icons.card_travel_outlined;
+      return Iconsax.card;
     case 'location':
-      return Icons.place_outlined;
+      return Iconsax.location;
     case 'time':
-      return Icons.schedule_outlined;
+      return Iconsax.clock;
     default:
-      return Icons.info_outline_rounded;
+      return Iconsax.info_circle;
   }
 }
 
@@ -63,7 +64,7 @@ class VisitorGuideScreen extends ConsumerWidget {
           backgroundColor: context.col.bg,
           elevation: 0,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back_rounded, color: context.col.textPrimary),
+            icon: Icon(Iconsax.arrow_left, color: context.col.textPrimary),
             onPressed: () => Navigator.pop(context),
           ),
         ),
@@ -94,7 +95,7 @@ class VisitorGuideScreen extends ConsumerWidget {
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
-                      Icons.arrow_back_rounded,
+                      Iconsax.arrow_left,
                       color: Colors.white,
                       size: 18,
                     ),
@@ -117,7 +118,7 @@ class VisitorGuideScreen extends ConsumerWidget {
                     if (guide.facts.isNotEmpty) const SizedBox(height: 20),
                     if (guide.about.trim().isNotEmpty)
                       _GuideCard(
-                        icon: Icons.info_outline_rounded,
+                        icon: Iconsax.info_circle,
                         iconColor: AppColors.info,
                         title: 'About ${guide.stateName}',
                         child: Text(
@@ -135,13 +136,13 @@ class VisitorGuideScreen extends ConsumerWidget {
                     if (guide.about.trim().isNotEmpty) const SizedBox(height: 16),
                     if (guide.dos.isNotEmpty)
                       _GuideCard(
-                        icon: Icons.check_circle_outline_rounded,
+                        icon: Iconsax.tick_circle,
                         iconColor: AppColors.success,
-                        title: 'What To Do ✅',
+                        title: 'What To Do',
                         child: _BulletList(
                           items: guide.dos,
                           color: AppColors.success,
-                          icon: Icons.check_circle_rounded,
+                          icon: Iconsax.tick_circle,
                         ),
                       )
                           .animate()
@@ -150,13 +151,13 @@ class VisitorGuideScreen extends ConsumerWidget {
                     if (guide.dos.isNotEmpty) const SizedBox(height: 16),
                     if (guide.donts.isNotEmpty)
                       _GuideCard(
-                        icon: Icons.cancel_outlined,
+                        icon: Iconsax.close_circle,
                         iconColor: AppColors.error,
-                        title: 'What Not To Do 🚫',
+                        title: 'What Not To Do',
                         child: _BulletList(
                           items: guide.donts,
                           color: AppColors.error,
-                          icon: Icons.cancel_rounded,
+                          icon: Iconsax.close_circle,
                         ),
                       )
                           .animate()
@@ -175,7 +176,7 @@ class VisitorGuideScreen extends ConsumerWidget {
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(Icons.lightbulb_outline_rounded,
+                          Icon(Iconsax.lamp_on,
                               color: AppColors.accent, size: 18),
                           const SizedBox(width: 10),
                           Expanded(
@@ -247,10 +248,7 @@ class _GuideHero extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 52),
-                Text(
-                  guide.emoji.trim().isEmpty ? '🗺️' : guide.emoji,
-                  style: const TextStyle(fontSize: 40),
-                ),
+                const Icon(Iconsax.map_1, size: 40, color: Colors.white),
                 const SizedBox(height: 8),
                 Text(
                   guide.stateName,
@@ -301,7 +299,7 @@ class _ComingSoonScreen extends StatelessWidget {
           ),
         ),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_rounded, color: context.col.textPrimary),
+          icon: Icon(Iconsax.arrow_left, color: context.col.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         elevation: 0,
@@ -310,7 +308,7 @@ class _ComingSoonScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text('🗺️', style: TextStyle(fontSize: 56)),
+            const Icon(Iconsax.map_1, size: 56, color: AppColors.primary),
             const SizedBox(height: 16),
             Text(
               'Guide Coming Soon',
