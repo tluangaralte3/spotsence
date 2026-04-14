@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
 import '../services/admin_service.dart';
+import '../services/notification_service.dart';
 
 // ── SignInResult ──────────────────────────────────────────────────────────────
 
@@ -114,6 +117,9 @@ class AuthController extends AsyncNotifier<AuthState> {
           // Seed / update the admin Firestore document
           await adminService.seedSuperAdmin();
         }
+        // Subscribe to FCM topics and persist the device token.
+        unawaited(NotificationService.instance.subscribeToTopics());
+        unawaited(NotificationService.instance.saveTokenToFirestore(user.id));
         return SignInResult(redirectRoute: isSuperAdmin ? '/admin' : '/');
       },
       err: (msg) {
@@ -142,6 +148,9 @@ class AuthController extends AsyncNotifier<AuthState> {
         state = AsyncData(
           AuthState(status: AuthStatus.authenticated, user: user),
         );
+        // Subscribe to FCM topics on registration, same as on login.
+        unawaited(NotificationService.instance.subscribeToTopics());
+        unawaited(NotificationService.instance.saveTokenToFirestore(user.id));
         return null;
       },
       err: (msg) {
@@ -154,6 +163,7 @@ class AuthController extends AsyncNotifier<AuthState> {
   }
 
   Future<void> signOut() async {
+    unawaited(NotificationService.instance.unsubscribeFromTopics());
     await _authService.signOut();
     state = const AsyncData(AuthState(status: AuthStatus.unauthenticated));
   }

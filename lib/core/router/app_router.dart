@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../controllers/auth_controller.dart';
+import '../../services/notification_service.dart';
 import '../../screens/auth/login_screen.dart';
 import '../../screens/auth/register_screen.dart';
 import '../../screens/auth/forgot_password_screen.dart';
@@ -230,6 +231,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   ref.watch(_routerListenerProvider);
 
   final router = GoRouter(
+    // Share the navigator key with NotificationService so it can push routes
+    // from FCM tap handlers without needing a BuildContext.
+    navigatorKey: NotificationService.navigatorKey,
     initialLocation: AppRoutes.home,
     debugLogDiagnostics: true,
     refreshListenable: _routerNotifier,
