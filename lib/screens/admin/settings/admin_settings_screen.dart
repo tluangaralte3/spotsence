@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../controllers/admin_controller.dart';
 import '../../../controllers/auth_controller.dart';
+import '../../../core/router/app_router.dart';
 import '../../../models/admin_model.dart';
 import 'admin_banner_settings_screen.dart';
 import '../visitor_guides/admin_visitor_guide_screen.dart';
@@ -205,6 +206,19 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
                             builder: (_) => const AdminVisitorGuideScreen(),
                           ),
                         ),
+                      ),
+                      _Divider(),
+                      _SettingsTile(
+                        icon: Icons.inventory_2_outlined,
+                        iconColor: AppColors.warning,
+                        title: 'Rental Tracking',
+                        subtitle: 'Bookings, inventory stats and rental periods',
+                        trailing: Icon(
+                          Icons.chevron_right_rounded,
+                          size: 18,
+                          color: context.col.textMuted,
+                        ),
+                        onTap: () => context.push(AppRoutes.adminRentalTracking),
                       ),
                     ],
                   ),

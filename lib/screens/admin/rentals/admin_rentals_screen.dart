@@ -34,6 +34,12 @@ class AdminRentalsScreen extends ConsumerWidget {
         ),
         actions: [
           IconButton(
+            icon: const Icon(Iconsax.chart_2, color: AppColors.info),
+            tooltip: 'Rental Tracking',
+            onPressed: () =>
+                context.push(AppRoutes.adminRentalTracking),
+          ),
+          IconButton(
             icon: const Icon(Iconsax.add, color: AppColors.primary),
             tooltip: 'Add Rental',
             onPressed: () => context.push(AppRoutes.adminAddRental),

@@ -1,6 +1,6 @@
 // lib/services/rental_service.dart
 //
-// Firestore CRUD for `equipment_rentals` collection.
+// Firestore CRUD for `equipment_rentals` and `rental_bookings` collections.
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/rental_models.dart';
@@ -14,7 +14,10 @@ class RentalService {
   CollectionReference<Map<String, dynamic>> get _col =>
       _db.collection('equipment_rentals');
 
-  // ── Streams ────────────────────────────────────────────────────────────────
+  CollectionReference<Map<String, dynamic>> get _bookings =>
+      _db.collection('rental_bookings');
+
+  // ── Equipment Streams ──────────────────────────────────────────────────────
 
   Stream<List<RentalItem>> watchFeatured({int limit = 10}) {
     return _col
@@ -88,5 +91,70 @@ class RentalService {
 
   Future<void> setFeatured(String id, {required bool featured}) async {
     await _col.doc(id).update({'isFeatured': featured});
+  }
+
+  // ── Booking Streams ────────────────────────────────────────────────────────
+
+  Stream<List<RentalBooking>> watchAllBookings() {
+    return _bookings
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((s) => s.docs.map((d) => RentalBooking.fromFirestore(d)).toList());
+  }
+
+  Stream<List<RentalBooking>> watchActiveBookings() {
+    return _bookings
+        .where('status', isEqualTo: RentalBookingStatus.active.value)
+        .orderBy('endDate')
+        .snapshots()
+        .map((s) => s.docs.map((d) => RentalBooking.fromFirestore(d)).toList());
+  }
+
+  Stream<List<RentalBooking>> watchBookingsByItem(String itemId) {
+    return _bookings
+        .where('itemId', isEqualTo: itemId)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((s) => s.docs.map((d) => RentalBooking.fromFirestore(d)).toList());
+  }
+
+  // ── Booking Writes ─────────────────────────────────────────────────────────
+
+  Future<String> createBooking(RentalBooking booking) async {
+    final ref = await _bookings.add(booking.toFirestore());
+    return ref.id;
+  }
+
+  Future<void> updateBookingStatus(
+    String id,
+    RentalBookingStatus status,
+  ) async {
+    await _bookings.doc(id).update({
+      'status': status.value,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Future<void> markReturned(String id) =>
+      updateBookingStatus(id, RentalBookingStatus.returned);
+
+  Future<void> cancelBooking(String id) =>
+      updateBookingStatus(id, RentalBookingStatus.cancelled);
+
+  Future<void> markOverdue(String id) =>
+      updateBookingStatus(id, RentalBookingStatus.overdue);
+
+  Future<void> updateBookingNotes(String id, String notes) async {
+    await _bookings.doc(id).update({
+      'notes': notes,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Future<void> extendBooking(String id, DateTime newEndDate) async {
+    await _bookings.doc(id).update({
+      'endDate': Timestamp.fromDate(newEndDate),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
   }
 }

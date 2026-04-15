@@ -203,3 +203,183 @@ Map<String, String> _toStringMap(dynamic v) {
   }
   return {};
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RentalBookingStatus
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum RentalBookingStatus {
+  active,
+  returned,
+  overdue,
+  cancelled;
+
+  String get label => switch (this) {
+    RentalBookingStatus.active => 'Active',
+    RentalBookingStatus.returned => 'Returned',
+    RentalBookingStatus.overdue => 'Overdue',
+    RentalBookingStatus.cancelled => 'Cancelled',
+  };
+
+  String get value => switch (this) {
+    RentalBookingStatus.active => 'active',
+    RentalBookingStatus.returned => 'returned',
+    RentalBookingStatus.overdue => 'overdue',
+    RentalBookingStatus.cancelled => 'cancelled',
+  };
+
+  static RentalBookingStatus fromString(String? s) {
+    return RentalBookingStatus.values.firstWhere(
+      (e) => e.value == s,
+      orElse: () => RentalBookingStatus.active,
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RentalBooking
+// ─────────────────────────────────────────────────────────────────────────────
+
+class RentalBooking {
+  final String id;
+
+  // Item snapshot (denormalised so history stays fixed even if item is edited)
+  final String itemId;
+  final String itemName;
+  final String itemCategory; // RentalCategory.value string
+  final String? itemImageUrl;
+  final double pricePerDay;
+  final double? pricePerHour;
+
+  // Renter details
+  final String renterName;
+  final String renterPhone;
+  final String renterEmail;
+
+  // Rental period
+  final DateTime startDate;
+  final DateTime endDate;
+  final int quantityRented;
+
+  // Financials
+  final double totalAmount;
+
+  // State
+  final RentalBookingStatus status;
+  final String notes;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+
+  const RentalBooking({
+    required this.id,
+    required this.itemId,
+    required this.itemName,
+    required this.itemCategory,
+    this.itemImageUrl,
+    required this.pricePerDay,
+    this.pricePerHour,
+    required this.renterName,
+    required this.renterPhone,
+    this.renterEmail = '',
+    required this.startDate,
+    required this.endDate,
+    this.quantityRented = 1,
+    required this.totalAmount,
+    this.status = RentalBookingStatus.active,
+    this.notes = '',
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  int get rentalDays => endDate.difference(startDate).inDays.abs() + 1;
+
+  bool get isEffectivelyOverdue =>
+      status == RentalBookingStatus.active &&
+      DateTime.now().isAfter(endDate.add(const Duration(hours: 24)));
+
+  factory RentalBooking.fromFirestore(
+    DocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
+    final d = doc.data() ?? {};
+    DateTime ts(String key) {
+      final v = d[key];
+      if (v is Timestamp) return v.toDate();
+      return DateTime.now();
+    }
+
+    return RentalBooking(
+      id: doc.id,
+      itemId: d['itemId']?.toString() ?? '',
+      itemName: d['itemName']?.toString() ?? '',
+      itemCategory: d['itemCategory']?.toString() ?? '',
+      itemImageUrl: d['itemImageUrl']?.toString(),
+      pricePerDay: _toDouble(d['pricePerDay']),
+      pricePerHour: d['pricePerHour'] != null
+          ? _toDouble(d['pricePerHour'])
+          : null,
+      renterName: d['renterName']?.toString() ?? '',
+      renterPhone: d['renterPhone']?.toString() ?? '',
+      renterEmail: d['renterEmail']?.toString() ?? '',
+      startDate: ts('startDate'),
+      endDate: ts('endDate'),
+      quantityRented: d['quantityRented'] is int
+          ? d['quantityRented'] as int
+          : int.tryParse(d['quantityRented']?.toString() ?? '') ?? 1,
+      totalAmount: _toDouble(d['totalAmount']),
+      status: RentalBookingStatus.fromString(d['status']?.toString()),
+      notes: d['notes']?.toString() ?? '',
+      createdAt: d['createdAt'] is Timestamp
+          ? (d['createdAt'] as Timestamp).toDate()
+          : null,
+      updatedAt: d['updatedAt'] is Timestamp
+          ? (d['updatedAt'] as Timestamp).toDate()
+          : null,
+    );
+  }
+
+  Map<String, dynamic> toFirestore() => {
+    'itemId': itemId,
+    'itemName': itemName,
+    'itemCategory': itemCategory,
+    if (itemImageUrl != null) 'itemImageUrl': itemImageUrl,
+    'pricePerDay': pricePerDay,
+    if (pricePerHour != null) 'pricePerHour': pricePerHour,
+    'renterName': renterName,
+    'renterPhone': renterPhone,
+    'renterEmail': renterEmail,
+    'startDate': Timestamp.fromDate(startDate),
+    'endDate': Timestamp.fromDate(endDate),
+    'quantityRented': quantityRented,
+    'totalAmount': totalAmount,
+    'status': status.value,
+    'notes': notes,
+    'createdAt': FieldValue.serverTimestamp(),
+    'updatedAt': FieldValue.serverTimestamp(),
+  };
+
+  RentalBooking copyWith({
+    RentalBookingStatus? status,
+    String? notes,
+    DateTime? endDate,
+  }) => RentalBooking(
+    id: id,
+    itemId: itemId,
+    itemName: itemName,
+    itemCategory: itemCategory,
+    itemImageUrl: itemImageUrl,
+    pricePerDay: pricePerDay,
+    pricePerHour: pricePerHour,
+    renterName: renterName,
+    renterPhone: renterPhone,
+    renterEmail: renterEmail,
+    startDate: startDate,
+    endDate: endDate ?? this.endDate,
+    quantityRented: quantityRented,
+    totalAmount: totalAmount,
+    status: status ?? this.status,
+    notes: notes ?? this.notes,
+    createdAt: createdAt,
+    updatedAt: updatedAt,
+  );
+}
+

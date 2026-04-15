@@ -41,3 +41,19 @@ final selectedRentalCategoryProvider =
     NotifierProvider<_RentalCategoryNotifier, RentalCategory?>(
   _RentalCategoryNotifier.new,
 );
+
+// ── Booking providers ──────────────────────────────────────────────────────
+
+final allBookingsProvider = StreamProvider<List<RentalBooking>>((ref) {
+  return ref.watch(rentalServiceProvider).watchAllBookings();
+});
+
+final activeBookingsProvider = StreamProvider<List<RentalBooking>>((ref) {
+  return ref.watch(rentalServiceProvider).watchActiveBookings();
+});
+
+final bookingsByItemProvider =
+    StreamProvider.family<List<RentalBooking>, String>((ref, itemId) {
+  return ref.watch(rentalServiceProvider).watchBookingsByItem(itemId);
+});
+

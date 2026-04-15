@@ -49,6 +49,7 @@ import '../../screens/admin/listings/admin_add_listing_screen.dart';
 import '../../screens/admin/listings/admin_venture_form_screen.dart';
 import '../../screens/admin/rentals/admin_rentals_screen.dart';
 import '../../screens/admin/rentals/admin_add_rental_screen.dart';
+import '../../screens/admin/rentals/admin_rental_tracking_screen.dart';
 import '../../screens/rentals/rentals_screen.dart';
 import '../../controllers/admin_controller.dart';
 
@@ -136,6 +137,7 @@ abstract class AppRoutes {
   static const adminEditRental = '/admin/rentals/edit/:docId';
   static String adminEditRentalPath(String docId) =>
       '/admin/rentals/edit/$docId';
+  static const adminRentalTracking = '/admin/rentals/tracking';
 
   static const rentals = '/rentals';
 
@@ -441,6 +443,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 docId: state.pathParameters['docId'],
               ),
             ),
+          ),
+          GoRoute(
+            path: 'rentals/tracking',
+            pageBuilder: (_, state) =>
+                _slide(state, const AdminRentalTrackingScreen()),
           ),
         ],
       ),

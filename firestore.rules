@@ -409,5 +409,14 @@ service cloud.firestore {
       allow write: if isAuth();
     }
 
+    // ── Rental Bookings (admin tracks purchases and rent periods) ────────────
+
+    match /rental_bookings/{bookingId} {
+      allow read: if isAuth();
+      allow create: if isAuth();
+      allow update: if isAuth();
+      allow delete: if isSuperAdmin();
+    }
+
   }
 }
