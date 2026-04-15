@@ -418,5 +418,16 @@ service cloud.firestore {
       allow delete: if isSuperAdmin();
     }
 
+    // ── Contributed Listings (user submissions pending admin review) ─────────
+
+    match /contributed_listings/{docId} {
+      allow read: if isSuperAdmin() ||
+        (isAuth() && resource.data.contributorId == request.auth.uid);
+      allow create: if isAuth() &&
+        request.resource.data.contributorId == request.auth.uid;
+      allow update: if isSuperAdmin();
+      allow delete: if isSuperAdmin();
+    }
+
   }
 }

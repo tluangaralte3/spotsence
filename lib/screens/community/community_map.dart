@@ -2,9 +2,11 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:latlong2/latlong.dart' hide Path;
 
+import '../../core/router/app_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/spot_model.dart';
 import '../../services/firestore_cafes_service.dart';
@@ -281,7 +283,7 @@ class _CommunityMapState extends ConsumerState<CommunityMap> {
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     itemCount: _kMapCategories.length,
-                    separatorBuilder: (_, _) => const SizedBox(width: 8),
+                    separatorBuilder: (_, sep) => const SizedBox(width: 8),
                     itemBuilder: (_, i) {
                       final cat = _kMapCategories[i];
                       final selected = cat == _selectedCategory;
@@ -336,6 +338,13 @@ class _CommunityMapState extends ConsumerState<CommunityMap> {
             ),
           ),
 
+          // ── Contribute FAB ─────────────────────────────────────────────────
+          Positioned(
+            right: 12,
+            bottom: MediaQuery.of(context).padding.bottom + 30,
+            child: _ContributeFab(),
+          ),
+
           // ── Zoom controls ──────────────────────────────────────────────────
           Positioned(
             right: 12,
@@ -346,6 +355,180 @@ class _CommunityMapState extends ConsumerState<CommunityMap> {
           // Pin taps now open place_detail_sheet.dart via showPlaceDetailSheet / showSpotDetailSheet
         ],
       ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Contribute FAB
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _ContributeFab extends StatefulWidget {
+  const _ContributeFab();
+
+  @override
+  State<_ContributeFab> createState() => _ContributeFabState();
+}
+
+class _ContributeFabState extends State<_ContributeFab>
+    with SingleTickerProviderStateMixin {
+  bool _expanded = false;
+  late final AnimationController _anim;
+  late final Animation<double> _fade;
+  late final Animation<Offset> _slide;
+
+  @override
+  void initState() {
+    super.initState();
+    _anim = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 220),
+    );
+    _fade = CurvedAnimation(parent: _anim, curve: Curves.easeOut);
+    _slide = Tween<Offset>(
+      begin: const Offset(0, 0.3),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _anim, curve: Curves.easeOut));
+  }
+
+  @override
+  void dispose() {
+    _anim.dispose();
+    super.dispose();
+  }
+
+  void _toggle() {
+    setState(() => _expanded = !_expanded);
+    if (_expanded) {
+      _anim.forward();
+    } else {
+      _anim.reverse();
+    }
+  }
+
+  void _go(BuildContext context) {
+    if (_expanded) _toggle();
+    context.push(AppRoutes.contribute);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final col = context.col;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        // ── Expanded label ────────────────────────────────────────────────
+        SlideTransition(
+          position: _slide,
+          child: FadeTransition(
+            opacity: _fade,
+            child: GestureDetector(
+              onTap: () => _go(context),
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: col.surface.withValues(alpha: 0.97),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: col.border),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text('📍', style: TextStyle(fontSize: 16)),
+                    const SizedBox(width: 8),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Add a Place',
+                          style: TextStyle(
+                            color: col.textPrimary,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                          ),
+                        ),
+                        Text(
+                          'Spot · Café · Restaurant · More',
+                          style: TextStyle(
+                            color: col.textMuted,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(width: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: AppColors.warning.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                            color:
+                                AppColors.warning.withValues(alpha: 0.4)),
+                      ),
+                      child: const Text(
+                        'Needs approval',
+                        style: TextStyle(
+                          color: AppColors.warning,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+
+        // ── Main FAB ──────────────────────────────────────────────────────
+        GestureDetector(
+          onTap: _toggle,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              color: _expanded ? col.surface : AppColors.primary,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: _expanded ? AppColors.primary : Colors.transparent,
+                width: 2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withValues(
+                      alpha: _expanded ? 0.2 : 0.45),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: AnimatedRotation(
+              turns: _expanded ? 0.125 : 0,
+              duration: const Duration(milliseconds: 200),
+              child: Icon(
+                Icons.add,
+                color: _expanded ? AppColors.primary : Colors.black,
+                size: 26,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -551,8 +734,8 @@ class _CirclePin extends StatelessWidget {
                       width: 56,
                       height: 56,
                       fit: BoxFit.cover,
-                      errorWidget: (_, _, _) => _fallback(),
-                      placeholder: (_, _) => _fallback(),
+                      errorWidget: (ctx, err, trace) => _fallback(),
+                      placeholder: (ctx, url) => _fallback(),
                     )
                   : _fallback(),
             ),

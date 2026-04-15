@@ -494,7 +494,7 @@ class _StatsTab extends StatelessWidget {
         GestureDetector(
           onTap: () => context.push(AppRoutes.myBookings),
           child: Container(
-            margin: const EdgeInsets.only(bottom: 20),
+            margin: const EdgeInsets.only(bottom: 12),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -544,6 +544,65 @@ class _StatsTab extends StatelessWidget {
                 ),
                 Icon(Icons.chevron_right_rounded,
                     color: AppColors.primary, size: 20),
+              ],
+            ),
+          ),
+        ),
+
+        // ── My Contributions shortcut ────────────────────────────────────
+        GestureDetector(
+          onTap: () => context.push(AppRoutes.myContributions),
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 20),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.secondary.withValues(alpha: 0.15),
+                  AppColors.secondary.withValues(alpha: 0.05),
+                ],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                  color: AppColors.secondary.withValues(alpha: 0.3)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: AppColors.secondary.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Iconsax.send_1,
+                      color: AppColors.secondary, size: 20),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'My Contributions',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: context.col.textPrimary,
+                        ),
+                      ),
+                      Text(
+                        'Track approval status of submitted places',
+                        style: TextStyle(
+                            fontSize: 11, color: context.col.textMuted),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(Icons.chevron_right_rounded,
+                    color: AppColors.secondary, size: 20),
               ],
             ),
           ),

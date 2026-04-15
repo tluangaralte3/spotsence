@@ -108,5 +108,15 @@ service firebase.storage {
                    && request.resource.contentType.matches('image/.*');
     }
 
+    // ── Contributed listing photos (user submissions) ─────────────────────────
+    match /contributed_listings/{userId}/{fileName} {
+      allow read: if true;
+      allow create: if isAuth()
+                    && request.auth.uid == userId
+                    && request.resource.size < 15 * 1024 * 1024
+                    && request.resource.contentType.matches('image/.*');
+      allow delete: if isAuth() && request.auth.uid == userId;
+    }
+
   }
 }

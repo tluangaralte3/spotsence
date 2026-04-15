@@ -35,6 +35,7 @@ import '../../screens/packages/venture_detail_screen.dart';
 import '../../screens/ventures/venture_public_detail_screen.dart';
 import '../../screens/ventures/booking_review_screen.dart';
 import '../../screens/ventures/my_bookings_screen.dart';
+import '../../screens/contribute/my_contributions_screen.dart';
 import '../../screens/community/room_management_screen.dart';
 import '../../screens/community/dare_detail_screen.dart';
 import '../../screens/community/dare_create_screens.dart';
@@ -50,6 +51,7 @@ import '../../screens/admin/listings/admin_venture_form_screen.dart';
 import '../../screens/admin/rentals/admin_rentals_screen.dart';
 import '../../screens/admin/rentals/admin_add_rental_screen.dart';
 import '../../screens/admin/rentals/admin_rental_tracking_screen.dart';
+import '../../screens/admin/contributions/admin_contributions_screen.dart';
 import '../../screens/rentals/rentals_screen.dart';
 import '../../controllers/admin_controller.dart';
 
@@ -90,6 +92,7 @@ abstract class AppRoutes {
   static String bookingReviewPath(String id) => '/ventures/$id/booking-review';
 
   static const myBookings = '/my-bookings';
+  static const myContributions = '/my-contributions';
   static const myRooms = '/community/my-rooms';
 
   // ── Dare (challenge) routes ──────────────────────────────────────────────
@@ -138,6 +141,7 @@ abstract class AppRoutes {
   static String adminEditRentalPath(String docId) =>
       '/admin/rentals/edit/$docId';
   static const adminRentalTracking = '/admin/rentals/tracking';
+  static const adminContributions = '/admin/contributions';
 
   static const rentals = '/rentals';
 
@@ -367,6 +371,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             _fade(state, const MyBookingsScreen()),
       ),
       GoRoute(
+        path: AppRoutes.myContributions,
+        pageBuilder: (_, state) =>
+            _fade(state, const MyContributionsScreen()),
+      ),
+      GoRoute(
         path: AppRoutes.myRooms,
         pageBuilder: (_, state) =>
             _slide(state, const RoomManagementScreen()),
@@ -448,6 +457,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             path: 'rentals/tracking',
             pageBuilder: (_, state) =>
                 _slide(state, const AdminRentalTrackingScreen()),
+          ),
+          GoRoute(
+            path: 'contributions',
+            pageBuilder: (_, state) =>
+                _slide(state, const AdminContributionsScreen()),
           ),
         ],
       ),
