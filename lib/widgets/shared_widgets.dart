@@ -206,20 +206,12 @@ class SpotLogo extends StatelessWidget {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [AppColors.primary, AppColors.secondary],
-            ),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: const Center(
-            child: Text(
-              'S',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 22,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
+          clipBehavior: Clip.antiAlias,
+          child: Image.asset(
+            'assets/icons/xplooria_logo.png',
+            fit: BoxFit.cover,
           ),
         ),
         const SizedBox(width: 10),

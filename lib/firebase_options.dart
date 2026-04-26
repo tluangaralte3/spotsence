@@ -50,25 +50,20 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyATmosaEG45_yrOS-_IXl7H1SMt9y-gd8Q',
-    appId: '1:195136676856:android:ef960a14247d52f663ac0d',
-    messagingSenderId: '195136676856',
-    projectId: 'spotmizoram',
-    storageBucket: 'spotmizoram.firebasestorage.app',
-    databaseURL:
-        'https://spotmizoram-default-rtdb.asia-southeast1.firebasedatabase.app',
+    apiKey: 'AIzaSyDOHQp1ehaMeIlQIxOir3V4GyeT4cmmJl8',
+    appId: '1:803545693742:android:fd51556e136691523be9bf',
+    messagingSenderId: '803545693742',
+    projectId: 'xplooria-de44c',
+    storageBucket: 'xplooria-de44c.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyCzuHqzWDRHWZcT7WdnCNVpvQbK5VPYvW0',
-    appId: '1:195136676856:ios:e1f64f535571b9f663ac0d',
-    messagingSenderId: '195136676856',
-    projectId: 'spotmizoram',
-    storageBucket: 'spotmizoram.firebasestorage.app',
-    iosClientId:
-        '195136676856-h59hc87309qfparsv735jcdoocndct4g.apps.googleusercontent.com',
-    iosBundleId: 'com.hillstech.spotmizoram',
-    databaseURL:
-        'https://spotmizoram-default-rtdb.asia-southeast1.firebasedatabase.app',
+    apiKey: 'AIzaSyCNJKHbzksz_4eJIfX3KlsKjuk9uv6OSqc',
+    appId: '1:803545693742:ios:b7ac21681dfa33543be9bf',
+    messagingSenderId: '803545693742',
+    projectId: 'xplooria-de44c',
+    storageBucket: 'xplooria-de44c.firebasestorage.app',
+    iosBundleId: 'com.hillstech.xplooria',
   );
+
 }

@@ -19,7 +19,7 @@ const path = require('path');
 // ──────────────────────────────────────────────
 const ADMIN_EMAIL    = 'hillstechadmin@spotsence.com';
 const ADMIN_PASSWORD = '#HillsTech2026#';
-const PROJECT_ID     = 'spotmizoram';
+const PROJECT_ID     = 'xplooria-de44c';
 
 // ──────────────────────────────────────────────
 // Init

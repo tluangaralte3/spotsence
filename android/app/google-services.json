@@ -1,43 +1,26 @@
 {
   "project_info": {
-    "project_number": "195136676856",
-    "project_id": "spotmizoram",
-    "storage_bucket": "spotmizoram.firebasestorage.app"
+    "project_number": "803545693742",
+    "project_id": "xplooria-de44c",
+    "storage_bucket": "xplooria-de44c.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:195136676856:android:ef960a14247d52f663ac0d",
+        "mobilesdk_app_id": "1:803545693742:android:fd51556e136691523be9bf",
         "android_client_info": {
-          "package_name": "com.hillstech.spotmizoram"
+          "package_name": "com.hillstech.xplooria"
         }
       },
-      "oauth_client": [
-        {
-          "client_id": "195136676856-t1gsn5n22qjj565iqbfo8occducc3thk.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
+      "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyATmosaEG45_yrOS-_IXl7H1SMt9y-gd8Q"
+          "current_key": "AIzaSyDOHQp1ehaMeIlQIxOir3V4GyeT4cmmJl8"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "195136676856-t1gsn5n22qjj565iqbfo8occducc3thk.apps.googleusercontent.com",
-              "client_type": 3
-            },
-            {
-              "client_id": "195136676856-h59hc87309qfparsv735jcdoocndct4g.apps.googleusercontent.com",
-              "client_type": 2,
-              "ios_info": {
-                "bundle_id": "com.hillstech.spotmizoram"
-              }
-            }
-          ]
+          "other_platform_oauth_client": []
         }
       }
     }

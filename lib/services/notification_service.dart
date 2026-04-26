@@ -141,8 +141,30 @@ class NotificationService {
 
   /// Call after a successful sign-in or registration.
   Future<void> subscribeToTopics() async {
+    // On iOS the APNs token may not be ready immediately after auth.
+    // Wait for it (up to 10 s) before subscribing to FCM topics.
+    if (!kIsWeb && Platform.isIOS) {
+      const maxWait = Duration(seconds: 10);
+      const interval = Duration(seconds: 1);
+      final deadline = DateTime.now().add(maxWait);
+
+      while (DateTime.now().isBefore(deadline)) {
+        try {
+          final apns = await _fcm.getAPNSToken();
+          if (apns != null) break; // token ready
+        } catch (_) {
+          // token not yet available — keep waiting
+        }
+        await Future.delayed(interval);
+      }
+    }
+
     for (final topic in _allTopics) {
-      await _fcm.subscribeToTopic(topic);
+      try {
+        await _fcm.subscribeToTopic(topic);
+      } catch (e) {
+        debugPrint('FCM: could not subscribe to $topic: $e');
+      }
     }
     debugPrint('FCM: subscribed to ${_allTopics.join(', ')}');
   }
@@ -150,7 +172,12 @@ class NotificationService {
   /// Call on sign-out.
   Future<void> unsubscribeFromTopics() async {
     for (final topic in _allTopics) {
-      await _fcm.unsubscribeFromTopic(topic);
+      try {
+        await _fcm.unsubscribeFromTopic(topic);
+      } catch (e) {
+        // APNs token may not be ready (iOS) — safe to ignore on sign-out.
+        debugPrint('FCM: could not unsubscribe from $topic: $e');
+      }
     }
     debugPrint('FCM: unsubscribed from all topics');
   }
@@ -161,6 +188,20 @@ class NotificationService {
   /// targeted (non-topic) notifications in future features.
   Future<void> saveTokenToFirestore(String userId) async {
     try {
+      // On iOS wait for APNs token before requesting the FCM token.
+      if (!kIsWeb && Platform.isIOS) {
+        const maxWait = Duration(seconds: 10);
+        const interval = Duration(seconds: 1);
+        final deadline = DateTime.now().add(maxWait);
+        while (DateTime.now().isBefore(deadline)) {
+          try {
+            final apns = await _fcm.getAPNSToken();
+            if (apns != null) break;
+          } catch (_) {}
+          await Future.delayed(interval);
+        }
+      }
+
       final token = await _fcm.getToken();
       if (token == null) return;
       await FirebaseFirestore.instance.collection('users').doc(userId).update({

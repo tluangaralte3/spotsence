@@ -7,7 +7,7 @@
 > Version: 1.0  
 > Build Date: April 2026  
 > Firebase Project: `spotmizoram`  
-> Bundle ID (iOS): `com.hillstech.spotmizoram`  
+> Bundle ID (iOS): `com.hillstech.xplooria`  
 > Company: HillsTech  
 
 ---

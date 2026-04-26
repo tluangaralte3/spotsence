@@ -63,14 +63,14 @@
 
 1. Go to [Firebase Console](https://console.firebase.google.com)
 2. Select your project (or create one)
-3. Add Android app with package name: `com.hillstech.spotmizoram`
+3. Add Android app with package name: `com.hillstech.xplooria`
 4. Download `google-services.json`
 5. Place it in `android/app/google-services.json`
 
 #### B. iOS Setup
 
 1. In Firebase Console, add iOS app
-2. Bundle ID: `com.hillstech.spotmizoram`
+2. Bundle ID: `com.hillstech.xplooria`
 3. Download `GoogleService-Info.plist`
 4. Add to `ios/Runner/GoogleService-Info.plist`
 

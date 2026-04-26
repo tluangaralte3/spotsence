@@ -14,7 +14,7 @@
 //
 // Deploy:
 //   cd functions && npm install
-//   firebase deploy --only functions --project spotmizoram
+//   firebase deploy --only functions --project xplooria-de44c
 
 'use strict';
 
