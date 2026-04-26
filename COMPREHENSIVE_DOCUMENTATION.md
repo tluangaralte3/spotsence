@@ -1,6 +1,6 @@
-# SpotSence — Comprehensive Project Documentation
+# xplooria — Comprehensive Project Documentation
 
-> **SpotSence** (package: `spotmizoram`) is a gamified tourism discovery platform for Mizoram, Northeast India.  
+> **xplooria** (package: `spotmizoram`) is a gamified tourism discovery platform for Mizoram, Northeast India.  
 > **Tagline:** *"Spot the Soul of Mizoram. Discover Places. Discover Mizoram."*
 
 ---
@@ -44,7 +44,7 @@
 | Field | Value |
 |---|---|
 | **Package name** | `spotmizoram` |
-| **App display name** | SpotSence |
+| **App display name** | xplooria |
 | **Version** | 1.0.0+1 |
 | **Dart SDK constraint** | `^3.10.8` |
 | **Supported platforms** | Android & iOS |
@@ -54,7 +54,7 @@
 | **Auth** | Firebase Authentication |
 | **Storage** | Firebase Storage |
 
-SpotSence helps travellers and locals discover tourist spots, restaurants, cafes, hotels, homestays, adventure activities, and cultural events across Mizoram. The app rewards user engagement through a gamification layer: XP points, level progression, streak tracking, and a badge system. Users can curate bucket lists, debate "place dilemmas", submit community posts, and contribute new spot discoveries — all while competing on leaderboards.
+xplooria helps travellers and locals discover tourist spots, restaurants, cafes, hotels, homestays, adventure activities, and cultural events across Mizoram. The app rewards user engagement through a gamification layer: XP points, level progression, streak tracking, and a badge system. Users can curate bucket lists, debate "place dilemmas", submit community posts, and contribute new spot discoveries — all while competing on leaderboards.
 
 ---
 
@@ -288,7 +288,7 @@ lib/
 
 ### Super Admin — Full Capability List
 
-Super Admin requires both Firebase Authentication AND a `superAdmin: true` custom claim set on the account. The super admin email is `hillstechadmin@spotsence.com`.
+Super Admin requires both Firebase Authentication AND a `superAdmin: true` custom claim set on the account. The super admin email is `hillstechadmin@xplooria.com`.
 
 Super Admins have ALL regular user capabilities PLUS:
 
@@ -1181,7 +1181,7 @@ A 3-page animated carousel shown on first app launch.
 
 | Section | Description |
 |---|---|
-| SliverAppBar | SpotSence logo + notifications icon |
+| SliverAppBar | xplooria logo + notifications icon |
 | Greeting | Personalised "Hello, [FirstName] 👋" with XP chip (when authenticated) |
 | Headline | "Discover Mizoram" tagline (when unauthenticated) |
 | Search bar | Non-functional input bar — tap navigates to `/search` |
@@ -1463,7 +1463,7 @@ Raw Firestore map version used for ventures created via the admin form. Dynamica
 
 **Shell:** `AdminShell` · **Route prefix:** `/admin`
 
-Accessible only to users with `superAdmin: true` Firebase custom claim (`hillstechadmin@spotsence.com`).
+Accessible only to users with `superAdmin: true` Firebase custom claim (`hillstechadmin@xplooria.com`).
 
 #### `AdminDashboardScreen` · `/admin`
 
@@ -1911,7 +1911,7 @@ There are two separate ranking systems:
 |---|---|---|
 | `API_BASE_URL` | REST API base URL | `http://10.0.2.2:3000` |
 
-Injected at build time via `--dart-define=API_BASE_URL=https://api.spotsence.com`.
+Injected at build time via `--dart-define=API_BASE_URL=https://api.xplooria.com`.
 
 ### Firebase Security Rules
 

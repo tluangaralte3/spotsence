@@ -78,7 +78,7 @@
 | Helper | Type | Description |
 |---|---|---|
 | `isAdmin` | `bool` | `role == 0` |
-| `isSuperAdminEmail` | `bool` | Email matches `hillstechadmin@spotsence.com` |
+| `isSuperAdminEmail` | `bool` | Email matches `hillstechadmin@xplooria.com` |
 | `pointsToNextLevel` | `int` | XP gap to next level |
 | `xpToNextLevel` | `int` | Alias for `pointsToNextLevel` |
 | `levelProgress` | `double` | 0.0–1.0 progress bar value |
@@ -1126,7 +1126,7 @@ Global visibility flag for the entire banner section.
 
 | Value | Label | Description |
 |---|---|---|
-| `superAdmin` | Super Admin | Full access — `hillstechadmin@spotsence.com` |
+| `superAdmin` | Super Admin | Full access — `hillstechadmin@xplooria.com` |
 | `moderator` | Moderator | Can review and approve content |
 | `analyst` | Analyst | Read-only analytics access |
 

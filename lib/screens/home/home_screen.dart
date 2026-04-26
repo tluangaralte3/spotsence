@@ -23,6 +23,8 @@ import '../../controllers/rental_controller.dart';
 import '../../models/rental_models.dart';
 import '../rentals/rentals_screen.dart';
 import 'visitor_guide_screen.dart';
+import '../../controllers/app_info_board_controller.dart';
+import '../../models/app_info_board_model.dart';
 
 /// Tracks which NE state the user has selected from the state picker.
 class _NeStateNotifier extends Notifier<String> {
@@ -255,7 +257,7 @@ class HomeScreen extends ConsumerWidget {
           const SliverToBoxAdapter(child: _EquipmentRentalsSection()),
 
           // ── AI Travelling Planner (Coming Soon) ───────────────────────
-          const SliverToBoxAdapter(child: _AiPlannerSection()),
+          const SliverToBoxAdapter(child: _AppInfoBoardSection()),
 
           // ── Quick stats (if signed in) ──────────────────────────────────
           if (user != null)
@@ -1346,9 +1348,7 @@ class _TourVentureSection extends ConsumerWidget {
                           vertical: 3,
                         ),
                         decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [AppColors.secondary, AppColors.primary],
-                          ),
+                          color: AppColors.primary,
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: const Text(
@@ -2231,17 +2231,10 @@ class _VisitorGuideCard extends StatelessWidget {
       ),
       child: Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppColors.secondary.withValues(alpha: 0.18),
-              AppColors.primary.withValues(alpha: 0.10),
-            ],
-          ),
+          color: AppColors.secondary.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: AppColors.secondary.withValues(alpha: 0.3),
+            color: AppColors.secondary.withValues(alpha: 0.25),
           ),
         ),
         padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
@@ -2430,11 +2423,7 @@ class _BannerCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppColors.secondary, AppColors.primary],
-        ),
+        color: AppColors.primary,
       ),
       child: Stack(
         fit: StackFit.expand,
@@ -2618,11 +2607,7 @@ class _XpPerksSheet extends ConsumerWidget {
                     width: 52,
                     height: 52,
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFFFFB300), Color(0xFFFF8C00)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
+                      color: const Color(0xFFFFB300),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: const Icon(Icons.bolt,
@@ -2743,19 +2728,9 @@ class _XpPerksSheet extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Container(
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: isDark
-                        ? [
-                            const Color(0xFF1A0A2E),
-                            const Color(0xFF0D1B4B),
-                          ]
-                        : [
-                            const Color(0xFF6C63FF),
-                            const Color(0xFF3B82F6),
-                          ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  color: isDark
+                      ? const Color(0xFF12103A)
+                      : AppColors.secondary,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: AppColors.secondary.withValues(alpha: 0.4),
@@ -2980,11 +2955,30 @@ class _XpPerksSheet extends ConsumerWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// AI Travelling Planner & Companion — Coming Soon locked section
+// AI Travelling Planner & Companion — dynamic, admin-controlled section
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _AiPlannerSection extends StatelessWidget {
-  const _AiPlannerSection();
+class _AppInfoBoardSection extends ConsumerWidget {
+  const _AppInfoBoardSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final sectionAsync = ref.watch(appInfoBoardSectionProvider);
+
+    return sectionAsync.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
+      data: (section) {
+        if (!section.sectionVisible) return const SizedBox.shrink();
+        return _AppInfoBoardCard(section: section);
+      },
+    );
+  }
+}
+
+class _AppInfoBoardCard extends StatelessWidget {
+  final AppInfoBoardModel section;
+  const _AppInfoBoardCard({required this.section});
 
   @override
   Widget build(BuildContext context) {
@@ -3001,35 +2995,28 @@ class _AiPlannerSection extends StatelessWidget {
               const Icon(Iconsax.cpu, size: 18, color: AppColors.secondary),
               const SizedBox(width: 8),
               Text(
-                'AI Travel Assistant',
+                section.sectionTitle,
                 style: Theme.of(context).textTheme.titleMedium,
               ),
             ],
           ),
           const SizedBox(height: 12),
 
-          // ── Locked card ─────────────────────────────────────────────────
+          // ── Card ────────────────────────────────────────────────────────
           Container(
             width: double.infinity,
             clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
+              color: context.col.surface,
               border: Border.all(
-                color: AppColors.primary.withValues(alpha: 0.25),
+                color: AppColors.primary.withValues(alpha: 0.2),
                 width: 1.5,
-              ),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  AppColors.primary.withValues(alpha: 0.07),
-                  AppColors.secondary.withValues(alpha: 0.12),
-                ],
               ),
             ),
             child: Stack(
               children: [
-                // ── Decorative blurred circle (top-right) ─────────────────
+                // ── Decorative circle (top-right) ──────────────────────────
                 Positioned(
                   top: -30,
                   right: -30,
@@ -3042,7 +3029,7 @@ class _AiPlannerSection extends StatelessWidget {
                     ),
                   ),
                 ),
-                // ── Decorative blurred circle (bottom-left) ───────────────
+                // ── Decorative circle (bottom-left) ───────────────────────
                 Positioned(
                   bottom: -20,
                   left: -20,
@@ -3062,21 +3049,14 @@ class _AiPlannerSection extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Icon + lock badge row
+                      // Icon + title + optional lock badge
                       Row(
                         children: [
                           Container(
                             width: 56,
                             height: 56,
                             decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [
-                                  AppColors.secondary,
-                                  AppColors.primary,
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
+                              color: AppColors.secondary,
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: const Icon(
@@ -3091,7 +3071,7 @@ class _AiPlannerSection extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'AI Travelling Planner',
+                                  section.title,
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w800,
@@ -3101,7 +3081,7 @@ class _AiPlannerSection extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  '& Travelling Companion',
+                                  section.subtitle,
                                   style: TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w600,
@@ -3111,35 +3091,36 @@ class _AiPlannerSection extends StatelessWidget {
                               ],
                             ),
                           ),
-                          // Lock badge
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 5),
-                            decoration: BoxDecoration(
-                              color: col.surfaceElevated,
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: col.border),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.lock_rounded,
-                                  size: 12,
-                                  color: col.textSecondary,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'Locked',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
+                          // Lock badge — shown only when isLocked == true
+                          if (section.isLocked)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: col.surfaceElevated,
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: col.border),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.lock_rounded,
+                                    size: 12,
                                     color: col.textSecondary,
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Locked',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: col.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
                         ],
                       ),
 
@@ -3147,7 +3128,7 @@ class _AiPlannerSection extends StatelessWidget {
 
                       // Description
                       Text(
-                        'Your intelligent travel companion powered by AI — plan personalised itineraries, discover hidden gems, get real-time recommendations, and travel smarter across Northeast India.',
+                        section.description,
                         style: TextStyle(
                           fontSize: 13,
                           color: col.textSecondary,
@@ -3155,35 +3136,26 @@ class _AiPlannerSection extends StatelessWidget {
                         ),
                       ),
 
-                      const SizedBox(height: 20),
+                      if (section.features.isNotEmpty) ...
+                      [
+                        const SizedBox(height: 20),
 
-                      // Feature chips
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          _AiFeatureChip(
-                            icon: Iconsax.map,
-                            label: 'Smart Itineraries',
-                          ),
-                          _AiFeatureChip(
-                            icon: Iconsax.message_text,
-                            label: 'AI Companion Chat',
-                          ),
-                          _AiFeatureChip(
-                            icon: Iconsax.star,
-                            label: 'Personalised Tips',
-                          ),
-                          _AiFeatureChip(
-                            icon: Iconsax.location,
-                            label: 'Live Suggestions',
-                          ),
-                        ],
-                      ),
+                        // Feature chips
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: section.features
+                              .map((f) => _AiFeatureChip(
+                                    icon: f.iconData,
+                                    label: f.label,
+                                  ))
+                              .toList(),
+                        ),
+                      ],
 
                       const SizedBox(height: 22),
 
-                      // Coming soon pill
+                      // CTA pill
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(vertical: 13),
@@ -3202,7 +3174,7 @@ class _AiPlannerSection extends StatelessWidget {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              'Coming Soon — Stay Tuned!',
+                              section.ctaText,
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,

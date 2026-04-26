@@ -2,7 +2,7 @@
  * set_admin_claim.js
  * 
  * Creates the super admin user (if not exists) and sets the `superAdmin: true`
- * custom claim on Firebase Auth for hillstechadmin@spotsence.com
+ * custom claim on Firebase Auth for hillstechadmin@xplooria.com
  * 
  * Usage:
  *   node set_admin_claim.js <path-to-service-account.json>
@@ -17,7 +17,7 @@ const path = require('path');
 // ──────────────────────────────────────────────
 // Config
 // ──────────────────────────────────────────────
-const ADMIN_EMAIL    = 'hillstechadmin@spotsence.com';
+const ADMIN_EMAIL    = 'hillstechadmin@xplooria.com';
 const ADMIN_PASSWORD = '#HillsTech2026#';
 const PROJECT_ID     = 'xplooria-de44c';
 
@@ -49,6 +49,19 @@ const db   = admin.firestore();
 async function run() {
   console.log(`\n🔧  Setting up super admin for project: ${PROJECT_ID}`);
   console.log(`📧  Email: ${ADMIN_EMAIL}\n`);
+
+  // 0. Remove the old spotsence.com admin account if it still exists
+  const OLD_EMAIL = 'hillstechadmin@xplooria.com';
+  try {
+    const oldUser = await auth.getUserByEmail(OLD_EMAIL);
+    await auth.deleteUser(oldUser.uid);
+    // Also remove its Firestore document
+    await db.collection('app_admins').doc(oldUser.uid).delete().catch(() => {});
+    console.log(`🗑️   Removed old admin account: ${OLD_EMAIL} (UID: ${oldUser.uid})`);
+  } catch (err) {
+    if (err.code !== 'auth/user-not-found') throw err;
+    console.log(`ℹ️   Old account (${OLD_EMAIL}) not found — skipping removal`);
+  }
 
   let uid;
 

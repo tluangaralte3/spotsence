@@ -11,6 +11,7 @@ import '../../../controllers/auth_controller.dart';
 import '../../../core/router/app_router.dart';
 import '../../../models/admin_model.dart';
 import 'admin_banner_settings_screen.dart';
+import 'admin_app_info_board_screen.dart';
 import '../visitor_guides/admin_visitor_guide_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -232,6 +233,25 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
                           color: context.col.textMuted,
                         ),
                         onTap: () => context.push(AppRoutes.adminContributions),
+                      ),
+                      _Divider(),
+                      _SettingsTile(
+                        icon: Icons.auto_awesome_rounded,
+                        iconColor: AppColors.secondary,
+                        title: 'App Information Board',
+                        subtitle:
+                            'Control visibility, text and feature chips for the AI section',
+                        trailing: Icon(
+                          Icons.chevron_right_rounded,
+                          size: 18,
+                          color: context.col.textMuted,
+                        ),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const AdminAppInfoBoardScreen(),
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -462,16 +482,9 @@ class _ProfileCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppColors.primary.withValues(alpha: 0.15),
-            AppColors.secondary.withValues(alpha: 0.10),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: AppColors.primary.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.25)),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
       ),
       child: Row(
         children: [
@@ -481,11 +494,7 @@ class _ProfileCard extends StatelessWidget {
             height: 60,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: const LinearGradient(
-                colors: [AppColors.primary, AppColors.secondary],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+              color: AppColors.primary,
             ),
             child: photoUrl != null
                 ? ClipOval(

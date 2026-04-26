@@ -234,8 +234,8 @@ class _GuideHero extends StatelessWidget {
                       context.col.bg,
                     ]
                   : [
-                      AppColors.secondary.withValues(alpha: 0.25),
-                      AppColors.primary.withValues(alpha: 0.15),
+                      AppColors.primary.withValues(alpha: 0.10),
+                      AppColors.primary.withValues(alpha: 0.10),
                       context.col.bg,
                     ],
             ),

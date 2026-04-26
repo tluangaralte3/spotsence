@@ -12,7 +12,7 @@ import 'package:flutter/foundation.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 
 enum AdminRole {
-  superAdmin, // Full access — hillstechadmin@spotsence.com
+  superAdmin, // Full access — hillstechadmin@xplooria.com
   moderator, // Can review / approve content
   analyst; // Read-only analytics
 

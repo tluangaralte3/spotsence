@@ -11,7 +11,7 @@
 // This service ONLY reads claims from the ID token for gate-keeping.
 //
 // The seeded super admin account:
-//   Email   : hillstechadmin@spotsence.com
+//   Email   : hillstechadmin@xplooria.com
 //   Password: #HillsTech2026#
 //   UID is assigned by Firebase Auth at first sign-in.
 //   You must call seedSuperAdmin() once after that first sign-in,
@@ -45,7 +45,7 @@ class AdminService {
   static const _activity = 'activityLog';
 
   // Hardcoded super admin seed credentials
-  static const seedEmail = 'hillstechadmin@spotsence.com';
+  static const seedEmail = 'hillstechadmin@xplooria.com';
   static const seedPassword = '#HillsTech2026#';
 
   AdminService(this._auth, this._db);

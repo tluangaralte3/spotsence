@@ -965,7 +965,7 @@ Super Admin accounts are created via the Node.js utility:
 ```
 scripts/set_admin_claim.js <serviceAccount.json>
 
-Admin Email:    hillstechadmin@spotsence.com
+Admin Email:    hillstechadmin@xplooria.com
 Custom Claim:   { superAdmin: true }
 Firestore Doc:  app_admins/{uid}  (permissions: all flags true)
 ```

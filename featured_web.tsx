@@ -163,7 +163,7 @@ export default function FeaturedSpotsSection() {
             <p className="text-gray-600">
               Discover hidden gems and popular destinations across Mizoram.{" "}
               <span className="font-medium text-emerald-600">
-                Now with SpotSence.
+                Now with xplooria.
               </span>
             </p>
           </div>
