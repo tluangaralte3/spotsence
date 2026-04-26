@@ -20,6 +20,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _passCtrl = TextEditingController();
   bool _obscure = true;
   bool _loading = false;
+  bool _googleLoading = false;
 
   bool get _isAdminEmail =>
       _emailCtrl.text.trim().toLowerCase() == AdminService.seedEmail;
@@ -29,6 +30,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     _emailCtrl.dispose();
     _passCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _signInWithGoogle() async {
+    setState(() => _googleLoading = true);
+    final result = await ref
+        .read(authControllerProvider.notifier)
+        .signInWithGoogle();
+    if (mounted) {
+      setState(() => _googleLoading = false);
+      if (!result.isSuccess) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result.errorMessage!),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      } else {
+        context.go(result.redirectRoute);
+      }
+    }
   }
 
   Future<void> _submit() async {
@@ -178,6 +199,57 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
                 const SizedBox(height: 24),
 
+                // Divider
+                Row(
+                  children: [
+                    Expanded(child: Divider(color: Colors.grey.shade300)),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Text(
+                        'or',
+                        style: TextStyle(color: Colors.grey.shade500),
+                      ),
+                    ),
+                    Expanded(child: Divider(color: Colors.grey.shade300)),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // Google Sign-In
+                OutlinedButton(
+                  onPressed:
+                      (_loading || _googleLoading) ? null : _signInWithGoogle,
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: Colors.grey.shade300),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    minimumSize: const Size(double.infinity, 52),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                  ),
+                  child: _googleLoading
+                      ? SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.primary,
+                          ),
+                        )
+                      : Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _GoogleIcon(),
+                            const SizedBox(width: 10),
+                            const Text(
+                              'Continue with Google',
+                              style: TextStyle(fontWeight: FontWeight.w600),
+                            ),
+                          ],
+                        ),
+                ),
+                const SizedBox(height: 24),
+
                 // Register link
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -201,6 +273,32 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _GoogleIcon extends StatelessWidget {
+  const _GoogleIcon();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 20,
+      height: 20,
+      decoration: const BoxDecoration(
+        shape: BoxShape.circle,
+        color: Color(0xFF4285F4),
+      ),
+      alignment: Alignment.center,
+      child: const Text(
+        'G',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+          height: 1,
         ),
       ),
     );

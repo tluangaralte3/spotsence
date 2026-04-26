@@ -173,6 +173,32 @@ class AuthController extends AsyncNotifier<AuthState> {
     return result.when(ok: (_) => null, err: (msg) => msg);
   }
 
+  Future<SignInResult> signInWithGoogle() async {
+    state = const AsyncLoading();
+    final result = await _authService.signInWithGoogle();
+    return result.when(
+      ok: (user) async {
+        state = AsyncData(
+          AuthState(status: AuthStatus.authenticated, user: user),
+        );
+        final adminService = ref.read(adminServiceProvider);
+        final isSuperAdmin = await adminService.checkSuperAdminClaim();
+        if (isSuperAdmin) {
+          await adminService.seedSuperAdmin();
+        }
+        unawaited(NotificationService.instance.subscribeToTopics());
+        unawaited(NotificationService.instance.saveTokenToFirestore(user.id));
+        return SignInResult(redirectRoute: isSuperAdmin ? '/admin' : '/');
+      },
+      err: (msg) {
+        state = AsyncData(
+          AuthState(status: AuthStatus.error, errorMessage: msg),
+        );
+        return SignInResult(errorMessage: msg);
+      },
+    );
+  }
+
   Future<String?> updateProfile({
     String? displayName,
     String? photoURL,

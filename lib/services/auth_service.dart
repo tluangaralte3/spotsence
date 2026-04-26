@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import '../models/user_model.dart';
 
 final authServiceProvider = Provider<AuthService>((ref) {
@@ -48,6 +49,27 @@ class AuthService {
   User? get currentFirebaseUser => _auth.currentUser;
 
   // ── Sign in ───────────────────────────────────────────────────────────
+
+  Future<AuthResult<UserModel>> signInWithGoogle() async {
+    try {
+      final googleUser = await GoogleSignIn().signIn();
+      if (googleUser == null) return const AuthErr('Sign in cancelled.');
+
+      final googleAuth = await googleUser.authentication;
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      final cred = await _auth.signInWithCredential(credential);
+      final user = await _fetchOrCreateProfile(cred.user!);
+      return AuthOk(user);
+    } on FirebaseAuthException catch (e) {
+      return AuthErr(_authMessage(e.code));
+    } catch (e) {
+      return AuthErr('Google sign in failed. Please try again.');
+    }
+  }
 
   Future<AuthResult<UserModel>> signInWithEmail(
     String email,
@@ -176,7 +198,10 @@ class AuthService {
 
   // ── Sign out ──────────────────────────────────────────────────────────
 
-  Future<void> signOut() => _auth.signOut();
+  Future<void> signOut() async {
+    await GoogleSignIn().signOut();
+    await _auth.signOut();
+  }
 
   // ── Password reset ────────────────────────────────────────────────────
 
