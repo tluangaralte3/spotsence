@@ -5,6 +5,7 @@ import '../../controllers/gamification_controller.dart';
 import '../../core/router/app_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../widgets/gamification_widgets.dart';
+import '../../services/analytics_service.dart';
 
 class MainShell extends ConsumerStatefulWidget {
   final Widget child;
@@ -81,14 +82,22 @@ class _MainShellState extends ConsumerState<MainShell> {
   void _onTap(BuildContext context, int index) {
     switch (index) {
       case 0:
+        AnalyticsService.instance.logTabChange(tabName: 'home', index: 0);
         context.go(AppRoutes.home);
       case 1:
+        AnalyticsService.instance.logTabChange(tabName: 'listings', index: 1);
         context.go(AppRoutes.listings);
       case 2:
+        AnalyticsService.instance.logTabChange(
+          tabName: 'leaderboard',
+          index: 2,
+        );
         context.go(AppRoutes.leaderboard);
       case 3:
+        AnalyticsService.instance.logTabChange(tabName: 'community', index: 3);
         context.go(AppRoutes.community);
       case 4:
+        AnalyticsService.instance.logTabChange(tabName: 'profile', index: 4);
         context.go(AppRoutes.profile);
     }
   }
