@@ -1,4 +1,4 @@
-# SpotMizoram Mobile - Project Structure
+# Xplooria Mobile - Project Structure
 
 ## 📁 Architecture Overview
 

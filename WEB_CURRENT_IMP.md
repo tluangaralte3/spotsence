@@ -1,4 +1,4 @@
-# SpotMizoram Web → Mobile Overview
+# Xplooria Web → Mobile Overview
 
 > Shared understanding of the current web implementation so the mobile app can mirror features, data, and UX patterns.
 

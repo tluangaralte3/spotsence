@@ -1,4 +1,4 @@
-# SpotMizoram Flutter App
+# Xplooria Flutter App
 
 Minimal gamified Flutter mobile app for discovering tourist spots in Mizoram.  
 Connects to the **SpotMizoram Next.js backend** via its REST API.
