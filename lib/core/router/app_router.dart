@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../controllers/auth_controller.dart';
@@ -19,6 +20,7 @@ import '../../screens/profile/profile_screen.dart';
 import '../../screens/profile/edit_profile_screen.dart';
 import '../../screens/shell/main_shell.dart';
 import '../../screens/onboarding/onboarding_screen.dart';
+import '../../screens/debug/diagnostics_screen.dart';
 import '../../screens/listings/listing_detail_screen.dart';
 import '../../screens/listings/cafe_detail_screen.dart';
 import '../../screens/listings/hotel_detail_screen.dart';
@@ -272,6 +274,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: 'Register',
         pageBuilder: (_, state) => _slide(state, const RegisterScreen()),
       ),
+      if (kDebugMode)
+        GoRoute(
+          path: '/debug',
+          name: 'Diagnostics',
+          pageBuilder: (_, state) => _slide(state, const DiagnosticsScreen()),
+        ),
       GoRoute(
         path: AppRoutes.forgotPassword,
         name: 'ForgotPassword',

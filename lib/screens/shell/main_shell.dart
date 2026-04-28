@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../controllers/gamification_controller.dart';
@@ -31,7 +32,15 @@ class _MainShellState extends ConsumerState<MainShell> {
     final index = _indexForLocation(location);
 
     return Scaffold(
+      // ignore: sort_child_properties_last
       body: XpToastOverlay(child: widget.child),
+      floatingActionButton: kDebugMode
+          ? FloatingActionButton(
+              onPressed: () => context.go('/debug'),
+              child: const Icon(Icons.bug_report),
+              tooltip: 'Diagnostics',
+            )
+          : null,
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           border: Border(top: BorderSide(color: context.col.border, width: 1)),
