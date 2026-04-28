@@ -1,4 +1,4 @@
-# SpotMizoram - Project Highlights & Features
+# Xplooria - Project Highlights & Features
 
 > **Tagline**: "Spot the Soul of Mizoram, Discover Places. Discover Mizoram."
 

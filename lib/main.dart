@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/router/app_router.dart';
@@ -33,7 +35,21 @@ Future<void> main() async {
   // Initialise FCM permissions, local notification channel, and tap handlers.
   await NotificationService.instance.initialize();
 
-  runApp(const ProviderScope(child: XplooriaApp()));
+  // Setup Crashlytics: redirect Flutter framework errors to Crashlytics and
+  // run the app in a guarded zone to capture uncaught async errors.
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.presentError(details);
+    FirebaseCrashlytics.instance.recordFlutterFatalError(details);
+  };
+
+  // Run app inside guarded zone so Crashlytics captures uncaught errors.
+  runZonedGuarded<Future<void>>(
+    () async {
+      runApp(const ProviderScope(child: XplooriaApp()));
+    },
+    (error, stack) =>
+        FirebaseCrashlytics.instance.recordError(error, stack, fatal: true),
+  );
 }
 
 class XplooriaApp extends ConsumerWidget {

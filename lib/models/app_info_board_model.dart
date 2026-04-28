@@ -10,7 +10,6 @@
 //   • Manage feature chips (features list)
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:flutter/material.dart';
 
@@ -25,14 +24,16 @@ class AppInfoBoardFeatureItem {
 
   const AppInfoBoardFeatureItem({required this.iconKey, required this.label});
 
-  factory AppInfoBoardFeatureItem.fromMap(Map<String, dynamic> m) => AppInfoBoardFeatureItem(
+  factory AppInfoBoardFeatureItem.fromMap(Map<String, dynamic> m) =>
+      AppInfoBoardFeatureItem(
         iconKey: m['iconKey'] as String? ?? 'star',
         label: m['label'] as String? ?? '',
       );
 
   Map<String, dynamic> toMap() => {'iconKey': iconKey, 'label': label};
 
-  AppInfoBoardFeatureItem copyWith({String? iconKey, String? label}) => AppInfoBoardFeatureItem(
+  AppInfoBoardFeatureItem copyWith({String? iconKey, String? label}) =>
+      AppInfoBoardFeatureItem(
         iconKey: iconKey ?? this.iconKey,
         label: label ?? this.label,
       );
@@ -139,9 +140,9 @@ class AppInfoBoardModel {
     final rawFeatures = d['features'];
     final features = rawFeatures is List
         ? rawFeatures
-            .whereType<Map<String, dynamic>>()
-            .map(AppInfoBoardFeatureItem.fromMap)
-            .toList()
+              .whereType<Map<String, dynamic>>()
+              .map(AppInfoBoardFeatureItem.fromMap)
+              .toList()
         : _defaultFeatures;
 
     return AppInfoBoardModel(
@@ -149,7 +150,8 @@ class AppInfoBoardModel {
       sectionTitle: d['sectionTitle'] as String? ?? 'AI Travel Assistant',
       title: d['title'] as String? ?? 'AI Travelling Planner',
       subtitle: d['subtitle'] as String? ?? '& Travelling Companion',
-      description: d['description'] as String? ??
+      description:
+          d['description'] as String? ??
           'Your intelligent travel companion powered by AI — plan personalised '
               'itineraries, discover hidden gems, get real-time recommendations, '
               'and travel smarter across Northeast India.',
@@ -161,22 +163,25 @@ class AppInfoBoardModel {
   }
 
   Map<String, dynamic> toJson() => {
-        'sectionVisible': sectionVisible,
-        'sectionTitle': sectionTitle,
-        'title': title,
-        'subtitle': subtitle,
-        'description': description,
-        'features': features.map((f) => f.toMap()).toList(),
-        'ctaText': ctaText,
-        'isLocked': isLocked,
-        'updatedAt': FieldValue.serverTimestamp(),
-      };
+    'sectionVisible': sectionVisible,
+    'sectionTitle': sectionTitle,
+    'title': title,
+    'subtitle': subtitle,
+    'description': description,
+    'features': features.map((f) => f.toMap()).toList(),
+    'ctaText': ctaText,
+    'isLocked': isLocked,
+    'updatedAt': FieldValue.serverTimestamp(),
+  };
 
   // ── Defaults ───────────────────────────────────────────────────────────────
 
   static const List<AppInfoBoardFeatureItem> _defaultFeatures = [
     AppInfoBoardFeatureItem(iconKey: 'map', label: 'Smart Itineraries'),
-    AppInfoBoardFeatureItem(iconKey: 'message_text', label: 'AI Companion Chat'),
+    AppInfoBoardFeatureItem(
+      iconKey: 'message_text',
+      label: 'AI Companion Chat',
+    ),
     AppInfoBoardFeatureItem(iconKey: 'star', label: 'Personalised Tips'),
     AppInfoBoardFeatureItem(iconKey: 'location', label: 'Live Suggestions'),
   ];
@@ -194,16 +199,15 @@ class AppInfoBoardModel {
     List<AppInfoBoardFeatureItem>? features,
     String? ctaText,
     bool? isLocked,
-  }) =>
-      AppInfoBoardModel(
-        sectionVisible: sectionVisible ?? this.sectionVisible,
-        sectionTitle: sectionTitle ?? this.sectionTitle,
-        title: title ?? this.title,
-        subtitle: subtitle ?? this.subtitle,
-        description: description ?? this.description,
-        features: features ?? this.features,
-        ctaText: ctaText ?? this.ctaText,
-        isLocked: isLocked ?? this.isLocked,
-        updatedAt: updatedAt,
-      );
+  }) => AppInfoBoardModel(
+    sectionVisible: sectionVisible ?? this.sectionVisible,
+    sectionTitle: sectionTitle ?? this.sectionTitle,
+    title: title ?? this.title,
+    subtitle: subtitle ?? this.subtitle,
+    description: description ?? this.description,
+    features: features ?? this.features,
+    ctaText: ctaText ?? this.ctaText,
+    isLocked: isLocked ?? this.isLocked,
+    updatedAt: updatedAt,
+  );
 }

@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Spotmizoram</string>
+	<string>Xplooria</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -15,7 +15,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>spotmizoram</string>
+	<string>Xplooria</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -27,15 +27,15 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>SpotMizoram needs camera access to capture listing photos.</string>
+	<string>Xplooria needs camera access to capture listing photos.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>SpotMizoram uses your location to show nearby restaurants and cafes on the map.</string>
+	<string>Xplooria uses your location to show nearby restaurants and cafes on the map.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>SpotMizoram uses your location to show nearby restaurants and cafes on the map.</string>
+	<string>Xplooria uses your location to show nearby restaurants and cafes on the map.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>SpotMizoram needs access to save images to your photo library.</string>
+	<string>Xplooria needs access to save images to your photo library.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>SpotMizoram needs access to your photo library to upload listing images.</string>
+	<string>Xplooria needs access to your photo library to upload listing images.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

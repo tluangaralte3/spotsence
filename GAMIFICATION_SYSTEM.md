@@ -1,4 +1,4 @@
-# SpotMizoram Gamification System
+# Xplooria Gamification System
 
 ## Overview
 

@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../controllers/auth_controller.dart';
@@ -19,6 +20,7 @@ import '../../screens/profile/profile_screen.dart';
 import '../../screens/profile/edit_profile_screen.dart';
 import '../../screens/shell/main_shell.dart';
 import '../../screens/onboarding/onboarding_screen.dart';
+import '../../screens/debug/diagnostics_screen.dart';
 import '../../screens/listings/listing_detail_screen.dart';
 import '../../screens/listings/cafe_detail_screen.dart';
 import '../../screens/listings/hotel_detail_screen.dart';
@@ -54,6 +56,7 @@ import '../../screens/admin/rentals/admin_rental_tracking_screen.dart';
 import '../../screens/admin/contributions/admin_contributions_screen.dart';
 import '../../screens/rentals/rentals_screen.dart';
 import '../../controllers/admin_controller.dart';
+import '../../services/analytics_service.dart';
 
 // Named route paths
 abstract class AppRoutes {
@@ -113,8 +116,7 @@ abstract class AppRoutes {
       '/community/dares/$dareId/add-challenge';
   static String dareProofPath(String dareId, String challengeId) =>
       '/community/dares/$dareId/challenges/$challengeId/proof';
-  static String scratchCardPath(String cardId) =>
-      '/dare-rewards/cards/$cardId';
+  static String scratchCardPath(String cardId) => '/dare-rewards/cards/$cardId';
 
   // ── Super Admin ──────────────────────────────────────────────────────────
   static const admin = '/admin';
@@ -248,6 +250,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   ref.watch(_routerListenerProvider);
 
   final router = GoRouter(
+    observers: [AnalyticsService.instance.observer],
     // Share the navigator key with NotificationService so it can push routes
     // from FCM tap handlers without needing a BuildContext.
     navigatorKey: NotificationService.navigatorKey,
@@ -258,18 +261,28 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(
         path: AppRoutes.onboarding,
+        name: 'Onboarding',
         builder: (_, _) => const OnboardingScreen(),
       ),
       GoRoute(
         path: AppRoutes.login,
+        name: 'Login',
         pageBuilder: (_, state) => _slide(state, const LoginScreen()),
       ),
       GoRoute(
         path: AppRoutes.register,
+        name: 'Register',
         pageBuilder: (_, state) => _slide(state, const RegisterScreen()),
       ),
+      if (kDebugMode)
+        GoRoute(
+          path: '/debug',
+          name: 'Diagnostics',
+          pageBuilder: (_, state) => _slide(state, const DiagnosticsScreen()),
+        ),
       GoRoute(
         path: AppRoutes.forgotPassword,
+        name: 'ForgotPassword',
         pageBuilder: (_, state) => _slide(state, const ForgotPasswordScreen()),
       ),
 
@@ -277,9 +290,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ShellRoute(
         builder: (context, state, child) => MainShell(child: child),
         routes: [
-          GoRoute(path: AppRoutes.home, builder: (_, _) => const HomeScreen()),
+          GoRoute(
+            path: AppRoutes.home,
+            name: 'Home',
+            builder: (_, _) => const HomeScreen(),
+          ),
           GoRoute(
             path: AppRoutes.spots,
+            name: 'Spots',
             builder: (_, _) => const ListingsScreen(initialTab: 0),
             routes: [
               GoRoute(
@@ -293,6 +311,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: AppRoutes.listings,
+            name: 'Listings',
             builder: (_, state) {
               final tab =
                   int.tryParse(state.uri.queryParameters['tab'] ?? '0') ?? 0;
@@ -320,10 +339,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: AppRoutes.search,
+            name: 'Search',
             builder: (_, _) => const SearchScreen(),
           ),
           GoRoute(
             path: AppRoutes.tourPackages,
+            name: 'Packages',
             builder: (_, _) => const TourPackagesScreen(),
             routes: [
               GoRoute(
@@ -337,14 +358,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: AppRoutes.community,
+            name: 'Community',
             builder: (_, _) => const CommunityScreen(),
           ),
           GoRoute(
             path: AppRoutes.leaderboard,
+            name: 'Leaderboard',
             builder: (_, _) => const LeaderboardScreen(),
           ),
           GoRoute(
             path: AppRoutes.profile,
+            name: 'Profile',
             builder: (_, _) => const ProfileScreen(),
           ),
         ],
@@ -367,18 +391,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.myBookings,
-        pageBuilder: (_, state) =>
-            _fade(state, const MyBookingsScreen()),
+        pageBuilder: (_, state) => _fade(state, const MyBookingsScreen()),
       ),
       GoRoute(
         path: AppRoutes.myContributions,
-        pageBuilder: (_, state) =>
-            _fade(state, const MyContributionsScreen()),
+        pageBuilder: (_, state) => _fade(state, const MyContributionsScreen()),
       ),
       GoRoute(
         path: AppRoutes.myRooms,
-        pageBuilder: (_, state) =>
-            _slide(state, const RoomManagementScreen()),
+        pageBuilder: (_, state) => _slide(state, const RoomManagementScreen()),
       ),
 
       // ── Admin (outside shell — own navigation) ─────────────────────────
@@ -448,9 +469,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             path: 'rentals/edit/:docId',
             pageBuilder: (_, state) => _slide(
               state,
-              AdminAddRentalScreen(
-                docId: state.pathParameters['docId'],
-              ),
+              AdminAddRentalScreen(docId: state.pathParameters['docId']),
             ),
           ),
           GoRoute(
@@ -467,11 +486,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.rentals,
-        pageBuilder: (_, state) =>
-            _slide(state, const RentalsScreen()),
+        name: 'Rentals',
+        pageBuilder: (_, state) => _slide(state, const RentalsScreen()),
       ),
       GoRoute(
         path: AppRoutes.createPost,
+        name: 'CreatePost',
         pageBuilder: (_, state) =>
             _bottomSheet(state, const CreatePostScreen()),
       ),
@@ -479,11 +499,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // ── Dare routes ────────────────────────────────────────────────────
       GoRoute(
         path: AppRoutes.createDare,
+        name: 'CreateDare',
         pageBuilder: (_, state) =>
             _bottomSheet(state, const CreateDareScreen()),
       ),
       GoRoute(
         path: AppRoutes.dareDetail,
+        name: 'DareDetail',
         pageBuilder: (_, state) => _slide(
           state,
           DareDetailScreen(dareId: state.pathParameters['id']!),
@@ -502,31 +524,32 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.addDareChallenge,
         pageBuilder: (_, state) => _slide(
           state,
-          AddDareChallengeScreen(
-            dareId: state.pathParameters['dareId']!,
-          ),
+          AddDareChallengeScreen(dareId: state.pathParameters['dareId']!),
         ),
       ),
       GoRoute(
         path: AppRoutes.dareProof,
+        name: 'DareProof',
         pageBuilder: (_, state) => _slide(
           state,
           DareProofScreen(
             dareId: state.pathParameters['dareId']!,
             challengeId: state.pathParameters['challengeId']!,
             challengeTitle: state.uri.queryParameters['title'] ?? 'Challenge',
-            initialImages:
-                state.extra is List<File> ? state.extra as List<File> : null,
+            initialImages: state.extra is List<File>
+                ? state.extra as List<File>
+                : null,
           ),
         ),
       ),
       GoRoute(
         path: AppRoutes.dareRewards,
-        pageBuilder: (_, state) =>
-            _slide(state, const DareRewardsScreen()),
+        name: 'DareRewards',
+        pageBuilder: (_, state) => _slide(state, const DareRewardsScreen()),
       ),
       GoRoute(
         path: AppRoutes.scratchCard,
+        name: 'ScratchCard',
         pageBuilder: (_, state) {
           final card = state.extra as ScratchCard;
           return _slide(state, ScratchCardScreen(card: card));
@@ -534,11 +557,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.notifications,
+        name: 'Notifications',
         pageBuilder: (_, state) =>
             _slide(state, const DareNotificationsScreen()),
       ),
       GoRoute(
         path: AppRoutes.dareDashboard,
+        name: 'DareDashboard',
         pageBuilder: (_, state) {
           final userId = state.uri.queryParameters['uid'] ?? '';
           return _slide(state, DareDashboardScreen(userId: userId));
@@ -546,16 +571,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.createDilemma,
-        pageBuilder: (_, state) =>
-            _slide(state, const CreateDilemmaScreen()),
+        name: 'CreateDilemma',
+        pageBuilder: (_, state) => _slide(state, const CreateDilemmaScreen()),
       ),
       GoRoute(
         path: AppRoutes.createBucketList,
+        name: 'CreateBucketList',
         pageBuilder: (_, state) =>
             _bottomSheet(state, const CreateBucketListScreen()),
       ),
       GoRoute(
         path: AppRoutes.editBucketList,
+        name: 'EditBucketList',
         pageBuilder: (_, state) => _slide(
           state,
           EditBucketListScreen(listId: state.pathParameters['id']!),
@@ -563,6 +590,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.bucketListDetail,
+        name: 'BucketListDetail',
         pageBuilder: (_, state) => _slide(
           state,
           BucketListDetailScreen(listId: state.pathParameters['id']!),
@@ -570,6 +598,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.addBucketItem,
+        name: 'AddBucketItem',
         pageBuilder: (_, state) => _slide(
           state,
           AddBucketItemScreen(listId: state.pathParameters['listId']!),
@@ -577,19 +606,23 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.eventDetail,
+        name: 'EventDetail',
         pageBuilder: (_, state) =>
             _slide(state, EventDetailScreen(id: state.pathParameters['id']!)),
       ),
       GoRoute(
         path: AppRoutes.contribute,
+        name: 'Contribute',
         pageBuilder: (_, state) => _slide(state, const ContributeScreen()),
       ),
       GoRoute(
         path: AppRoutes.editProfile,
+        name: 'EditProfile',
         pageBuilder: (_, state) => _slide(state, const EditProfileScreen()),
       ),
       GoRoute(
         path: AppRoutes.allReviews,
+        name: 'AllReviews',
         pageBuilder: (_, state) {
           final collection = state.pathParameters['collection']!;
           final id = state.pathParameters['id']!;

@@ -1,4 +1,4 @@
-# SpotMizoram — Full Test Case Report
+# Xplooria — Full Test Case Report
 
 **Generated:** 21 March 2026  
 **Project:** SpotMizoram Mobile (Flutter)  
