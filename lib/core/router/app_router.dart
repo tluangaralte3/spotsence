@@ -282,7 +282,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ShellRoute(
         builder: (context, state, child) => MainShell(child: child),
         routes: [
-          GoRoute(path: AppRoutes.home, name: 'Home', builder: (_, _) => const HomeScreen()),
+          GoRoute(
+            path: AppRoutes.home,
+            name: 'Home',
+            builder: (_, _) => const HomeScreen(),
+          ),
           GoRoute(
             path: AppRoutes.spots,
             name: 'Spots',
@@ -477,20 +481,20 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: 'Rentals',
         pageBuilder: (_, state) => _slide(state, const RentalsScreen()),
       ),
-  GoRoute(
-    path: AppRoutes.createPost,
-    name: 'CreatePost',
-    pageBuilder: (_, state) =>
-    _bottomSheet(state, const CreatePostScreen()),
-  ),
+      GoRoute(
+        path: AppRoutes.createPost,
+        name: 'CreatePost',
+        pageBuilder: (_, state) =>
+            _bottomSheet(state, const CreatePostScreen()),
+      ),
 
       // ── Dare routes ────────────────────────────────────────────────────
-  GoRoute(
-    path: AppRoutes.createDare,
-    name: 'CreateDare',
-    pageBuilder: (_, state) =>
-    _bottomSheet(state, const CreateDareScreen()),
-  ),
+      GoRoute(
+        path: AppRoutes.createDare,
+        name: 'CreateDare',
+        pageBuilder: (_, state) =>
+            _bottomSheet(state, const CreateDareScreen()),
+      ),
       GoRoute(
         path: AppRoutes.dareDetail,
         name: 'DareDetail',
@@ -543,12 +547,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           return _slide(state, ScratchCardScreen(card: card));
         },
       ),
-  GoRoute(
-    path: AppRoutes.notifications,
-    name: 'Notifications',
-    pageBuilder: (_, state) =>
-    _slide(state, const DareNotificationsScreen()),
-  ),
+      GoRoute(
+        path: AppRoutes.notifications,
+        name: 'Notifications',
+        pageBuilder: (_, state) =>
+            _slide(state, const DareNotificationsScreen()),
+      ),
       GoRoute(
         path: AppRoutes.dareDashboard,
         name: 'DareDashboard',
@@ -562,12 +566,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: 'CreateDilemma',
         pageBuilder: (_, state) => _slide(state, const CreateDilemmaScreen()),
       ),
-  GoRoute(
-    path: AppRoutes.createBucketList,
-    name: 'CreateBucketList',
-    pageBuilder: (_, state) =>
-    _bottomSheet(state, const CreateBucketListScreen()),
-  ),
+      GoRoute(
+        path: AppRoutes.createBucketList,
+        name: 'CreateBucketList',
+        pageBuilder: (_, state) =>
+            _bottomSheet(state, const CreateBucketListScreen()),
+      ),
       GoRoute(
         path: AppRoutes.editBucketList,
         name: 'EditBucketList',
@@ -592,12 +596,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           AddBucketItemScreen(listId: state.pathParameters['listId']!),
         ),
       ),
-  GoRoute(
-    path: AppRoutes.eventDetail,
-    name: 'EventDetail',
-    pageBuilder: (_, state) =>
-    _slide(state, EventDetailScreen(id: state.pathParameters['id']!)),
-  ),
+      GoRoute(
+        path: AppRoutes.eventDetail,
+        name: 'EventDetail',
+        pageBuilder: (_, state) =>
+            _slide(state, EventDetailScreen(id: state.pathParameters['id']!)),
+      ),
       GoRoute(
         path: AppRoutes.contribute,
         name: 'Contribute',
