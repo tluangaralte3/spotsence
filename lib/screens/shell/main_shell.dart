@@ -1,3 +1,4 @@
+// ignore_for_file: sort_child_properties_last
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -32,7 +33,6 @@ class _MainShellState extends ConsumerState<MainShell> {
     final index = _indexForLocation(location);
 
     return Scaffold(
-      // ignore: sort_child_properties_last
       body: XpToastOverlay(child: widget.child),
       floatingActionButton: kDebugMode
           ? FloatingActionButton(
