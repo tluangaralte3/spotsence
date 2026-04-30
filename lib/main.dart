@@ -19,32 +19,34 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 }
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-  } on FirebaseException catch (e) {
-    if (e.code != 'duplicate-app') rethrow;
-  }
-
-  // Register the background handler BEFORE calling runApp.
-  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-
-  // Initialise FCM permissions, local notification channel, and tap handlers.
-  await NotificationService.instance.initialize();
-
-  // Setup Crashlytics: redirect Flutter framework errors to Crashlytics and
-  // run the app in a guarded zone to capture uncaught async errors.
-  FlutterError.onError = (FlutterErrorDetails details) {
-    FlutterError.presentError(details);
-    FirebaseCrashlytics.instance.recordFlutterFatalError(details);
-  };
-
-  // Run app inside guarded zone so Crashlytics captures uncaught errors.
+  // Run app inside a guarded zone so Crashlytics captures uncaught errors
+  // and the Widgets binding is initialized in the same zone as runApp.
   runZonedGuarded<Future<void>>(
     () async {
+      WidgetsFlutterBinding.ensureInitialized();
+
+      try {
+        await Firebase.initializeApp(
+          options: DefaultFirebaseOptions.currentPlatform,
+        );
+      } on FirebaseException catch (e) {
+        if (e.code != 'duplicate-app') rethrow;
+      }
+
+      // Register the background handler BEFORE calling runApp.
+      FirebaseMessaging.onBackgroundMessage(
+        _firebaseMessagingBackgroundHandler,
+      );
+
+      // Initialise FCM permissions, local notification channel, and tap handlers.
+      await NotificationService.instance.initialize();
+
+      // Setup Crashlytics: redirect Flutter framework errors to Crashlytics.
+      FlutterError.onError = (FlutterErrorDetails details) {
+        FlutterError.presentError(details);
+        FirebaseCrashlytics.instance.recordFlutterFatalError(details);
+      };
+
       runApp(const ProviderScope(child: XplooriaApp()));
     },
     (error, stack) =>
